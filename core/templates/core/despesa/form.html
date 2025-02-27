@@ -1,0 +1,269 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .destino-container {
+        display: none;
+    }
+    .destino-container.active {
+        display: block;
+    }
+    .required-field::after {
+        content: " *";
+        color: red;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h4>{% if despesa %}Editar Despesa{% else %}Nova Despesa{% endif %}</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" id="despesaForm">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <!-- Dados Básicos -->
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Dados Básicos</h5>
+                        
+                        <div class="mb-3">
+                            <label for="data" class="form-label required-field">Data</label>
+                            <input type="date" class="form-control" id="data" name="data" 
+                                   value="{{ despesa.data|date:'Y-m-d' }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="data_vencimento" class="form-label required-field">Data de Vencimento</label>
+                            <input type="date" class="form-control" id="data_vencimento" name="data_vencimento" 
+                                   value="{{ despesa.data_vencimento|date:'Y-m-d' }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="data_pagamento" class="form-label">Data de Pagamento</label>
+                            <input type="date" class="form-control" id="data_pagamento" name="data_pagamento" 
+                                   value="{{ despesa.data_pagamento|date:'Y-m-d' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="valor" class="form-label required-field">Valor</label>
+                            <div class="input-group">
+                                <span class="input-group-text">R$</span>
+                                <input type="number" class="form-control" id="valor" name="valor" 
+                                       step="0.01" min="0.01" value="{{ despesa.valor|default:'0.00' }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Categorização -->
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Categorização</h5>
+                        
+                        <div class="mb-3">
+                            <label for="categoria" class="form-label required-field">Categoria</label>
+                            <select class="form-select" id="categoria" name="categoria" required>
+                                <option value="">Selecione uma categoria</option>
+                                {% for categoria in categorias %}
+                                <option value="{{ categoria.id }}" 
+                                        data-alocacao="{{ categoria.alocacao }}"
+                                        {% if despesa.categoria_id == categoria.id %}selected{% endif %}>
+                                    {{ categoria.nome }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="subcategoria" class="form-label required-field">Subcategoria</label>
+                            <select class="form-select" id="subcategoria" name="subcategoria" required>
+                                <option value="">Selecione uma subcategoria</option>
+                                {% if despesa %}
+                                <option value="{{ despesa.subcategoria.id }}" selected>
+                                    {{ despesa.subcategoria.nome }}
+                                </option>
+                                {% endif %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="contato" class="form-label">Contato</label>
+                            <select class="form-select" id="contato" name="contato">
+                                <option value="">Selecione um contato</option>
+                                {% for contato in contatos %}
+                                <option value="{{ contato.id }}" 
+                                        {% if despesa.contato_id == contato.id %}selected{% endif %}>
+                                    {{ contato.nome_completo }} ({{ contato.get_tipo_display }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Destinos (baseados na alocação da categoria) -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h5 class="mb-3">Destino</h5>
+                        
+                        <!-- Veículos -->
+                        <div id="destino-veiculo" class="destino-container">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="caminhao" class="form-label">Caminhão</label>
+                                        <select class="form-select" id="caminhao" name="caminhao">
+                                            <option value="">Selecione um caminhão</option>
+                                            {% for caminhao in caminhoes %}
+                                            <option value="{{ caminhao.id }}" 
+                                                    {% if despesa.caminhao_id == caminhao.id %}selected{% endif %}>
+                                                {{ caminhao.placa }} - {{ caminhao.marca }} {{ caminhao.modelo }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="carreta" class="form-label">Carreta</label>
+                                        <select class="form-select" id="carreta" name="carreta">
+                                            <option value="">Selecione uma carreta</option>
+                                            {% for carreta in carretas %}
+                                            <option value="{{ carreta.id }}" 
+                                                    {% if despesa.carreta_id == carreta.id %}selected{% endif %}>
+                                                {{ carreta.placa }} - {{ carreta.marca }} {{ carreta.modelo }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Fretes -->
+                        <div id="destino-frete" class="destino-container">
+                            <div class="mb-3">
+                                <label for="frete" class="form-label">Frete</label>
+                                <select class="form-select" id="frete" name="frete">
+                                    <option value="">Selecione um frete</option>
+                                    {% for frete in fretes %}
+                                    <option value="{{ frete.id }}" 
+                                            {% if despesa.frete_id == frete.id %}selected{% endif %}>
+                                        Frete #{{ frete.id }} - {{ frete.cliente.nome_completo }} - {{ frete.origem }} para {{ frete.destino }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Administrativo -->
+                        <div id="destino-administrativo" class="destino-container">
+                            <div class="mb-3">
+                                <label for="empresa" class="form-label">Empresa</label>
+                                <select class="form-select" id="empresa" name="empresa">
+                                    <option value="">Selecione uma empresa</option>
+                                    {% for empresa in empresas %}
+                                    <option value="{{ empresa.id }}" 
+                                            {% if despesa.empresa_id == empresa.id %}selected{% endif %}>
+                                        {{ empresa.nome }} - {{ empresa.razao_social }} - {{ empresa.cnpj }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Observações -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <label for="observacao" class="form-label">Observações</label>
+                            <textarea class="form-control" id="observacao" name="observacao" rows="3">{{ despesa.observacao }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'core:despesa_list' %}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const categoriaSelect = document.getElementById('categoria');
+        const subcategoriaSelect = document.getElementById('subcategoria');
+        const destinoVeiculo = document.getElementById('destino-veiculo');
+        const destinoFrete = document.getElementById('destino-frete');
+        const destinoAdministrativo = document.getElementById('destino-administrativo');
+        
+        // Função para carregar subcategorias
+        function carregarSubcategorias(categoriaId) {
+            if (!categoriaId) {
+                subcategoriaSelect.innerHTML = '<option value="">Selecione uma subcategoria</option>';
+                return;
+            }
+            
+            fetch(`{% url 'core:get_subcategorias' %}?categoria_id=${categoriaId}`)
+                .then(response => response.json())
+                .then(data => {
+                    subcategoriaSelect.innerHTML = '<option value="">Selecione uma subcategoria</option>';
+                    data.forEach(subcategoria => {
+                        const option = document.createElement('option');
+                        option.value = subcategoria.id;
+                        option.textContent = subcategoria.nome;
+                        subcategoriaSelect.appendChild(option);
+                    });
+                    
+                    // Se estiver editando, selecionar a subcategoria atual
+                    {% if despesa and despesa.subcategoria_id %}
+                    subcategoriaSelect.value = "{{ despesa.subcategoria_id }}";
+                    {% endif %}
+                })
+                .catch(error => console.error('Erro ao carregar subcategorias:', error));
+        }
+        
+        // Função para mostrar o destino correto baseado na alocação
+        function mostrarDestino(alocacao) {
+            // Esconder todos os destinos
+            destinoVeiculo.classList.remove('active');
+            destinoFrete.classList.remove('active');
+            destinoAdministrativo.classList.remove('active');
+            
+            // Mostrar o destino correspondente
+            if (alocacao === 'VEICULO') {
+                destinoVeiculo.classList.add('active');
+            } else if (alocacao === 'FRETE') {
+                destinoFrete.classList.add('active');
+            } else if (alocacao === 'ADMINISTRATIVO') {
+                destinoAdministrativo.classList.add('active');
+            }
+        }
+        
+        // Evento de mudança na categoria
+        categoriaSelect.addEventListener('change', function() {
+            const categoriaId = this.value;
+            const alocacao = this.options[this.selectedIndex].getAttribute('data-alocacao');
+            
+            carregarSubcategorias(categoriaId);
+            mostrarDestino(alocacao);
+        });
+        
+        // Inicialização
+        if (categoriaSelect.value) {
+            const alocacao = categoriaSelect.options[categoriaSelect.selectedIndex].getAttribute('data-alocacao');
+            carregarSubcategorias(categoriaSelect.value);
+            mostrarDestino(alocacao);
+        }
+    });
+</script>
+{% endblock %}

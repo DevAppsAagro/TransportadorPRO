@@ -1,0 +1,368 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Relatório de Fretes por Cliente{% endblock %}
+
+{% block custom_css %}
+<style>
+    .report-header {
+        background-color: #f8f9fc;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+    .report-header h4 {
+        color: #4e73df;
+        margin-bottom: 15px;
+    }
+    .report-form label {
+        font-weight: 600;
+        color: #5a5c69;
+    }
+    .report-results {
+        margin-top: 30px;
+    }
+    .summary-card {
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    .summary-card .card-header {
+        background-color: #4e73df;
+        color: white;
+        font-weight: bold;
+        padding: 15px 20px;
+    }
+    .summary-card .card-body {
+        padding: 20px;
+    }
+    .summary-item {
+        margin-bottom: 10px;
+        border-bottom: 1px solid #e3e6f0;
+        padding-bottom: 10px;
+    }
+    .summary-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    .summary-label {
+        font-weight: 600;
+        color: #5a5c69;
+    }
+    .summary-value {
+        font-weight: 700;
+        float: right;
+    }
+    .table-responsive {
+        margin-top: 20px;
+    }
+    .status-badge {
+        font-size: 12px;
+        padding: 5px 10px;
+        border-radius: 30px;
+    }
+    .status-concluido {
+        background-color: #1cc88a;
+        color: white;
+    }
+    .status-andamento {
+        background-color: #f6c23e;
+        color: white;
+    }
+    .print-header {
+        display: none;
+    }
+    @media print {
+        .print-header {
+            display: block;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .print-header h2 {
+            margin-bottom: 5px;
+        }
+        .print-header p {
+            margin-bottom: 0;
+        }
+        .no-print {
+            display: none !important;
+        }
+        .card {
+            border: 1px solid #ddd !important;
+            box-shadow: none !important;
+        }
+        .card-header {
+            background-color: #f8f9fc !important;
+            color: #000 !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Relatório de Fretes por Cliente</h1>
+        <a href="{% url 'core:relatorios' %}" class="btn btn-sm btn-secondary no-print">
+            <i class="fas fa-arrow-left mr-1"></i> Voltar
+        </a>
+    </div>
+
+    <!-- Print Header (only visible when printing) -->
+    <div class="print-header">
+        <h2>Relatório de Fretes por Cliente</h2>
+        {% if relatorio_gerado %}
+        <p>Cliente: {{ cliente.nome_completo }}</p>
+        <p>Período: {{ data_inicio|date:"d/m/Y" }} a {{ data_fim|date:"d/m/Y" }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Form Section -->
+    <div class="report-header no-print">
+        <h4><i class="fas fa-filter mr-2"></i>Filtros do Relatório</h4>
+        <form method="post" class="report-form">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="cliente">Cliente</label>
+                    <select name="cliente" id="cliente" class="form-control" required>
+                        <option value="">Selecione um cliente</option>
+                        {% for cliente in clientes %}
+                        <option value="{{ cliente.id }}">{{ cliente.nome_completo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="data_inicio">Data Inicial</label>
+                    <input type="date" name="data_inicio" id="data_inicio" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="data_fim">Data Final</label>
+                    <input type="date" name="data_fim" id="data_fim" class="form-control" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search mr-1"></i> Gerar Relatório
+            </button>
+        </form>
+    </div>
+
+    {% if relatorio_gerado %}
+    <div class="report-results">
+        <!-- Report Header -->
+        <div class="alert alert-info mb-4 no-print">
+            <h5 class="mb-1"><i class="fas fa-info-circle mr-1"></i> Informações do Relatório</h5>
+            <p class="mb-0">Cliente: <strong>{{ cliente.nome_completo }}</strong> | Período: <strong>{{ data_inicio|date:"d/m/Y" }} a {{ data_fim|date:"d/m/Y" }}</strong></p>
+        </div>
+
+        <!-- Report Actions -->
+        <div class="mb-4 text-right no-print">
+            <button onclick="window.print()" class="btn btn-sm btn-primary">
+                <i class="fas fa-print mr-1"></i> Imprimir Relatório
+            </button>
+            <a href="#" class="btn btn-sm btn-success" id="exportExcel">
+                <i class="fas fa-file-excel mr-1"></i> Exportar para Excel
+            </a>
+        </div>
+
+        <div class="row">
+            <!-- Summary Card -->
+            <div class="col-lg-4">
+                <div class="summary-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-pie mr-1"></i> Resumo do Relatório
+                    </div>
+                    <div class="card-body">
+                        <div class="summary-item">
+                            <span class="summary-label">Total de Fretes:</span>
+                            <span class="summary-value">{{ total_fretes }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Fretes Concluídos:</span>
+                            <span class="summary-value">{{ fretes_concluidos }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Fretes em Andamento:</span>
+                            <span class="summary-value">{{ fretes_em_andamento }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Valor Total:</span>
+                            <span class="summary-value">R$ {{ total_valor|floatformat:2|intcomma }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Peso Total Transportado:</span>
+                            <span class="summary-value">{{ peso_total|floatformat:2|intcomma }} kg</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Resumo por Tipo de Carga -->
+                <div class="summary-card mt-4">
+                    <div class="card-header">
+                        <i class="fas fa-boxes mr-1"></i> Resumo por Tipo de Carga
+                    </div>
+                    <div class="card-body">
+                        {% for carga_item in cargas_resumo %}
+                        <div class="summary-item">
+                            <span class="summary-label">{{ carga_item.carga.nome }}:</span>
+                            <span class="summary-value">
+                                {{ carga_item.quantidade_convertida|floatformat:2|intcomma }} {{ carga_item.carga.unidade_medida }}
+                                <small class="text-muted">({{ carga_item.peso_total|floatformat:2|intcomma }} kg)</small>
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fretes Table -->
+            <div class="col-lg-8">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Lista de Fretes</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Origem → Destino</th>
+                                        <th>Valor</th>
+                                        <th>Peso</th>
+                                        <th>Carga</th>
+                                        <th>Status</th>
+                                        <th class="no-print">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for frete in fretes %}
+                                    <tr>
+                                        <td>{{ frete.data_saida|date:"d/m/Y" }}</td>
+                                        <td>{{ frete.origem }} → {{ frete.destino }}</td>
+                                        <td>R$ {{ frete.valor_total|floatformat:2|intcomma }}</td>
+                                        <td>{{ frete.peso_carga|floatformat:2|intcomma }} kg</td>
+                                        <td>
+                                            {{ frete.quantidade_convertida|floatformat:2|intcomma }} {{ frete.unidade_medida }}
+                                            <small class="text-muted d-block">({{ frete.carga.nome }})</small>
+                                        </td>
+                                        <td>
+                                            {% if frete.data_chegada %}
+                                            <span class="badge status-badge status-concluido">Concluído</span>
+                                            {% else %}
+                                            <span class="badge status-badge status-andamento">Em Andamento</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="no-print">
+                                            <a href="{% url 'core:frete_detalhes' frete.pk %}" class="btn btn-sm btn-info" title="Visualizar Detalhes">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar datatable se o relatório foi gerado
+        {% if relatorio_gerado %}
+        $('#dataTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
+            },
+            "order": [[0, "desc"]]
+        });
+        {% endif %}
+        
+        // Exportar para Excel
+        document.getElementById('exportExcel').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Criar uma tabela temporária para exportar
+            let table = document.createElement('table');
+            
+            // Cabeçalho do Excel
+            let headerRow = table.insertRow();
+            ['Data', 'Origem → Destino', 'Valor', 'Peso (kg)', 'Carga Convertida', 'Status'].forEach(text => {
+                let cell = headerRow.insertCell();
+                cell.textContent = text;
+            });
+            
+            // Dados
+            {% if relatorio_gerado %}
+            {% for frete in fretes %}
+            let row = table.insertRow();
+            
+            let dateCell = row.insertCell();
+            dateCell.textContent = '{{ frete.data_saida|date:"d/m/Y" }}';
+            
+            let routeCell = row.insertCell();
+            routeCell.textContent = '{{ frete.origem }} → {{ frete.destino }}';
+            
+            let valueCell = row.insertCell();
+            valueCell.textContent = 'R$ {{ frete.valor_total|floatformat:2 }}'.replace('.', ',');
+            
+            let weightCell = row.insertCell();
+            weightCell.textContent = '{{ frete.peso_carga|floatformat:2 }} kg'.replace('.', ',');
+            
+            let cargaCell = row.insertCell();
+            cargaCell.textContent = '{{ frete.quantidade_convertida|floatformat:2 }} {{ frete.unidade_medida }} ({{ frete.carga.nome }})'.replace('.', ',');
+            
+            let statusCell = row.insertCell();
+            statusCell.textContent = '{% if frete.data_chegada %}Concluído{% else %}Em Andamento{% endif %}';
+            {% endfor %}
+            {% endif %}
+            
+            // Converter para CSV
+            let csv = [];
+            for (let i = 0; i < table.rows.length; i++) {
+                let row = [], cols = table.rows[i].cells;
+                
+                for (let j = 0; j < cols.length; j++) {
+                    // Escapar aspas duplas e adicionar aspas ao redor do texto
+                    let data = cols[j].textContent.replace(/"/g, '""');
+                    row.push('"' + data + '"');
+                }
+                
+                csv.push(row.join(';'));
+            }
+            
+            let csvContent = csv.join('\n');
+            
+            // Criar blob e link para download
+            let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement('a');
+            
+            // Nome do arquivo
+            let fileName = 'Relatorio_Cliente_{{ cliente.nome_completo|default:"" }}_{{ data_inicio|date:"d-m-Y"|default:"" }}_a_{{ data_fim|date:"d-m-Y"|default:"" }}.csv';
+            
+            // Criar link de download
+            if (navigator.msSaveBlob) { // IE 10+
+                navigator.msSaveBlob(blob, fileName);
+            } else {
+                let url = URL.createObjectURL(blob);
+                link.href = url;
+                link.setAttribute('download', fileName);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        });
+    });
+</script>
+{% endblock %}

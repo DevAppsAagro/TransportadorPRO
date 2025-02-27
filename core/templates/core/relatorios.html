@@ -1,0 +1,110 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Relatórios{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Relatórios</h1>
+    <div class="row mt-4">
+        <!-- DRE Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                DRE</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">Demonstrativo de Resultados</div>
+                            <p class="mt-2 mb-0 text-muted">Análise completa de receitas e despesas</p>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    <a href="{% url 'core:dre' %}" class="btn btn-primary btn-sm mt-3">Ver Relatório</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fluxo de Caixa Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Fluxo de Caixa</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">Movimentação Financeira</div>
+                            <p class="mt-2 mb-0 text-muted">Controle de entradas e saídas</p>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    <a href="{% url 'core:fluxo_caixa' %}" class="btn btn-success btn-sm mt-3">Ver Relatório</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Relatório de Fretes Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Relatório de Fretes</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">Análise de Operações</div>
+                            <p class="mt-2 mb-0 text-muted">Desempenho das operações de frete</p>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-truck fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    <a href="{% url 'core:relatorio_frete' %}" class="btn btn-info btn-sm mt-3">Ver Relatório</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Relatório de Veículos Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Relatório de Veículos</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">Status da Frota</div>
+                            <p class="mt-2 mb-0 text-muted">Manutenção e desempenho dos veículos</p>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-car fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    <a href="{% url 'core:relatorio_veiculo' %}" class="btn btn-warning btn-sm mt-3">Ver Relatório</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Relatório de Clientes Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Relatório de Clientes</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">Fretes por Cliente</div>
+                            <p class="mt-2 mb-0 text-muted">Histórico de fretes por cliente</p>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    <a href="{% url 'core:relatorio_cliente' %}" class="btn btn-danger btn-sm mt-3">Ver Relatório</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,203 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<style>
+    .badge-pendente {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    .badge-vence-hoje {
+        background-color: #17a2b8;
+        color: white;
+    }
+    .badge-vencida {
+        background-color: #dc3545;
+        color: white;
+    }
+    .badge-paga {
+        background-color: #28a745;
+        color: white;
+    }
+    .btn-filter {
+        margin-right: 5px;
+        margin-bottom: 10px;
+    }
+    .btn-filter.active {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.5);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#despesasTable').DataTable({
+            "language": {
+                "sEmptyTable": "Nenhum registro encontrado",
+                "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
+                "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
+                "sInfoFiltered": "(Filtrados de _MAX_ registros)",
+                "sInfoPostFix": "",
+                "sInfoThousands": ".",
+                "sLengthMenu": "_MENU_ resultados por página",
+                "sLoadingRecords": "Carregando...",
+                "sProcessing": "Processando...",
+                "sZeroRecords": "Nenhum registro encontrado",
+                "sSearch": "Pesquisar",
+                "oPaginate": {
+                    "sNext": "Próximo",
+                    "sPrevious": "Anterior",
+                    "sFirst": "Primeiro",
+                    "sLast": "Último"
+                }
+            },
+            "order": [[1, "desc"]] // Ordenar por data de vencimento (decrescente)
+        });
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Despesas</h2>
+
+    <div class="d-flex justify-content-between mb-3">
+        <div>
+            <a href="{% url 'core:despesa_list' %}" class="btn btn-sm btn-filter {% if not status_filter %}active{% endif %}">
+                Todas
+            </a>
+            <a href="{% url 'core:despesa_list' %}?status=PENDENTE" class="btn btn-sm btn-warning btn-filter {% if status_filter == 'PENDENTE' %}active{% endif %}">
+                Pendentes
+            </a>
+            <a href="{% url 'core:despesa_list' %}?status=VENCE_HOJE" class="btn btn-sm btn-info btn-filter {% if status_filter == 'VENCE_HOJE' %}active{% endif %}">
+                Vence Hoje
+            </a>
+            <a href="{% url 'core:despesa_list' %}?status=VENCIDA" class="btn btn-sm btn-danger btn-filter {% if status_filter == 'VENCIDA' %}active{% endif %}">
+                Vencidas
+            </a>
+            <a href="{% url 'core:despesa_list' %}?status=PAGA" class="btn btn-sm btn-success btn-filter {% if status_filter == 'PAGA' %}active{% endif %}">
+                Pagas
+            </a>
+        </div>
+        <a href="{% url 'core:despesa_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nova Despesa
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="despesasTable" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Categoria</th>
+                            <th>Data Vencimento</th>
+                            <th>Valor</th>
+                            <th>Destino</th>
+                            <th>Contato</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for despesa in despesas %}
+                        <tr>
+                            <td>
+                                <strong>{{ despesa.categoria.nome }}</strong><br>
+                                <small>{{ despesa.subcategoria.nome }}</small>
+                            </td>
+                            <td>{{ despesa.data_vencimento|date:"d/m/Y" }}</td>
+                            <td>R$ {{ despesa.valor|floatformat:2 }}</td>
+                            <td>{{ despesa.destino_display }}</td>
+                            <td>{{ despesa.contato.nome_completo|default:"-" }}</td>
+                            <td>
+                                {% if despesa.status_calculado == 'PENDENTE' %}
+                                    <span class="badge badge-pendente">Pendente</span>
+                                {% elif despesa.status_calculado == 'VENCE_HOJE' %}
+                                    <span class="badge badge-vence-hoje">Vence Hoje</span>
+                                {% elif despesa.status_calculado == 'VENCIDA' %}
+                                    <span class="badge badge-vencida">Vencida ({{ despesa.dias_atraso }} dias)</span>
+                                {% elif despesa.status_calculado == 'PAGA' %}
+                                    <span class="badge badge-paga">Paga</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'core:despesa_detail' despesa.id %}" class="btn btn-sm btn-info" title="Visualizar">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'core:despesa_edit' despesa.id %}" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-danger" title="Excluir" 
+                                            onclick="if(confirm('Tem certeza que deseja excluir esta despesa?')) { 
+                                                window.location.href='{% url 'core:despesa_delete' despesa.id %}'
+                                            }">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% if despesa.status_calculado != 'PAGA' %}
+                                    <button type="button" class="btn btn-sm btn-success" title="Registrar Pagamento" 
+                                            data-bs-toggle="modal" data-bs-target="#pagamentoModal" 
+                                            data-despesa-id="{{ despesa.id }}">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">Nenhuma despesa encontrada.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Pagamento -->
+<div class="modal fade" id="pagamentoModal" tabindex="-1" aria-labelledby="pagamentoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pagamentoModalLabel">Registrar Pagamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="pagamentoForm" method="post" action="">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="data_pagamento" class="form-label">Data de Pagamento</label>
+                        <input type="date" class="form-control" id="data_pagamento" name="data_pagamento" value="{% now 'Y-m-d' %}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Confirmar Pagamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Configurar o modal de pagamento
+        var pagamentoModal = document.getElementById('pagamentoModal');
+        if (pagamentoModal) {
+            pagamentoModal.addEventListener('show.bs.modal', function(event) {
+                var button = event.relatedTarget;
+                var despesaId = button.getAttribute('data-despesa-id');
+                var form = document.getElementById('pagamentoForm');
+                form.action = "{% url 'core:registrar_pagamento' 0 %}".replace('0', despesaId);
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,483 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load custom_filters %}
+
+{% block title %}Dashboard - TransportadorPRO{% endblock %}
+
+{% block custom_css %}
+<style>
+    .card-dashboard {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .card-dashboard:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+    }
+    .card-dashboard .card-body {
+        padding: 20px;
+        position: relative;
+    }
+    .card-dashboard .card-title {
+        font-size: 0.9rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        color: #fff;
+    }
+    .card-dashboard .card-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #fff;
+        margin-bottom: 0;
+    }
+    .card-dashboard .card-icon {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 2.5rem;
+        opacity: 0.3;
+        color: #fff;
+    }
+    
+    /* Cores dos cards */
+    .card-receitas {
+        background: linear-gradient(45deg, #4e73df, #6f8be8);
+    }
+    .card-despesas {
+        background: linear-gradient(45deg, #e74a3b, #f07a6f);
+    }
+    .card-resultado-positivo {
+        background: linear-gradient(45deg, #1cc88a, #36e3a9);
+    }
+    .card-resultado-negativo {
+        background: linear-gradient(45deg, #e74a3b, #f07a6f);
+    }
+    .card-fretes {
+        background: linear-gradient(45deg, #36b9cc, #5dcfdf);
+    }
+    .card-veiculos {
+        background: linear-gradient(45deg, #1cc88a, #36e3a9);
+    }
+    .card-contatos {
+        background: linear-gradient(45deg, #f6c23e, #fad475);
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 350px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #e3e6f0;
+    }
+    .stat-item:last-child {
+        border-bottom: none;
+    }
+    .stat-label {
+        color: #5a5c69;
+        font-weight: 600;
+    }
+    .stat-value {
+        font-weight: 700;
+    }
+    .stat-value.positive {
+        color: #1cc88a;
+    }
+    .stat-value.negative {
+        color: #e74a3b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+        <div>
+            <span class="text-muted me-3">{{ data_atual|date:"d/m/Y" }} - {{ nome_mes_atual }}/{{ data_atual|date:"Y" }}</span>
+            <a href="{% url 'core:relatorios' %}" class="btn btn-primary">
+                <i class="bi bi-file-earmark-text"></i> Ver Relatórios
+            </a>
+        </div>
+    </div>
+
+    <!-- Resumo Financeiro -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card card-dashboard card-receitas">
+                <div class="card-body">
+                    <h5 class="card-title">Receitas do Mês</h5>
+                    <p class="card-value">R$ {{ receitas_mes|floatformat:2|intcomma }}</p>
+                    <div class="card-icon">
+                        <i class="bi bi-cash"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-dashboard card-despesas">
+                <div class="card-body">
+                    <h5 class="card-title">Despesas do Mês</h5>
+                    <p class="card-value">R$ {{ despesas_mes|floatformat:2|intcomma }}</p>
+                    <div class="card-icon">
+                        <i class="bi bi-credit-card"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-dashboard {% if resultado_mes > 0 %}card-resultado-positivo{% else %}card-resultado-negativo{% endif %}">
+                <div class="card-body">
+                    <h5 class="card-title">Resultado do Mês</h5>
+                    <p class="card-value">R$ {{ resultado_mes|floatformat:2|intcomma }}</p>
+                    <div class="card-icon">
+                        <i class="bi bi-calculator"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-dashboard card-fretes">
+                <div class="card-body">
+                    <h5 class="card-title">Fretes do Mês</h5>
+                    <p class="card-value">{{ total_fretes_mes }}</p>
+                    <div class="card-icon">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Gráfico de Receitas e Despesas -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Receitas x Despesas</h6>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="periodoDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ periodo }} Meses
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="periodoDropdown">
+                            {% for p in periodos_disponiveis %}
+                            <li><a class="dropdown-item {% if p == periodo %}active{% endif %}" href="?periodo={{ p }}">{{ p }} Meses</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height:300px;">
+                        <canvas id="receitasDespesasChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top 5 Despesas por Categoria -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Top 5 Despesas por Categoria</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height:300px;">
+                        <canvas id="despesasCategoriasChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Resumo de Fretes -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Resumo de Fretes</h6>
+                </div>
+                <div class="card-body">
+                    <div class="stat-item">
+                        <span class="stat-label">Fretes do Mês:</span>
+                        <span class="stat-value">{{ total_fretes_mes }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Em Andamento:</span>
+                        <span class="stat-value">{{ fretes_em_andamento }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Concluídos no Mês:</span>
+                        <span class="stat-value">{{ fretes_concluidos_mes }}</span>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'core:fretes' %}" class="btn btn-primary btn-sm">Ver Todos os Fretes</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumo de Veículos -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Resumo de Veículos</h6>
+                </div>
+                <div class="card-body">
+                    <div class="stat-item">
+                        <span class="stat-label">Caminhões Ativos:</span>
+                        <span class="stat-value">{{ total_caminhoes_ativos }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Carretas Ativas:</span>
+                        <span class="stat-value">{{ total_carretas_ativas }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Conjuntos Ativos:</span>
+                        <span class="stat-value">{{ total_conjuntos_ativos }}</span>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'core:conjuntos' %}" class="btn btn-primary btn-sm">Ver Conjuntos</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumo de Contatos -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Resumo de Contatos</h6>
+                </div>
+                <div class="card-body">
+                    <div class="stat-item">
+                        <span class="stat-label">Clientes:</span>
+                        <span class="stat-value">{{ total_clientes }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Fornecedores:</span>
+                        <span class="stat-value">{{ total_fornecedores }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Motoristas:</span>
+                        <span class="stat-value">{{ total_motoristas }}</span>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'core:contatos' %}" class="btn btn-primary btn-sm">Ver Contatos</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumo Financeiro Detalhado -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Resumo Financeiro Detalhado</h6>
+                </div>
+                <div class="card-body">
+                    <div class="stat-item">
+                        <span class="stat-label">Receitas do Mês:</span>
+                        <span class="stat-value positive">R$ {{ receitas_mes|floatformat:2|intcomma }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Despesas do Mês:</span>
+                        <span class="stat-value negative">R$ {{ despesas_mes|floatformat:2|intcomma }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Despesas Pagas:</span>
+                        <span class="stat-value">R$ {{ despesas_pagas_mes|floatformat:2|intcomma }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Despesas a Pagar:</span>
+                        <span class="stat-value">R$ {{ despesas_a_pagar_mes|floatformat:2|intcomma }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Resultado do Mês:</span>
+                        <span class="stat-value {% if resultado_mes > 0 %}positive{% else %}negative{% endif %}">
+                            R$ {{ resultado_mes|floatformat:2|intcomma }}
+                        </span>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'core:dre' %}" class="btn btn-primary btn-sm">Ver DRE</a>
+                        <a href="{% url 'core:fluxo_caixa' %}" class="btn btn-success btn-sm ms-2">Ver Fluxo de Caixa</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Ações Rápidas</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <a href="{% url 'core:frete_novo' %}" class="btn btn-primary btn-block w-100">
+                                <i class="bi bi-plus-circle me-2"></i> Novo Frete
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="{% url 'core:despesa_create' %}" class="btn btn-danger btn-block w-100">
+                                <i class="bi bi-plus-circle me-2"></i> Nova Despesa
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="{% url 'core:abastecimento_novo' %}" class="btn btn-info btn-block w-100">
+                                <i class="bi bi-plus-circle me-2"></i> Novo Abastecimento
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="{% url 'core:contato_novo' %}" class="btn btn-success btn-block w-100">
+                                <i class="bi bi-plus-circle me-2"></i> Novo Contato
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Dados para o gráfico de Receitas e Despesas
+    const mesesLabels = {{ meses_labels|safe }};
+    const dadosReceitas = {{ dados_receitas|safe }};
+    const dadosDespesas = {{ dados_despesas|safe }};
+    
+    // Dados para o gráfico de Despesas por Categoria
+    const categoriasLabels = {{ categorias_labels|safe }};
+    const categoriasValores = {{ categorias_valores|safe }};
+    
+    // Gera cores aleatórias para o gráfico de categorias
+    function generateColors(count) {
+        const colors = [];
+        const backgroundColors = [];
+        
+        for (let i = 0; i < count; i++) {
+            // Gera uma cor HSL com saturação e luminosidade fixas para garantir cores visíveis
+            const hue = Math.floor(360 * i / count);
+            const color = `hsl(${hue}, 70%, 50%)`;
+            colors.push(color);
+            backgroundColors.push(`hsl(${hue}, 70%, 70%)`);
+        }
+        
+        return {
+            borderColors: colors,
+            backgroundColors: backgroundColors
+        };
+    }
+    
+    const colors = generateColors(categoriasLabels.length);
+    
+    // Configuração do gráfico de Receitas e Despesas
+    const ctxReceitas = document.getElementById('receitasDespesasChart');
+    if (ctxReceitas) {
+        const receitasDespesasChart = new Chart(ctxReceitas, {
+            type: 'bar',
+            data: {
+                labels: mesesLabels,
+                datasets: [
+                    {
+                        label: 'Receitas',
+                        data: dadosReceitas,
+                        backgroundColor: 'rgba(78, 115, 223, 0.2)',
+                        borderColor: 'rgba(78, 115, 223, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Despesas',
+                        data: dadosDespesas,
+                        backgroundColor: 'rgba(231, 74, 59, 0.2)',
+                        borderColor: 'rgba(231, 74, 59, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': R$ ' + context.raw.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Configuração do gráfico de Despesas por Categoria
+    const ctxDespesas = document.getElementById('despesasCategoriasChart');
+    if (ctxDespesas) {
+        const despesasCategoriasChart = new Chart(ctxDespesas, {
+            type: 'doughnut',
+            data: {
+                labels: categoriasLabels,
+                datasets: [{
+                    data: categoriasValores,
+                    backgroundColor: colors.backgroundColors,
+                    borderColor: colors.borderColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 15,
+                            padding: 10,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: R$ ${value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{% if caminhao %}Editar{% else %}Novo{% endif %} Caminhão{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>{% if caminhao %}Editar{% else %}Novo{% endif %} Caminhão</h2>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="placa" class="form-label">Placa*</label>
+                        <input type="text" class="form-control" id="placa" name="placa" value="{{ caminhao.placa|default:'' }}" required maxlength="8">
+                        <div class="invalid-feedback">Por favor, informe a placa do caminhão.</div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="marca" class="form-label">Marca*</label>
+                        <input type="text" class="form-control" id="marca" name="marca" value="{{ caminhao.marca|default:'' }}" required maxlength="50">
+                        <div class="invalid-feedback">Por favor, informe a marca do caminhão.</div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="modelo" class="form-label">Modelo*</label>
+                        <input type="text" class="form-control" id="modelo" name="modelo" value="{{ caminhao.modelo|default:'' }}" required maxlength="50">
+                        <div class="invalid-feedback">Por favor, informe o modelo do caminhão.</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="ano" class="form-label">Ano*</label>
+                        <input type="number" class="form-control" id="ano" name="ano" value="{{ caminhao.ano|default:'' }}" required min="1900">
+                        <div class="invalid-feedback">Por favor, informe o ano do caminhão.</div>
+                    </div>
+                    <div class="col-md-5 mb-3">
+                        <label for="chassi" class="form-label">Chassi*</label>
+                        <input type="text" class="form-control" id="chassi" name="chassi" value="{{ caminhao.chassi|default:'' }}" required maxlength="17">
+                        <div class="invalid-feedback">Por favor, informe o chassi do caminhão.</div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="renavam" class="form-label">Renavam*</label>
+                        <input type="text" class="form-control" id="renavam" name="renavam" value="{{ caminhao.renavam|default:'' }}" required maxlength="11">
+                        <div class="invalid-feedback">Por favor, informe o renavam do caminhão.</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="valor_compra" class="form-label">Valor de Compra (R$)*</label>
+                        <input type="text" class="form-control money" id="valor_compra" name="valor_compra" value="{{ caminhao.valor_compra|default:'' }}" required>
+                        <div class="invalid-feedback">Por favor, informe o valor de compra do caminhão.</div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="vida_util" class="form-label">Vida Útil (anos)*</label>
+                        <input type="number" class="form-control" id="vida_util" name="vida_util" value="{{ caminhao.vida_util|default:'' }}" required min="1">
+                        <div class="invalid-feedback">Por favor, informe a vida útil do caminhão.</div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="valor_residual" class="form-label">Valor Residual (R$)*</label>
+                        <input type="text" class="form-control money" id="valor_residual" name="valor_residual" value="{{ caminhao.valor_residual|default:'' }}" required>
+                        <div class="invalid-feedback">Por favor, informe o valor residual do caminhão.</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="capacidade_carga" class="form-label">Capacidade de Carga (kg)*</label>
+                        <input type="text" class="form-control decimal" id="capacidade_carga" name="capacidade_carga" value="{{ caminhao.capacidade_carga|default:'' }}" required>
+                        <div class="invalid-feedback">Por favor, informe a capacidade de carga do caminhão.</div>
+                    </div>
+
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <a href="{% url 'core:caminhoes' %}" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Máscara para placa (Formato Mercosul)
+    $('#placa').mask('AAA-0A00', {
+        translation: {
+            'A': { pattern: /[A-Za-z]/ },
+            '0': { pattern: /[0-9]/ }
+        }
+    });
+
+    // Máscara para chassi
+    $('#chassi').mask('AAAAAAAAAAAAAAAAA', {
+        translation: {
+            'A': { pattern: /[A-Za-z0-9]/ }
+        }
+    });
+
+    // Máscara para renavam
+    $('#renavam').mask('00000000000');
+
+    // Máscara para valores monetários
+    $('.money').mask('#.##0,00', {reverse: true});
+
+    // Máscara para valores decimais
+    $('.decimal').mask('#.##0,00', {reverse: true});
+});
+
+// Validação do formulário
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+</script>
+{% endblock %}

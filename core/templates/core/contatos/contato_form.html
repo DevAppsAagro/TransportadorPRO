@@ -1,0 +1,133 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{% if contato %}Editar{% else %}Novo{% endif %} Contato{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">{% if contato %}Editar{% else %}Novo{% endif %} Contato</h2>
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="nome_completo" class="form-label">Nome Completo*</label>
+                                <input type="text" class="form-control" id="nome_completo" name="nome_completo" value="{{ contato.nome_completo }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="tipo" class="form-label">Tipo*</label>
+                                <select class="form-select" id="tipo" name="tipo" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="CLIENTE" {% if contato.tipo == 'CLIENTE' %}selected{% endif %}>Cliente</option>
+                                    <option value="FORNECEDOR" {% if contato.tipo == 'FORNECEDOR' %}selected{% endif %}>Fornecedor</option>
+                                    <option value="MOTORISTA" {% if contato.tipo == 'MOTORISTA' %}selected{% endif %}>Motorista</option>
+                                    <option value="FUNCIONARIO" {% if contato.tipo == 'FUNCIONARIO' %}selected{% endif %}>Funcionário</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ contato.email }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="telefone" class="form-label">Telefone</label>
+                                <input type="tel" class="form-control" id="telefone" name="telefone" value="{{ contato.telefone }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="cpf_cnpj" class="form-label">CPF/CNPJ</label>
+                                <input type="text" class="form-control" id="cpf_cnpj" name="cpf_cnpj" value="{{ contato.cpf_cnpj }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="cep" class="form-label">CEP</label>
+                                <input type="text" class="form-control" id="cep" name="cep" value="{{ contato.cep }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label for="logradouro" class="form-label">Logradouro</label>
+                                <input type="text" class="form-control" id="logradouro" name="logradouro" value="{{ contato.logradouro }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="numero" class="form-label">Número</label>
+                                <input type="text" class="form-control" id="numero" name="numero" value="{{ contato.numero }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="complemento" class="form-label">Complemento</label>
+                                <input type="text" class="form-control" id="complemento" name="complemento" value="{{ contato.complemento }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="bairro" class="form-label">Bairro</label>
+                                <input type="text" class="form-control" id="bairro" name="bairro" value="{{ contato.bairro }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="cidade" class="form-label">Cidade</label>
+                                <input type="text" class="form-control" id="cidade" name="cidade" value="{{ contato.cidade }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="estado" class="form-label">Estado</label>
+                                <select class="form-select" id="estado" name="estado">
+                                    <option value="">Selecione...</option>
+                                    <option value="AC" {% if contato.estado == 'AC' %}selected{% endif %}>Acre</option>
+                                    <option value="AL" {% if contato.estado == 'AL' %}selected{% endif %}>Alagoas</option>
+                                    <option value="AP" {% if contato.estado == 'AP' %}selected{% endif %}>Amapá</option>
+                                    <option value="AM" {% if contato.estado == 'AM' %}selected{% endif %}>Amazonas</option>
+                                    <option value="BA" {% if contato.estado == 'BA' %}selected{% endif %}>Bahia</option>
+                                    <option value="CE" {% if contato.estado == 'CE' %}selected{% endif %}>Ceará</option>
+                                    <option value="DF" {% if contato.estado == 'DF' %}selected{% endif %}>Distrito Federal</option>
+                                    <option value="ES" {% if contato.estado == 'ES' %}selected{% endif %}>Espírito Santo</option>
+                                    <option value="GO" {% if contato.estado == 'GO' %}selected{% endif %}>Goiás</option>
+                                    <option value="MA" {% if contato.estado == 'MA' %}selected{% endif %}>Maranhão</option>
+                                    <option value="MT" {% if contato.estado == 'MT' %}selected{% endif %}>Mato Grosso</option>
+                                    <option value="MS" {% if contato.estado == 'MS' %}selected{% endif %}>Mato Grosso do Sul</option>
+                                    <option value="MG" {% if contato.estado == 'MG' %}selected{% endif %}>Minas Gerais</option>
+                                    <option value="PA" {% if contato.estado == 'PA' %}selected{% endif %}>Pará</option>
+                                    <option value="PB" {% if contato.estado == 'PB' %}selected{% endif %}>Paraíba</option>
+                                    <option value="PR" {% if contato.estado == 'PR' %}selected{% endif %}>Paraná</option>
+                                    <option value="PE" {% if contato.estado == 'PE' %}selected{% endif %}>Pernambuco</option>
+                                    <option value="PI" {% if contato.estado == 'PI' %}selected{% endif %}>Piauí</option>
+                                    <option value="RJ" {% if contato.estado == 'RJ' %}selected{% endif %}>Rio de Janeiro</option>
+                                    <option value="RN" {% if contato.estado == 'RN' %}selected{% endif %}>Rio Grande do Norte</option>
+                                    <option value="RS" {% if contato.estado == 'RS' %}selected{% endif %}>Rio Grande do Sul</option>
+                                    <option value="RO" {% if contato.estado == 'RO' %}selected{% endif %}>Rondônia</option>
+                                    <option value="RR" {% if contato.estado == 'RR' %}selected{% endif %}>Roraima</option>
+                                    <option value="SC" {% if contato.estado == 'SC' %}selected{% endif %}>Santa Catarina</option>
+                                    <option value="SP" {% if contato.estado == 'SP' %}selected{% endif %}>São Paulo</option>
+                                    <option value="SE" {% if contato.estado == 'SE' %}selected{% endif %}>Sergipe</option>
+                                    <option value="TO" {% if contato.estado == 'TO' %}selected{% endif %}>Tocantins</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <a href="{% url 'core:contatos' %}" class="btn btn-secondary">Cancelar</a>
+                                <button type="submit" class="btn btn-primary">Salvar</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

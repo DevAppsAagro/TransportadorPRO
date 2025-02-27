@@ -1,0 +1,178 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .company-logo {
+        max-height: 150px;
+        max-width: 300px;
+        margin-bottom: 20px;
+    }
+    .detail-label {
+        font-weight: bold;
+        color: #6c757d;
+    }
+    .detail-section {
+        margin-bottom: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Detalhes da Empresa</h2>
+        <div>
+            <a href="{% url 'core:empresa_edit' empresa.id %}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Editar
+            </a>
+            <a href="{% url 'core:empresas_list' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 text-center">
+                    {% if empresa.logo %}
+                    <img src="{{ empresa.logo }}" alt="Logo {{ empresa.nome_fantasia }}" class="company-logo">
+                    {% else %}
+                    <div class="company-logo d-flex justify-content-center align-items-center bg-light">
+                        <i class="bi bi-building" style="font-size: 5rem;"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-9">
+                    <h3>{{ empresa.razao_social }}</h3>
+                    {% if empresa.nome_fantasia %}
+                    <h5 class="text-muted">{{ empresa.nome_fantasia }}</h5>
+                    {% endif %}
+                    <hr>
+                    
+                    <div class="detail-section">
+                        <h4>Informações Básicas</h4>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <span class="detail-label">CNPJ:</span>
+                                <div>{{ empresa.cnpj }}</div>
+                            </div>
+                            {% if empresa.inscricao_estadual %}
+                            <div class="col-md-4 mb-2">
+                                <span class="detail-label">Inscrição Estadual:</span>
+                                <div>{{ empresa.inscricao_estadual }}</div>
+                            </div>
+                            {% endif %}
+                            {% if empresa.inscricao_municipal %}
+                            <div class="col-md-4 mb-2">
+                                <span class="detail-label">Inscrição Municipal:</span>
+                                <div>{{ empresa.inscricao_municipal }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Endereço</h4>
+                        <div class="row">
+                            <div class="col-md-8 mb-2">
+                                <span class="detail-label">Endereço:</span>
+                                <div>{{ empresa.logradouro }}, {{ empresa.numero }}{% if empresa.complemento %}, {{ empresa.complemento }}{% endif %}</div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <span class="detail-label">CEP:</span>
+                                <div>{{ empresa.cep }}</div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <span class="detail-label">Bairro:</span>
+                                <div>{{ empresa.bairro }}</div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <span class="detail-label">Cidade:</span>
+                                <div>{{ empresa.cidade }}</div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <span class="detail-label">Estado:</span>
+                                <div>{{ empresa.estado }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Contato</h4>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <span class="detail-label">Telefone:</span>
+                                <div>{{ empresa.telefone }}</div>
+                            </div>
+                            {% if empresa.celular %}
+                            <div class="col-md-4 mb-2">
+                                <span class="detail-label">Celular:</span>
+                                <div>{{ empresa.celular }}</div>
+                            </div>
+                            {% endif %}
+                            <div class="col-md-4 mb-2">
+                                <span class="detail-label">E-mail:</span>
+                                <div>{{ empresa.email }}</div>
+                            </div>
+                        </div>
+                        {% if empresa.site %}
+                        <div class="row">
+                            <div class="col-md-12 mb-2">
+                                <span class="detail-label">Site:</span>
+                                <div><a href="{{ empresa.site }}" target="_blank">{{ empresa.site }}</a></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if empresa.rntrc or empresa.antt or empresa.observacoes %}
+                    <div class="detail-section">
+                        <h4>Informações Adicionais</h4>
+                        <div class="row">
+                            {% if empresa.rntrc %}
+                            <div class="col-md-6 mb-2">
+                                <span class="detail-label">RNTRC:</span>
+                                <div>{{ empresa.rntrc }}</div>
+                            </div>
+                            {% endif %}
+                            {% if empresa.antt %}
+                            <div class="col-md-6 mb-2">
+                                <span class="detail-label">ANTT:</span>
+                                <div>{{ empresa.antt }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% if empresa.observacoes %}
+                        <div class="row">
+                            <div class="col-md-12 mb-2">
+                                <span class="detail-label">Observações:</span>
+                                <div>{{ empresa.observacoes|linebreaks }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="detail-section">
+                        <h4>Informações do Sistema</h4>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <span class="detail-label">Data de Criação:</span>
+                                <div>{{ empresa.data_criacao|date:"d/m/Y H:i" }}</div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <span class="detail-label">Última Atualização:</span>
+                                <div>{{ empresa.data_atualizacao|date:"d/m/Y H:i" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

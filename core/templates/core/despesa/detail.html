@@ -1,0 +1,193 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .badge-pendente {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    .badge-vence-hoje {
+        background-color: #17a2b8;
+        color: white;
+    }
+    .badge-vencida {
+        background-color: #dc3545;
+        color: white;
+    }
+    .badge-paga {
+        background-color: #28a745;
+        color: white;
+    }
+    .detail-label {
+        font-weight: bold;
+        color: #6c757d;
+    }
+    .detail-value {
+        font-weight: normal;
+    }
+    .detail-section {
+        margin-bottom: 2rem;
+    }
+    .detail-section h5 {
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Detalhes da Despesa</h2>
+        <div>
+            <a href="{% url 'core:despesa_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+            <a href="{% url 'core:despesa_edit' despesa.id %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            {% if despesa.status != 'PAGA' %}
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#pagamentoModal">
+                <i class="fas fa-check"></i> Registrar Pagamento
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4>Despesa #{{ despesa.id }}</h4>
+            <div>
+                {% if despesa.status == 'PENDENTE' %}
+                    <span class="badge badge-pendente">Pendente</span>
+                {% elif despesa.status == 'VENCE_HOJE' %}
+                    <span class="badge badge-vence-hoje">Vence Hoje</span>
+                {% elif despesa.status == 'VENCIDA' %}
+                    <span class="badge badge-vencida">Vencida ({{ despesa.dias_atraso }} dias)</span>
+                {% elif despesa.status == 'PAGA' %}
+                    <span class="badge badge-paga">Paga</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Dados Básicos -->
+                <div class="col-md-6">
+                    <div class="detail-section">
+                        <h5>Dados Básicos</h5>
+                        <div class="row mb-2">
+                            <div class="col-sm-4 detail-label">Data:</div>
+                            <div class="col-sm-8 detail-value">{{ despesa.data|date:"d/m/Y" }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-sm-4 detail-label">Data de Vencimento:</div>
+                            <div class="col-sm-8 detail-value">{{ despesa.data_vencimento|date:"d/m/Y" }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-sm-4 detail-label">Data de Pagamento:</div>
+                            <div class="col-sm-8 detail-value">
+                                {% if despesa.data_pagamento %}
+                                    {{ despesa.data_pagamento|date:"d/m/Y" }}
+                                {% else %}
+                                    <span class="text-muted">Não pago</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-sm-4 detail-label">Valor:</div>
+                            <div class="col-sm-8 detail-value">R$ {{ despesa.valor|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Categorização -->
+                <div class="col-md-6">
+                    <div class="detail-section">
+                        <h5>Categorização</h5>
+                        <div class="row mb-2">
+                            <div class="col-sm-4 detail-label">Categoria:</div>
+                            <div class="col-sm-8 detail-value">{{ despesa.categoria.nome }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-sm-4 detail-label">Subcategoria:</div>
+                            <div class="col-sm-8 detail-value">{{ despesa.subcategoria.nome }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-sm-4 detail-label">Alocação:</div>
+                            <div class="col-sm-8 detail-value">{{ despesa.categoria.get_alocacao_display }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-sm-4 detail-label">Contato:</div>
+                            <div class="col-sm-8 detail-value">
+                                {% if despesa.contato %}
+                                    {{ despesa.contato.nome_completo }} ({{ despesa.contato.get_tipo_display }})
+                                {% else %}
+                                    <span class="text-muted">Não informado</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Destino -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="detail-section">
+                        <h5>Destino</h5>
+                        <div class="row mb-2">
+                            <div class="col-sm-2 detail-label">Destino:</div>
+                            <div class="col-sm-10 detail-value">{{ despesa.destino_display }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Observações -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="detail-section">
+                        <h5>Observações</h5>
+                        <div class="row mb-2">
+                            <div class="col-12">
+                                {% if despesa.observacao %}
+                                    {{ despesa.observacao|linebreaks }}
+                                {% else %}
+                                    <span class="text-muted">Nenhuma observação</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Pagamento -->
+<div class="modal fade" id="pagamentoModal" tabindex="-1" aria-labelledby="pagamentoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pagamentoModalLabel">Registrar Pagamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'core:registrar_pagamento' despesa.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="data_pagamento" class="form-label">Data de Pagamento</label>
+                        <input type="date" class="form-control" id="data_pagamento" name="data_pagamento" value="{% now 'Y-m-d' %}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Confirmar Pagamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

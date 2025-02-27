@@ -1,0 +1,16 @@
+.bg-light-blue {
+    background-color: #e3f2fd !important;
+}
+
+.card.bg-light-blue {
+    border: 1px solid #90caf9;
+}
+
+.card.bg-light-blue .card-title {
+    color: #1976d2;
+}
+
+.card.bg-light-blue .h3 {
+    color: #0d47a1;
+    font-weight: bold;
+}

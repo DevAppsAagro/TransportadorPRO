@@ -1,0 +1,421 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load custom_filters %}
+
+{% block title %}Demonstrativo de Resultado do Exercício (DRE){% endblock %}
+
+{% block custom_css %}
+<style>
+    .filter-card {
+        background-color: #f8f9fc;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    
+    /* Cards de resumo */
+    .info-card {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+    }
+    .info-card .card-body {
+        padding: 20px;
+        position: relative;
+    }
+    .info-card .card-title {
+        font-size: 0.9rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        color: #fff;
+    }
+    .info-card .card-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #fff;
+        margin-bottom: 0;
+    }
+    .info-card .card-icon {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 2.5rem;
+        opacity: 0.3;
+        color: #fff;
+    }
+    
+    /* Cores dos cards */
+    .card-receitas {
+        background: linear-gradient(45deg, #4e73df, #6f8be8);
+    }
+    .card-despesas {
+        background: linear-gradient(45deg, #e74a3b, #f07a6f);
+    }
+    .card-resultado-positivo {
+        background: linear-gradient(45deg, #1cc88a, #36e3a9);
+    }
+    .card-resultado-negativo {
+        background: linear-gradient(45deg, #e74a3b, #f07a6f);
+    }
+    .card-margem-positiva {
+        background: linear-gradient(45deg, #f6c23e, #fad475);
+    }
+    .card-margem-negativa {
+        background: linear-gradient(45deg, #e74a3b, #f07a6f);
+    }
+    
+    /* Tabelas */
+    .table-dre th, .table-dre td {
+        padding: 12px 15px;
+    }
+    .table-dre .text-left {
+        text-align: left;
+    }
+    .table-dre .text-right {
+        text-align: right;
+    }
+    .table-dre .positive {
+        color: #1cc88a;
+        font-weight: bold;
+    }
+    .table-dre .negative {
+        color: #e74a3b;
+        font-weight: bold;
+    }
+    .table-dre .total-row {
+        background-color: #f8f9fc;
+        font-weight: bold;
+    }
+    .table-dre .subtotal-row {
+        background-color: #f1f1f1;
+        font-weight: bold;
+    }
+    
+    /* Gráfico */
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin-bottom: 30px;
+    }
+    
+    /* Regime toggle */
+    .regime-toggle {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+    .regime-toggle .btn-group {
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .regime-toggle .btn {
+        padding: 8px 20px;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Demonstrativo de Resultado do Exercício (DRE)</h1>
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="bi bi-printer"></i> Imprimir Relatório
+        </button>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-card">
+        <form method="get" action="{% url 'core:dre' %}" class="row">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="ano">Ano:</label>
+                    <select class="form-control" id="ano" name="ano">
+                        {% for ano in anos %}
+                            <option value="{{ ano }}" {% if ano == ano_selecionado %}selected{% endif %}>{{ ano }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="mes">Mês:</label>
+                    <select class="form-control" id="mes" name="mes">
+                        {% for mes in meses %}
+                            <option value="{{ mes.valor }}" {% if mes.valor == mes_selecionado %}selected{% endif %}>{{ mes.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="regime">Regime:</label>
+                    <select class="form-control" id="regime" name="regime">
+                        <option value="competencia" {% if regime == 'competencia' %}selected{% endif %}>Competência</option>
+                        <option value="caixa" {% if regime == 'caixa' %}selected{% endif %}>Caixa</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-funnel"></i> Filtrar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Resumo -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card info-card card-receitas">
+                <div class="card-body">
+                    <h5 class="card-title">Receita Total</h5>
+                    <p class="card-value">R$ {{ receitas.total|floatformat:2|intcomma }}</p>
+                    <div class="card-icon">
+                        <i class="bi bi-cash"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card info-card card-despesas">
+                <div class="card-body">
+                    <h5 class="card-title">Despesas Totais</h5>
+                    <p class="card-value">R$ {{ despesas.total|floatformat:2|intcomma }}</p>
+                    <div class="card-icon">
+                        <i class="bi bi-credit-card"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card info-card {% if resultados.resultado_liquido > 0 %}card-resultado-positivo{% else %}card-resultado-negativo{% endif %}">
+                <div class="card-body">
+                    <h5 class="card-title">Resultado Líquido</h5>
+                    <p class="card-value">R$ {{ resultados.resultado_liquido|floatformat:2|intcomma }}</p>
+                    <div class="card-icon">
+                        <i class="bi bi-calculator"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card info-card {% if resultados.margem > 0 %}card-margem-positiva{% else %}card-margem-negativa{% endif %}">
+                <div class="card-body">
+                    <h5 class="card-title">Margem de Lucro</h5>
+                    <p class="card-value">{{ resultados.margem|floatformat:2 }}%</p>
+                    <div class="card-icon">
+                        <i class="bi bi-percent"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Gráfico de Despesas por Categoria -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Despesas por Categoria</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="despesasChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de Receitas -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Receitas</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-dre">
+                            <thead>
+                                <tr>
+                                    <th class="text-left">Descrição</th>
+                                    <th class="text-right">Valor</th>
+                                    <th class="text-right">%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-left">Fretes</td>
+                                    <td class="text-right">R$ {{ receitas.fretes|floatformat:2|intcomma }}</td>
+                                    <td class="text-right">100%</td>
+                                </tr>
+                                <tr class="total-row">
+                                    <td class="text-left">Total de Receitas</td>
+                                    <td class="text-right">R$ {{ receitas.total|floatformat:2|intcomma }}</td>
+                                    <td class="text-right">100%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Despesas -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Despesas</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-dre">
+                    <thead>
+                        <tr>
+                            <th class="text-left">Categoria</th>
+                            <th class="text-right">Valor</th>
+                            <th class="text-right">% da Receita</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for categoria, valor in despesas.items|dictsort:1|dictsortreversed:1 %}
+                            {% if categoria != 'total' %}
+                                <tr>
+                                    <td class="text-left">{{ categoria }}</td>
+                                    <td class="text-right">R$ {{ valor|floatformat:2|intcomma }}</td>
+                                    <td class="text-right">{{ valor|percentage:receitas.total|floatformat:2 }}%</td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                        <tr class="total-row">
+                            <td class="text-left">Total de Despesas</td>
+                            <td class="text-right">R$ {{ despesas.total|floatformat:2|intcomma }}</td>
+                            <td class="text-right">{{ despesas.total|percentage:receitas.total|floatformat:2 }}%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Resultados -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Resultados</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-dre">
+                    <thead>
+                        <tr>
+                            <th class="text-left">Descrição</th>
+                            <th class="text-right">Valor</th>
+                            <th class="text-right">% da Receita</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-left">Receita Líquida</td>
+                            <td class="text-right">R$ {{ resultados.receita_liquida|floatformat:2|intcomma }}</td>
+                            <td class="text-right">100%</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left">(-) Despesas Totais</td>
+                            <td class="text-right">R$ {{ resultados.despesas_totais|floatformat:2|intcomma }}</td>
+                            <td class="text-right">{{ resultados.despesas_totais|percentage:resultados.receita_liquida|floatformat:2 }}%</td>
+                        </tr>
+                        <tr class="{% if resultados.resultado_liquido > 0 %}positive{% else %}negative{% endif %} total-row">
+                            <td class="text-left">Resultado Líquido</td>
+                            <td class="text-right">R$ {{ resultados.resultado_liquido|floatformat:2|intcomma }}</td>
+                            <td class="text-right">{{ resultados.margem|floatformat:2 }}%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Dados para o gráfico
+    const labels = {{ chart_labels|safe }};
+    const values = {{ chart_values|safe }};
+    
+    // Gera cores aleatórias para o gráfico
+    function generateColors(count) {
+        const colors = [];
+        const backgroundColors = [];
+        
+        for (let i = 0; i < count; i++) {
+            // Gera uma cor HSL com saturação e luminosidade fixas para garantir cores visíveis
+            const hue = Math.floor(360 * i / count);
+            const color = `hsl(${hue}, 70%, 50%)`;
+            colors.push(color);
+            backgroundColors.push(`hsl(${hue}, 70%, 70%)`);
+        }
+        
+        return {
+            borderColors: colors,
+            backgroundColors: backgroundColors
+        };
+    }
+    
+    const colors = generateColors(labels.length);
+    
+    // Configuração do gráfico de despesas
+    const ctx = document.getElementById('despesasChart');
+    
+    if (ctx) {
+        const despesasChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: colors.backgroundColors,
+                    borderColor: colors.borderColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 15,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: R$ ${value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends 'base/base.html' %}
+
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Abastecimentos</h2>
+                <a href="{% url 'core:abastecimento_novo' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Novo Abastecimento
+                </a>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total de Abastecimentos</h5>
+                    <h3 class="card-text">R$ {{ total_valor }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="tabela-abastecimentos" class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Data Pagamento</th>
+                    <th>Caminhão</th>
+                    <th>Motorista</th>
+                    <th>Posto</th>
+                    <th>Litros</th>
+                    <th>Valor/L</th>
+                    <th>Total</th>
+                    <th>Situação</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for abastecimento in abastecimentos %}
+                <tr>
+                    <td data-order="{{ abastecimento.data|date:'Y-m-d' }}">{{ abastecimento.data|date:"d/m/Y" }}</td>
+                    <td data-order="{{ abastecimento.data_pagamento|date:'Y-m-d' }}">{{ abastecimento.data_pagamento|date:"d/m/Y"|default:"-" }}</td>
+                    <td>{{ abastecimento.caminhao.placa }}</td>
+                    <td>{{ abastecimento.motorista.nome_completo }}</td>
+                    <td>{{ abastecimento.posto.nome_completo }}</td>
+                    <td data-order="{{ abastecimento.litros }}">{{ abastecimento.litros }}</td>
+                    <td data-order="{{ abastecimento.valor_litro }}">R$ {{ abastecimento.valor_litro }}</td>
+                    <td data-order="{{ abastecimento.total_valor }}">R$ {{ abastecimento.total_valor }}</td>
+                    <td>
+                        <span class="badge {% if abastecimento.situacao == 'EM_PERCURSO' %}bg-warning
+                                     {% elif abastecimento.situacao == 'FINAL_FRETE' %}bg-success
+                                     {% endif %}">
+                            {{ abastecimento.get_situacao_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'core:abastecimento_editar' abastecimento.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'core:abastecimento_excluir' abastecimento.id %}" class="btn btn-sm btn-danger"
+                           onclick="return confirm('Tem certeza que deseja excluir este abastecimento?');">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" class="text-center">Nenhum abastecimento cadastrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#tabela-abastecimentos').DataTable({
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+            },
+            order: [[0, 'desc']],
+            pageLength: 25,
+            dom: '<"d-flex justify-content-between align-items-center mb-3"<"d-flex align-items-center"l><"d-flex"f>>rtip'
+        });
+    });
+</script>
+{% endblock %}

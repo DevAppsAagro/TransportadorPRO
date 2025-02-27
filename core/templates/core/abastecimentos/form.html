@@ -1,0 +1,126 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if abastecimento %}Editar{% else %}Novo{% endif %} Abastecimento</h2>
+    
+    <form method="post" action="{% if abastecimento %}{% url 'core:abastecimento_editar' abastecimento.id %}{% else %}{% url 'core:abastecimento_novo' %}{% endif %}">
+        {% csrf_token %}
+        
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="data" class="form-label">Data do Abastecimento</label>
+                <input type="date" class="form-control" id="data" name="data" value="{{ abastecimento.data|date:'Y-m-d' }}" required>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <label for="data_vencimento" class="form-label">Data de Vencimento</label>
+                <input type="date" class="form-control" id="data_vencimento" name="data_vencimento" value="{{ abastecimento.data_vencimento|date:'Y-m-d' }}" required>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label for="data_pagamento" class="form-label">Data de Pagamento</label>
+                <input type="date" class="form-control" id="data_pagamento" name="data_pagamento" value="{{ abastecimento.data_pagamento|date:'Y-m-d' }}">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="caminhao" class="form-label">Caminhão</label>
+                <select class="form-select" id="caminhao" name="caminhao" required>
+                    <option value="">Selecione um caminhão</option>
+                    {% for caminhao in caminhoes %}
+                        <option value="{{ caminhao.id }}" {% if abastecimento.caminhao.id == caminhao.id %}selected{% endif %}>
+                            {{ caminhao.placa }} - {{ caminhao.modelo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <label for="motorista" class="form-label">Motorista</label>
+                <select class="form-select" id="motorista" name="motorista" required>
+                    <option value="">Selecione um motorista</option>
+                    {% for motorista in motoristas %}
+                        <option value="{{ motorista.id }}" {% if abastecimento.motorista.id == motorista.id %}selected{% endif %}>
+                            {{ motorista.nome_completo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="posto" class="form-label">Posto</label>
+                <select class="form-select" id="posto" name="posto" required>
+                    <option value="">Selecione um posto</option>
+                    {% for posto in postos %}
+                        <option value="{{ posto.id }}" {% if abastecimento.posto.id == posto.id %}selected{% endif %}>
+                            {{ posto.nome_completo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <label for="frete" class="form-label">Frete em Andamento (Opcional)</label>
+                <select class="form-select" id="frete" name="frete">
+                    <option value="">Selecione um frete</option>
+                    {% for frete in fretes %}
+                        <option value="{{ frete.id }}" {% if abastecimento.frete.id == frete.id %}selected{% endif %}>
+                            {{ frete.origem }} - {{ frete.destino }} ({{ frete.data_inicio|date:'d/m/Y' }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="situacao" class="form-label">Situação</label>
+                <select class="form-select" id="situacao" name="situacao" required>
+                    <option value="">Selecione a situação</option>
+                    <option value="EM_PERCURSO" {% if abastecimento.situacao == 'EM_PERCURSO' %}selected{% endif %}>Em Percurso</option>
+                    <option value="FINAL_FRETE" {% if abastecimento.situacao == 'FINAL_FRETE' %}selected{% endif %}>Final de Frete</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label for="litros" class="form-label">Litros</label>
+                <input type="number" step="0.01" class="form-control" id="litros" name="litros" value="{{ abastecimento.litros }}" required onchange="calcularTotal()">
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <label for="valor_litro" class="form-label">Valor por Litro</label>
+                <input type="number" step="0.01" class="form-control" id="valor_litro" name="valor_litro" value="{{ abastecimento.valor_litro }}" required onchange="calcularTotal()">
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <label for="total_valor" class="form-label">Valor Total</label>
+                <input type="number" step="0.01" class="form-control" id="total_valor" name="total_valor" value="{{ abastecimento.total_valor }}" readonly>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label for="km_abastecimento" class="form-label">Quilometragem</label>
+                <input type="number" class="form-control" id="km_abastecimento" name="km_abastecimento" value="{{ abastecimento.km_abastecimento }}" required>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a href="{% url 'core:abastecimentos' %}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+function calcularTotal() {
+    const litros = parseFloat(document.getElementById('litros').value) || 0;
+    const valorLitro = parseFloat(document.getElementById('valor_litro').value) || 0;
+    const total = litros * valorLitro;
+    document.getElementById('total_valor').value = total.toFixed(2);
+}
+</script>
+{% endblock %}

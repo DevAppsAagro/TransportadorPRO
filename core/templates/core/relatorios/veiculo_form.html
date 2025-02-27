@@ -1,0 +1,76 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Relatório de Veículo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Relatório de Veículo</h6>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'core:relatorio_veiculo' %}">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="caminhao">Caminhão:</label>
+                            <select class="form-control" id="caminhao" name="caminhao" required>
+                                <option value="">Selecione um caminhão</option>
+                                {% for caminhao in caminhoes %}
+                                    <option value="{{ caminhao.id }}">{{ caminhao.placa }} - {{ caminhao.marca }} {{ caminhao.modelo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="data_inicio">Data Inicial:</label>
+                            <input type="date" class="form-control" id="data_inicio" name="data_inicio" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="data_fim">Data Final:</label>
+                            <input type="date" class="form-control" id="data_fim" name="data_fim" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-12 text-center">
+                        <button type="submit" class="btn btn-primary">Gerar Relatório</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+    $(document).ready(function() {
+        // Inicializa as datas com o mês atual
+        var today = new Date();
+        var firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        var lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        
+        // Formata as datas para o formato YYYY-MM-DD
+        var formatDate = function(date) {
+            var d = new Date(date),
+                month = '' + (d.getMonth() + 1),
+                day = '' + d.getDate(),
+                year = d.getFullYear();
+            
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+            
+            return [year, month, day].join('-');
+        };
+        
+        $('#data_inicio').val(formatDate(firstDay));
+        $('#data_fim').val(formatDate(lastDay));
+    });
+</script>
+{% endblock %}

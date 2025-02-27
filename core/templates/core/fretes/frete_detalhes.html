@@ -1,0 +1,360 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Detalhes do Frete{% endblock %}
+
+{% block custom_css %}
+<style>
+    .detail-card {
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    .detail-card .card-header {
+        background-color: #4e73df;
+        color: white;
+        font-weight: bold;
+        padding: 15px 20px;
+    }
+    .detail-card .card-body {
+        padding: 20px;
+    }
+    .status-badge {
+        font-size: 14px;
+        padding: 5px 10px;
+        border-radius: 30px;
+    }
+    .status-concluido {
+        background-color: #1cc88a;
+        color: white;
+    }
+    .status-andamento {
+        background-color: #f6c23e;
+        color: white;
+    }
+    .info-box {
+        background-color: #f8f9fc;
+        border-left: 4px solid #4e73df;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+    }
+    .info-box h6 {
+        margin-bottom: 10px;
+        color: #4e73df;
+        font-weight: bold;
+    }
+    .info-label {
+        font-weight: bold;
+        color: #5a5c69;
+    }
+    .value-card {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        padding: 15px;
+        text-align: center;
+        height: 100%;
+        border-left: 4px solid #4e73df;
+    }
+    .value-card .value-title {
+        font-size: 14px;
+        font-weight: bold;
+        color: #5a5c69;
+        margin-bottom: 10px;
+    }
+    .value-card .value-amount {
+        font-size: 24px;
+        font-weight: bold;
+        color: #4e73df;
+    }
+    .value-card.primary {
+        border-left-color: #4e73df;
+    }
+    .value-card.primary .value-amount {
+        color: #4e73df;
+    }
+    .value-card.success {
+        border-left-color: #1cc88a;
+    }
+    .value-card.success .value-amount {
+        color: #1cc88a;
+    }
+    .value-card.warning {
+        border-left-color: #f6c23e;
+    }
+    .value-card.warning .value-amount {
+        color: #f6c23e;
+    }
+    .value-card.info {
+        border-left-color: #36b9cc;
+    }
+    .value-card.info .value-amount {
+        color: #36b9cc;
+    }
+    .action-buttons {
+        margin-bottom: 20px;
+    }
+    .action-buttons .btn {
+        margin-right: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            Detalhes do Frete #{{ frete.id }}
+            {% if frete.data_chegada %}
+                <span class="status-badge status-concluido">Concluído</span>
+            {% else %}
+                <span class="status-badge status-andamento">Em Andamento</span>
+            {% endif %}
+        </h1>
+        <div class="action-buttons">
+            <a href="{% url 'core:frete_editar' frete.pk %}" class="btn btn-primary">
+                <i class="fas fa-edit fa-sm text-white-50 mr-1"></i> Editar
+            </a>
+            <a href="{% url 'core:relatorio_frete_id' frete.pk %}" class="btn btn-info">
+                <i class="fas fa-chart-bar fa-sm text-white-50 mr-1"></i> Relatório
+            </a>
+            <a href="{% url 'core:fretes' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left fa-sm text-white-50 mr-1"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Resumo Financeiro -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="value-card primary">
+                <div class="value-title">VALOR TOTAL DO FRETE</div>
+                <div class="value-amount">R$ {{ frete.valor_total|floatformat:2|intcomma }}</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="value-card success">
+                <div class="value-title">COMISSÃO DO MOTORISTA</div>
+                <div class="value-amount">R$ {{ frete.valor_comissao_motorista|floatformat:2|intcomma }}</div>
+                <div class="text-muted">({{ frete.comissao_motorista }}%)</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="value-card info">
+                <div class="value-title">QUILOMETRAGEM TOTAL</div>
+                <div class="value-amount">{{ frete.km_total|default:0|intcomma }} km</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="value-card warning">
+                <div class="value-title">VALOR POR KM</div>
+                <div class="value-amount">
+                    {% if frete.km_total and frete.km_total > 0 %}
+                        R$ {{ frete.valor_por_km|floatformat:2|intcomma }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informações do Transporte -->
+        <div class="col-lg-6">
+            <div class="detail-card">
+                <div class="card-header">
+                    <i class="fas fa-truck mr-1"></i> Informações do Transporte
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4 info-label">Caminhão:</div>
+                        <div class="col-md-8">{{ frete.caminhao }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 info-label">Motorista:</div>
+                        <div class="col-md-8">{{ frete.motorista }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 info-label">Cliente:</div>
+                        <div class="col-md-8">{{ frete.cliente }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 info-label">Tipo de Carga:</div>
+                        <div class="col-md-8">{{ frete.carga }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 info-label">Peso da Carga:</div>
+                        <div class="col-md-8">{{ frete.peso_carga|intcomma }} kg</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 info-label">Nota Fiscal:</div>
+                        <div class="col-md-8">{{ frete.nota_fiscal|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 info-label">Ticket:</div>
+                        <div class="col-md-8">{{ frete.ticket|default:"-" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informações Financeiras -->
+        <div class="col-lg-6">
+            <div class="detail-card">
+                <div class="card-header">
+                    <i class="fas fa-dollar-sign mr-1"></i> Informações Financeiras
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4 info-label">Valor Unitário:</div>
+                        <div class="col-md-8">R$ {{ frete.valor_unitario|floatformat:2|intcomma }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 info-label">Comissão (%):</div>
+                        <div class="col-md-8">{{ frete.comissao_motorista }}%</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 info-label">Valor Comissão:</div>
+                        <div class="col-md-8">R$ {{ frete.valor_comissao_motorista|floatformat:2|intcomma }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 info-label">Conta Bancária:</div>
+                        <div class="col-md-8">{{ frete.conta_bancaria|default:"-" }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 info-label">Data Recebimento:</div>
+                        <div class="col-md-8">{{ frete.data_recebimento|date:"d/m/Y"|default:"Não recebido" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 info-label">Status Pagamento:</div>
+                        <div class="col-md-8">
+                            {% if frete.data_recebimento %}
+                                <span class="badge bg-success">Recebido</span>
+                            {% else %}
+                                <span class="badge bg-warning">Pendente</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detalhes da Viagem -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="detail-card">
+                <div class="card-header">
+                    <i class="fas fa-route mr-1"></i> Detalhes da Viagem
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="info-box">
+                                <h6><i class="fas fa-map-marker-alt mr-1"></i> Origem</h6>
+                                <p class="mb-0">{{ frete.origem }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-box">
+                                <h6><i class="fas fa-flag-checkered mr-1"></i> Destino</h6>
+                                <p class="mb-0">{{ frete.destino }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="info-box">
+                                <h6><i class="fas fa-calendar-alt mr-1"></i> Data Saída</h6>
+                                <p class="mb-0">{{ frete.data_saida|date:"d/m/Y" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="info-box">
+                                <h6><i class="fas fa-calendar-check mr-1"></i> Data Chegada</h6>
+                                <p class="mb-0">{{ frete.data_chegada|date:"d/m/Y"|default:"Em andamento" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="info-box">
+                                <h6><i class="fas fa-tachometer-alt mr-1"></i> KM Saída</h6>
+                                <p class="mb-0">{{ frete.km_saida|intcomma }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="info-box">
+                                <h6><i class="fas fa-tachometer-alt mr-1"></i> KM Chegada</h6>
+                                <p class="mb-0">{{ frete.km_chegada|default:"-"|intcomma }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Observações -->
+    {% if frete.observacoes %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="detail-card">
+                <div class="card-header">
+                    <i class="fas fa-sticky-note mr-1"></i> Observações
+                </div>
+                <div class="card-body">
+                    {{ frete.observacoes|linebreaks }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Despesas Relacionadas -->
+    {% if despesas %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="detail-card">
+                <div class="card-header">
+                    <i class="fas fa-receipt mr-1"></i> Despesas Relacionadas
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Categoria</th>
+                                    <th>Data</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for despesa in despesas %}
+                                <tr>
+                                    <td>{{ despesa.categoria.nome }}</td>
+                                    <td>{{ despesa.data_vencimento|date:"d/m/Y" }}</td>
+                                    <td>R$ {{ despesa.valor|floatformat:2|intcomma }}</td>
+                                    <td>
+                                        {% if despesa.status == 'PAGA' %}
+                                            <span class="badge bg-success">Paga</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Pendente</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="alert alert-info p-5">
+                <h2 class="mb-4">Veículos</h2>
+                <p class="lead">Esta página está em desenvolvimento.</p>
+                <hr>
+                <p>Em breve, novas funcionalidades serão implementadas.</p>
+            </div>
+        </div>
+    </div>
+    <div class="list-group">
+        <a href="{% url 'core:caminhoes' %}" class="list-group-item list-group-item-action">
+            <i class="fas fa-truck me-2"></i>Caminhões
+        </a>
+        <a href="{% url 'core:carretas' %}" class="list-group-item list-group-item-action">
+            <i class="fas fa-trailer me-2"></i>Carretas
+        </a>
+        <a href="{% url 'core:conjuntos' %}" class="list-group-item list-group-item-action">
+            <i class="fas fa-link me-2"></i>Conjuntos
+        </a>
+    </div>
+</div>
+{% endblock %}

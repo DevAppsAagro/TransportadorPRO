@@ -1,0 +1,348 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load custom_filters %}
+
+{% block title %}Fluxo de Caixa{% endblock %}
+
+{% block custom_css %}
+<style>
+    .filter-card {
+        background-color: #f8f9fc;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .table-cash-flow th, .table-cash-flow td {
+        text-align: center;
+    }
+    .table-cash-flow .text-left {
+        text-align: left;
+    }
+    .table-cash-flow .positive {
+        color: #1cc88a;
+        font-weight: bold;
+    }
+    .table-cash-flow .negative {
+        color: #e74a3b;
+        font-weight: bold;
+    }
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin-bottom: 30px;
+    }
+    
+    /* Cards de resumo */
+    .info-card {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+    }
+    .info-card .card-body {
+        padding: 20px;
+        position: relative;
+    }
+    .info-card .card-title {
+        font-size: 0.9rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        color: #fff;
+    }
+    .info-card .card-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #fff;
+        margin-bottom: 0;
+    }
+    .info-card .card-icon {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 2.5rem;
+        opacity: 0.3;
+        color: #fff;
+    }
+    
+    /* Cores dos cards */
+    .card-receitas {
+        background: linear-gradient(45deg, #4e73df, #6f8be8);
+    }
+    .card-despesas {
+        background: linear-gradient(45deg, #e74a3b, #f07a6f);
+    }
+    .card-saldo-positivo {
+        background: linear-gradient(45deg, #1cc88a, #36e3a9);
+    }
+    .card-saldo-negativo {
+        background: linear-gradient(45deg, #e74a3b, #f07a6f);
+    }
+    .card-acumulado-positivo {
+        background: linear-gradient(45deg, #f6c23e, #fad475);
+    }
+    .card-acumulado-negativo {
+        background: linear-gradient(45deg, #e74a3b, #f07a6f);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Fluxo de Caixa</h1>
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="bi bi-printer"></i> Imprimir Relatório
+        </button>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-card">
+        <form method="get" action="{% url 'core:fluxo_caixa' %}" class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="ano">Ano:</label>
+                    <select class="form-control" id="ano" name="ano">
+                        {% for ano in anos %}
+                            <option value="{{ ano }}" {% if ano == ano_selecionado %}selected{% endif %}>{{ ano }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <div class="form-check mt-4">
+                        <input class="form-check-input" type="checkbox" id="considerar_estimados" name="considerar_estimados" {% if considerar_estimados %}checked{% endif %}>
+                        <label class="form-check-label" for="considerar_estimados">
+                            Considerar custos fixos estimados
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-funnel"></i> Filtrar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Resumo Anual -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card info-card card-receitas">
+                <div class="card-body">
+                    <h5 class="card-title">Total de Receitas</h5>
+                    <p class="card-value">R$ {{ chart_receitas|sum_list|floatformat:2|intcomma }}</p>
+                    <div class="card-icon">
+                        <i class="bi bi-cash"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card info-card card-despesas">
+                <div class="card-body">
+                    <h5 class="card-title">Total de Despesas</h5>
+                    <p class="card-value">R$ {{ chart_despesas|sum_list|floatformat:2|intcomma }}</p>
+                    <div class="card-icon">
+                        <i class="bi bi-credit-card"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card info-card {% if chart_saldo_mensal|sum_list > 0 %}card-saldo-positivo{% else %}card-saldo-negativo{% endif %}">
+                <div class="card-body">
+                    <h5 class="card-title">Saldo Anual</h5>
+                    <p class="card-value">R$ {{ chart_saldo_mensal|sum_list|floatformat:2|intcomma }}</p>
+                    <div class="card-icon">
+                        <i class="bi bi-calculator"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card info-card {% if chart_saldo_acumulado|last > 0 %}card-acumulado-positivo{% else %}card-acumulado-negativo{% endif %}">
+                <div class="card-body">
+                    <h5 class="card-title">Saldo Acumulado Final</h5>
+                    <p class="card-value">R$ {{ chart_saldo_acumulado|last|floatformat:2|intcomma }}</p>
+                    <div class="card-icon">
+                        <i class="bi bi-graph-up"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Evolução Anual</h6>
+        </div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="fluxoCaixaChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Fluxo de Caixa -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Fluxo de Caixa {{ ano_selecionado }}</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-cash-flow">
+                    <thead>
+                        <tr>
+                            <th class="text-left">Mês</th>
+                            <th>Receitas</th>
+                            <th>Despesas</th>
+                            {% if considerar_estimados %}
+                                <th>Custos Fixos Estimados</th>
+                            {% endif %}
+                            <th>Saldo Mensal</th>
+                            <th>Saldo Acumulado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mes in fluxo_caixa %}
+                            <tr>
+                                <td class="text-left">{{ mes.mes }}</td>
+                                <td>R$ {{ mes.receitas|floatformat:2|intcomma }}</td>
+                                <td>R$ {{ mes.despesas|floatformat:2|intcomma }}</td>
+                                {% if considerar_estimados %}
+                                    <td>R$ {{ mes.custos_fixos_estimados|floatformat:2|intcomma }}</td>
+                                {% endif %}
+                                <td class="{% if mes.saldo_mes > 0 %}positive{% else %}negative{% endif %}">
+                                    R$ {{ mes.saldo_mes|floatformat:2|intcomma }}
+                                </td>
+                                <td class="{% if mes.saldo_acumulado > 0 %}positive{% else %}negative{% endif %}">
+                                    R$ {{ mes.saldo_acumulado|floatformat:2|intcomma }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Dados para o gráfico
+    const labels = {{ chart_labels|safe }};
+    const receitas = {{ chart_receitas|safe }};
+    const despesas = {{ chart_despesas|safe }};
+    const saldoMensal = {{ chart_saldo_mensal|safe }};
+    const saldoAcumulado = {{ chart_saldo_acumulado|safe }};
+
+    // Configuração do gráfico
+    const ctx = document.getElementById('fluxoCaixaChart');
+    
+    if (ctx) {
+        const fluxoCaixaChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Receitas',
+                        data: receitas,
+                        backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                        borderColor: 'rgba(78, 115, 223, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                        pointBorderColor: '#fff',
+                        pointRadius: 4,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Despesas',
+                        data: despesas,
+                        backgroundColor: 'rgba(231, 74, 59, 0.05)',
+                        borderColor: 'rgba(231, 74, 59, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(231, 74, 59, 1)',
+                        pointBorderColor: '#fff',
+                        pointRadius: 4,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Saldo Mensal',
+                        data: saldoMensal,
+                        backgroundColor: 'rgba(28, 200, 138, 0.05)',
+                        borderColor: 'rgba(28, 200, 138, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(28, 200, 138, 1)',
+                        pointBorderColor: '#fff',
+                        pointRadius: 4,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Saldo Acumulado',
+                        data: saldoAcumulado,
+                        backgroundColor: 'rgba(246, 194, 62, 0.05)',
+                        borderColor: 'rgba(246, 194, 62, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(246, 194, 62, 1)',
+                        pointBorderColor: '#fff',
+                        pointRadius: 4,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            drawBorder: false,
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': R$ ' + context.raw.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

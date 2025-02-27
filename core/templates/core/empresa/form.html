@@ -1,0 +1,218 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .preview-logo {
+        max-height: 100px;
+        max-width: 200px;
+        margin-top: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#cnpj').mask('00.000.000/0000-00');
+        $('#cep').mask('00000-000');
+        $('#telefone').mask('(00) 0000-0000');
+        $('#celular').mask('(00) 00000-0000');
+        
+        // Preview da logo
+        $('#logo').change(function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#preview').attr('src', e.target.result);
+                    $('#preview-container').show();
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Consulta CEP
+        $('#cep').blur(function() {
+            const cep = $(this).val().replace(/\D/g, '');
+            if (cep.length === 8) {
+                $.getJSON(`https://viacep.com.br/ws/${cep}/json/`, function(data) {
+                    if (!data.erro) {
+                        $('#logradouro').val(data.logradouro);
+                        $('#bairro').val(data.bairro);
+                        $('#cidade').val(data.localidade);
+                        $('#estado').val(data.uf);
+                        $('#numero').focus();
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">{% if empresa %}Editar Empresa{% else %}Nova Empresa{% endif %}</h2>
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <h4 class="mb-3">Informações Básicas</h4>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="razao_social" class="form-label">Razão Social *</label>
+                                <input type="text" class="form-control" id="razao_social" name="razao_social" value="{{ empresa.razao_social }}" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="nome_fantasia" class="form-label">Nome Fantasia</label>
+                                <input type="text" class="form-control" id="nome_fantasia" name="nome_fantasia" value="{{ empresa.nome_fantasia }}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="cnpj" class="form-label">CNPJ *</label>
+                                <input type="text" class="form-control" id="cnpj" name="cnpj" value="{{ empresa.cnpj }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="inscricao_estadual" class="form-label">Inscrição Estadual</label>
+                                <input type="text" class="form-control" id="inscricao_estadual" name="inscricao_estadual" value="{{ empresa.inscricao_estadual }}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="inscricao_municipal" class="form-label">Inscrição Municipal</label>
+                                <input type="text" class="form-control" id="inscricao_municipal" name="inscricao_municipal" value="{{ empresa.inscricao_municipal }}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="logo" class="form-label">Logo da Empresa</label>
+                                <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
+                                {% if empresa.logo %}
+                                <div id="preview-container">
+                                    <img src="{{ empresa.logo }}" alt="Logo da Empresa" class="preview-logo" id="preview">
+                                </div>
+                                {% else %}
+                                <div id="preview-container" style="display: none;">
+                                    <img src="" alt="Logo da Empresa" class="preview-logo" id="preview">
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <h4 class="mb-3 mt-4">Endereço</h4>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="cep" class="form-label">CEP *</label>
+                                <input type="text" class="form-control" id="cep" name="cep" value="{{ empresa.cep }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="logradouro" class="form-label">Logradouro *</label>
+                                <input type="text" class="form-control" id="logradouro" name="logradouro" value="{{ empresa.logradouro }}" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="numero" class="form-label">Número *</label>
+                                <input type="text" class="form-control" id="numero" name="numero" value="{{ empresa.numero }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="complemento" class="form-label">Complemento</label>
+                                <input type="text" class="form-control" id="complemento" name="complemento" value="{{ empresa.complemento }}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="bairro" class="form-label">Bairro *</label>
+                                <input type="text" class="form-control" id="bairro" name="bairro" value="{{ empresa.bairro }}" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="cidade" class="form-label">Cidade *</label>
+                                <input type="text" class="form-control" id="cidade" name="cidade" value="{{ empresa.cidade }}" required>
+                            </div>
+                            <div class="col-md-1 mb-3">
+                                <label for="estado" class="form-label">UF *</label>
+                                <select class="form-select" id="estado" name="estado" required>
+                                    <option value="">UF</option>
+                                    <option value="AC" {% if empresa.estado == 'AC' %}selected{% endif %}>AC</option>
+                                    <option value="AL" {% if empresa.estado == 'AL' %}selected{% endif %}>AL</option>
+                                    <option value="AP" {% if empresa.estado == 'AP' %}selected{% endif %}>AP</option>
+                                    <option value="AM" {% if empresa.estado == 'AM' %}selected{% endif %}>AM</option>
+                                    <option value="BA" {% if empresa.estado == 'BA' %}selected{% endif %}>BA</option>
+                                    <option value="CE" {% if empresa.estado == 'CE' %}selected{% endif %}>CE</option>
+                                    <option value="DF" {% if empresa.estado == 'DF' %}selected{% endif %}>DF</option>
+                                    <option value="ES" {% if empresa.estado == 'ES' %}selected{% endif %}>ES</option>
+                                    <option value="GO" {% if empresa.estado == 'GO' %}selected{% endif %}>GO</option>
+                                    <option value="MA" {% if empresa.estado == 'MA' %}selected{% endif %}>MA</option>
+                                    <option value="MT" {% if empresa.estado == 'MT' %}selected{% endif %}>MT</option>
+                                    <option value="MS" {% if empresa.estado == 'MS' %}selected{% endif %}>MS</option>
+                                    <option value="MG" {% if empresa.estado == 'MG' %}selected{% endif %}>MG</option>
+                                    <option value="PA" {% if empresa.estado == 'PA' %}selected{% endif %}>PA</option>
+                                    <option value="PB" {% if empresa.estado == 'PB' %}selected{% endif %}>PB</option>
+                                    <option value="PR" {% if empresa.estado == 'PR' %}selected{% endif %}>PR</option>
+                                    <option value="PE" {% if empresa.estado == 'PE' %}selected{% endif %}>PE</option>
+                                    <option value="PI" {% if empresa.estado == 'PI' %}selected{% endif %}>PI</option>
+                                    <option value="RJ" {% if empresa.estado == 'RJ' %}selected{% endif %}>RJ</option>
+                                    <option value="RN" {% if empresa.estado == 'RN' %}selected{% endif %}>RN</option>
+                                    <option value="RS" {% if empresa.estado == 'RS' %}selected{% endif %}>RS</option>
+                                    <option value="RO" {% if empresa.estado == 'RO' %}selected{% endif %}>RO</option>
+                                    <option value="RR" {% if empresa.estado == 'RR' %}selected{% endif %}>RR</option>
+                                    <option value="SC" {% if empresa.estado == 'SC' %}selected{% endif %}>SC</option>
+                                    <option value="SP" {% if empresa.estado == 'SP' %}selected{% endif %}>SP</option>
+                                    <option value="SE" {% if empresa.estado == 'SE' %}selected{% endif %}>SE</option>
+                                    <option value="TO" {% if empresa.estado == 'TO' %}selected{% endif %}>TO</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <h4 class="mb-3 mt-4">Contato</h4>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="telefone" class="form-label">Telefone *</label>
+                                <input type="text" class="form-control" id="telefone" name="telefone" value="{{ empresa.telefone }}" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="celular" class="form-label">Celular</label>
+                                <input type="text" class="form-control" id="celular" name="celular" value="{{ empresa.celular }}">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="email" class="form-label">E-mail *</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ empresa.email }}" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="site" class="form-label">Site</label>
+                                <input type="url" class="form-control" id="site" name="site" value="{{ empresa.site }}">
+                            </div>
+                        </div>
+                        
+                        <h4 class="mb-3 mt-4">Informações Adicionais</h4>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="rntrc" class="form-label">RNTRC</label>
+                                <input type="text" class="form-control" id="rntrc" name="rntrc" value="{{ empresa.rntrc }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="antt" class="form-label">ANTT</label>
+                                <input type="text" class="form-control" id="antt" name="antt" value="{{ empresa.antt }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="observacoes" class="form-label">Observações</label>
+                                <textarea class="form-control" id="observacoes" name="observacoes" rows="3">{{ empresa.observacoes }}</textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'core:empresas_list' %}" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

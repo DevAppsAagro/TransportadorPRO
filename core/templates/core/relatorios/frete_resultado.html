@@ -1,0 +1,459 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load custom_filters %}
+
+{% block title %}Relatório de Frete #{{ frete.id }}{% endblock %}
+
+{% block custom_css %}
+<style>
+    .report-header {
+        background-color: #f8f9fc;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .report-section {
+        margin-bottom: 30px;
+    }
+    .report-section h5 {
+        border-bottom: 1px solid #e3e6f0;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+    }
+    .metric-card {
+        background-color: #fff;
+        border-left: 4px solid #4e73df;
+        border-radius: 4px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        margin-bottom: 20px;
+        padding: 15px;
+    }
+    .metric-card.positive {
+        border-left: 4px solid #1cc88a;
+    }
+    .metric-card.negative {
+        border-left: 4px solid #e74a3b;
+    }
+    .metric-card.warning {
+        border-left: 4px solid #f6c23e;
+    }
+    .metric-card .metric-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    .metric-card.positive .metric-value {
+        color: #1cc88a;
+    }
+    .metric-card.negative .metric-value {
+        color: #e74a3b;
+    }
+    .metric-card .metric-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #4e73df;
+        margin-bottom: 5px;
+    }
+    .metric-card.positive .metric-title {
+        color: #1cc88a;
+    }
+    .metric-card.negative .metric-title {
+        color: #e74a3b;
+    }
+    .table-costs td, .table-costs th {
+        padding: 0.5rem;
+    }
+    .info-row {
+        margin-bottom: 10px;
+    }
+    .info-label {
+        font-weight: bold;
+        color: #4e73df;
+    }
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 30px;
+        font-size: 14px;
+        font-weight: bold;
+    }
+    .status-concluido {
+        background-color: #1cc88a;
+        color: white;
+    }
+    .status-andamento {
+        background-color: #f6c23e;
+        color: white;
+    }
+    @media print {
+        .no-print {
+            display: none;
+        }
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        .container-fluid {
+            width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        .card {
+            border: none;
+            box-shadow: none;
+        }
+        .card-body {
+            padding: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Botão de impressão -->
+    <div class="row mb-4 no-print">
+        <div class="col-md-12">
+            <a href="{% url 'core:relatorio_frete' %}" class="btn btn-secondary mr-2">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="fas fa-print"></i> Imprimir Relatório
+            </button>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Relatório de Frete #{{ frete.id }}</h6>
+        </div>
+        <div class="card-body">
+            <div class="report-header">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>
+                            Frete #{{ frete.id }} 
+                            {% if frete.data_chegada %}
+                                <span class="status-badge status-concluido">Concluído</span>
+                            {% else %}
+                                <span class="status-badge status-andamento">Em Andamento</span>
+                            {% endif %}
+                        </h4>
+                        <div class="info-row">
+                            <span class="info-label">Origem:</span> {{ frete.origem }}
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Destino:</span> {{ frete.destino }}
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Cliente:</span> {{ cliente.nome_completo }}
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Carga:</span> {{ frete.carga }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-row">
+                            <span class="info-label">Caminhão:</span> {{ caminhao.marca }} {{ caminhao.modelo }} - {{ caminhao.placa }}
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Motorista:</span> {{ motorista.nome_completo }}
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Data de Saída:</span> {{ frete.data_saida|date:"d/m/Y" }}
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Data de Chegada:</span> {{ frete.data_chegada|date:"d/m/Y"|default:"Em andamento" }}
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Duração:</span> {{ dias_frete }} dia(s)
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Quilometragem:</span> {{ km_total|intcomma }} km
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h5>Métricas Financeiras</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Receita Bruta</div>
+                            <div class="metric-value">R$ {{ receita_bruta|floatformat:2|intcomma }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Comissão Motorista</div>
+                            <div class="metric-value">R$ {{ comissao_motorista|floatformat:2|intcomma }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Custo Total</div>
+                            <div class="metric-value">R$ {{ total_custos|floatformat:2|intcomma }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card {% if lucro_operacional > 0 %}positive{% else %}negative{% endif %}">
+                            <div class="metric-title">Lucro Operacional</div>
+                            <div class="metric-value">
+                                R$ {{ lucro_operacional|floatformat:2|intcomma }}
+                                {% if lucro_operacional > 0 %}
+                                    <small class="text-success">(LUCRO)</small>
+                                {% else %}
+                                    <small class="text-danger">(PREJUÍZO)</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <div class="metric-card {% if lucro_liquido > 0 %}positive{% else %}negative{% endif %}">
+                            <div class="metric-title">Lucro Líquido</div>
+                            <div class="metric-value">
+                                R$ {{ lucro_liquido|floatformat:2|intcomma }}
+                                {% if lucro_liquido > 0 %}
+                                    <small class="text-success">(LUCRO)</small>
+                                {% else %}
+                                    <small class="text-danger">(PREJUÍZO)</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Custo Fixo por Km</div>
+                            <div class="metric-value">R$ {{ custo_fixo_km|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Custo Variável por Km</div>
+                            <div class="metric-value">R$ {{ custo_variavel_km|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Custo Total por Km</div>
+                            <div class="metric-value">R$ {{ custo_total_km|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <div class="metric-card {% if margem_lucro > 0 %}positive{% else %}negative{% endif %}">
+                            <div class="metric-title">Margem de Lucro</div>
+                            <div class="metric-value">
+                                {{ margem_lucro|floatformat:2 }}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Valor por Km</div>
+                            <div class="metric-value">R$ {{ frete.valor_por_km|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Média de Km/L</div>
+                            <div class="metric-value">{{ media_km_l|floatformat:2 }} km/l</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Custo de Diesel por Km</div>
+                            <div class="metric-value">R$ {{ custo_diesel_km|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h5>Custos Fixos Estimados</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-costs">
+                        <thead>
+                            <tr>
+                                <th>Categoria</th>
+                                <th>Valor</th>
+                                <th>% do Custo Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Depreciação do Caminhão</td>
+                                <td>R$ {{ custos_fixos_estimados.depreciacao_caminhao|floatformat:2|intcomma }}</td>
+                                <td>{{ custos_fixos_estimados.depreciacao_caminhao|div:total_custos|mul:100|floatformat:2 }}%</td>
+                            </tr>
+                            <tr>
+                                <td>Depreciação da Carreta</td>
+                                <td>R$ {{ custos_fixos_estimados.depreciacao_carreta|floatformat:2|intcomma }}</td>
+                                <td>{{ custos_fixos_estimados.depreciacao_carreta|div:total_custos|mul:100|floatformat:2 }}%</td>
+                            </tr>
+                            <tr>
+                                <td>Seguro e Custos Fixos</td>
+                                <td>R$ {{ custos_fixos_estimados.seguro|floatformat:2|intcomma }}</td>
+                                <td>{{ custos_fixos_estimados.seguro|div:total_custos|mul:100|floatformat:2 }}%</td>
+                            </tr>
+                            <tr>
+                                <td>Manutenção Planejada</td>
+                                <td>R$ {{ custos_fixos_estimados.manutencao|floatformat:2|intcomma }}</td>
+                                <td>{{ custos_fixos_estimados.manutencao|div:total_custos|mul:100|floatformat:2 }}%</td>
+                            </tr>
+                            <tr>
+                                <td>Pneus Planejados</td>
+                                <td>R$ {{ custos_fixos_estimados.pneus|floatformat:2|intcomma }}</td>
+                                <td>{{ custos_fixos_estimados.pneus|div:total_custos|mul:100|floatformat:2 }}%</td>
+                            </tr>
+                            <tr class="table-primary">
+                                <td><strong>Total de Custos Fixos</strong></td>
+                                <td><strong>R$ {{ total_custos_fixos_estimados|floatformat:2|intcomma }}</strong></td>
+                                <td><strong>{{ total_custos_fixos_estimados|div:total_custos|mul:100|floatformat:2 }}%</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h5>Custos Variáveis</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-costs">
+                        <thead>
+                            <tr>
+                                <th>Categoria</th>
+                                <th>Valor</th>
+                                <th>% do Custo Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Combustível</td>
+                                <td>R$ {{ total_valor_diesel|floatformat:2|intcomma }}</td>
+                                <td>{{ total_valor_diesel|div:total_custos|mul:100|floatformat:2 }}%</td>
+                            </tr>
+                            {% for categoria, subcategorias in despesas_por_categoria.items %}
+                                {% for subcategoria, valor in subcategorias.items %}
+                                    <tr>
+                                        <td>{{ categoria }} - {{ subcategoria }}</td>
+                                        <td>R$ {{ valor|floatformat:2|intcomma }}</td>
+                                        <td>{{ valor|div:total_custos|mul:100|floatformat:2 }}%</td>
+                                    </tr>
+                                {% endfor %}
+                            {% endfor %}
+                            <tr class="table-primary">
+                                <td><strong>Total de Custos Variáveis</strong></td>
+                                <td><strong>R$ {{ total_custos_variaveis|floatformat:2|intcomma }}</strong></td>
+                                <td><strong>{{ total_custos_variaveis|div:total_custos|mul:100|floatformat:2 }}%</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h5>Detalhes dos Abastecimentos</h5>
+                {% if abastecimentos %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Posto</th>
+                                    <th>Litros</th>
+                                    <th>Valor Unitário</th>
+                                    <th>Valor Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for abastecimento in abastecimentos %}
+                                    <tr>
+                                        <td>{{ abastecimento.data|date:"d/m/Y" }}</td>
+                                        <td>{{ abastecimento.posto }}</td>
+                                        <td>{{ abastecimento.litros|floatformat:2 }}</td>
+                                        <td>R$ {{ abastecimento.valor_unitario|floatformat:3 }}</td>
+                                        <td>R$ {{ abastecimento.total_valor|floatformat:2 }}</td>
+                                    </tr>
+                                {% endfor %}
+                                <tr class="table-primary">
+                                    <td colspan="2"><strong>Total</strong></td>
+                                    <td><strong>{{ total_diesel|floatformat:2 }}</strong></td>
+                                    <td><strong>R$ {{ valor_medio_diesel|floatformat:3 }}</strong></td>
+                                    <td><strong>R$ {{ total_valor_diesel|floatformat:2 }}</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        Não há abastecimentos registrados para este frete.
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="report-section">
+                <h5>Detalhes das Despesas</h5>
+                {% if despesas %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Categoria</th>
+                                    <th>Subcategoria</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for despesa in despesas %}
+                                    <tr>
+                                        <td>{{ despesa.data|date:"d/m/Y" }}</td>
+                                        <td>{{ despesa.categoria.nome }}</td>
+                                        <td>{{ despesa.subcategoria.nome }}</td>
+                                        <td>R$ {{ despesa.valor|floatformat:2 }}</td>
+                                        <td>
+                                            {% if despesa.status == 'PAGA' %}
+                                                <span class="badge bg-success text-white">Paga</span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-white">{{ despesa.get_status_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                <tr class="table-primary">
+                                    <td colspan="3"><strong>Total</strong></td>
+                                    <td colspan="2"><strong>R$ {{ total_despesas|floatformat:2 }}</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        Não há despesas registradas para este frete.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+    // Função para formatar números em porcentagem
+    function formatPercentage(value) {
+        return (value * 100).toFixed(2) + '%';
+    }
+
+    // Função para formatar números em moeda
+    function formatCurrency(value) {
+        return 'R$ ' + value.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+\,)/g, '$1.');
+    }
+</script>
+{% endblock %}

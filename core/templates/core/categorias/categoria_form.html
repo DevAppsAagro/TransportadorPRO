@@ -1,0 +1,54 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">{% if categoria %}Editar{% else %}Nova{% endif %} Categoria</h2>
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="nome" class="form-label">Nome da Categoria*</label>
+                                <input type="text" class="form-control" id="nome" name="nome" value="{{ categoria.nome }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="tipo" class="form-label">Tipo*</label>
+                                <select class="form-select" id="tipo" name="tipo" required>
+                                    <option value="" {% if not categoria %}selected{% endif %}>Selecione...</option>
+                                    <option value="CUSTO_FIXO" {% if categoria.tipo == 'CUSTO_FIXO' %}selected{% endif %}>Custo Fixo</option>
+                                    <option value="CUSTO_VARIAVEL" {% if categoria.tipo == 'CUSTO_VARIAVEL' %}selected{% endif %}>Custo Variável</option>
+                                    <option value="INVESTIMENTO" {% if categoria.tipo == 'INVESTIMENTO' %}selected{% endif %}>Investimento</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="alocacao" class="form-label">Alocação*</label>
+                                <select class="form-select" id="alocacao" name="alocacao" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="VEICULO" {% if categoria.alocacao == 'VEICULO' %}selected{% endif %}>Veículo</option>
+                                    <option value="FRETE" {% if categoria.alocacao == 'FRETE' %}selected{% endif %}>Frete</option>
+                                    <option value="ADMINISTRATIVO" {% if categoria.alocacao == 'ADMINISTRATIVO' %}selected{% endif %}>Administrativo</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save"></i> Salvar
+                                </button>
+                                <a href="{% url 'core:categorias' %}" class="btn btn-secondary">
+                                    <i class="bi bi-x"></i> Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

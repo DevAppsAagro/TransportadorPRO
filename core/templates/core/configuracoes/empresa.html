@@ -1,0 +1,198 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Configurações da Empresa - TransportadorPRO{% endblock %}
+
+{% block custom_css %}
+<style>
+    .config-header {
+        background-color: #f8f9fc;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    
+    .config-header h1 {
+        margin-bottom: 10px;
+        color: #4e73df;
+    }
+    
+    .config-header p {
+        color: #6c757d;
+    }
+    
+    .config-card {
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+    }
+    
+    .config-card .card-header {
+        background-color: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+        padding: 15px 20px;
+    }
+    
+    .config-card .card-body {
+        padding: 25px;
+    }
+    
+    .form-section {
+        margin-bottom: 30px;
+    }
+    
+    .form-section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #4e73df;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e3e6f0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="config-header">
+        <h1>Configurações da Empresa</h1>
+        <p>Gerencie as informações da sua empresa para documentos e relatórios</p>
+    </div>
+    
+    <div class="card config-card">
+        <div class="card-header">
+            <h5 class="mb-0">Dados da Empresa</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <div class="form-section">
+                    <h3 class="form-section-title">Informações Básicas</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.razao_social|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.nome_fantasia|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form.cnpj|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.inscricao_estadual|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.inscricao_municipal|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3 class="form-section-title">Endereço</h3>
+                    <div class="row">
+                        <div class="col-md-3">
+                            {{ form.cep|as_crispy_field }}
+                        </div>
+                        <div class="col-md-7">
+                            {{ form.logradouro|as_crispy_field }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ form.numero|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form.complemento|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.bairro|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.cidade|as_crispy_field }}
+                        </div>
+                        <div class="col-md-1">
+                            {{ form.estado|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3 class="form-section-title">Contato</h3>
+                    <div class="row">
+                        <div class="col-md-3">
+                            {{ form.telefone|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.celular|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.email|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.site|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3 class="form-section-title">Informações Adicionais</h3>
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form.rntrc|as_crispy_field }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ form.antt|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form.observacoes|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i> Salvar Configurações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+    // Script para buscar endereço pelo CEP
+    document.addEventListener('DOMContentLoaded', function() {
+        const cepInput = document.getElementById('id_cep');
+        
+        if (cepInput) {
+            cepInput.addEventListener('blur', function() {
+                const cep = this.value.replace(/\D/g, '');
+                
+                if (cep.length === 8) {
+                    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (!data.erro) {
+                                document.getElementById('id_logradouro').value = data.logradouro;
+                                document.getElementById('id_bairro').value = data.bairro;
+                                document.getElementById('id_cidade').value = data.localidade;
+                                document.getElementById('id_estado').value = data.uf;
+                                document.getElementById('id_numero').focus();
+                            }
+                        })
+                        .catch(error => console.error('Erro ao buscar CEP:', error));
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

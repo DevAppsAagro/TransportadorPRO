@@ -1,0 +1,229 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .item-row {
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+<script>
+    $(document).ready(function() {
+        // Inicializar datepicker
+        flatpickr("#data_estimativa", {
+            locale: "pt",
+            dateFormat: "Y-m-d",
+            allowInput: true
+        });
+        
+        // Adicionar item
+        $("#addItem").click(function() {
+            addItemRow();
+        });
+        
+        // Remover item
+        $(document).on('click', '.removeItem', function() {
+            $(this).closest('.item-row').remove();
+            recalcularTotal();
+        });
+        
+        // Calcular valor por dia ao mudar valor total ou tipo
+        $(document).on('change', '.valor-total, .tipo-select', function() {
+            const row = $(this).closest('.item-row');
+            calcularValorPorDia(row);
+        });
+        
+        // Preencher formulário com itens existentes (se estiver editando)
+        {% if itens %}
+            {% for item in itens %}
+                addItemRow('{{ item.descricao }}', '{{ item.tipo }}', '{{ item.valor_total }}', '{{ item.valor_por_dia|floatformat:4 }}');
+            {% endfor %}
+        {% else %}
+            // Adicionar uma linha vazia para novo formulário
+            addItemRow();
+        {% endif %}
+        
+        // Submeter formulário
+        $("#estimativaForm").submit(function(e) {
+            e.preventDefault();
+            
+            // Coletar dados dos itens
+            const itens = [];
+            $('.item-row').each(function() {
+                const descricao = $(this).find('.descricao').val();
+                const tipo = $(this).find('.tipo-select').val();
+                const valorTotal = $(this).find('.valor-total').val();
+                
+                if (descricao && valorTotal) {
+                    itens.push({
+                        descricao: descricao,
+                        tipo: tipo,
+                        valor_total: valorTotal
+                    });
+                }
+            });
+            
+            // Adicionar dados dos itens como JSON
+            $('#itens_data').val(JSON.stringify(itens));
+            
+            // Enviar formulário
+            this.submit();
+        });
+    });
+    
+    // Função para adicionar linha de item
+    function addItemRow(descricao = '', tipo = 'ANUAL', valorTotal = '', valorPorDia = '') {
+        const rowHtml = `
+            <div class="item-row">
+                <div class="row">
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label">Descrição</label>
+                        <input type="text" class="form-control descricao" value="${descricao}" required>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <label class="form-label">Tipo</label>
+                        <select class="form-select tipo-select" required>
+                            <option value="ANUAL" ${tipo === 'ANUAL' ? 'selected' : ''}>Anual</option>
+                            <option value="MENSAL" ${tipo === 'MENSAL' ? 'selected' : ''}>Mensal</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <label class="form-label">Valor Total (R$)</label>
+                        <input type="number" step="0.01" min="0" class="form-control valor-total" value="${valorTotal}" required>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <label class="form-label">Valor/Dia (R$)</label>
+                        <input type="text" class="form-control valor-por-dia" value="${valorPorDia}" readonly>
+                    </div>
+                    <div class="col-md-2 mb-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-danger removeItem">
+                            <i class="fas fa-trash"></i> Remover
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        $('#itensContainer').append(rowHtml);
+        
+        // Calcular valor por dia para o novo item
+        if (valorTotal) {
+            const row = $('#itensContainer').find('.item-row').last();
+            calcularValorPorDia(row);
+        }
+    }
+    
+    // Função para calcular valor por dia
+    function calcularValorPorDia(row) {
+        const valorTotal = parseFloat(row.find('.valor-total').val()) || 0;
+        const tipo = row.find('.tipo-select').val();
+        
+        let valorPorDia = 0;
+        
+        if (tipo === 'ANUAL') {
+            valorPorDia = valorTotal / 365;
+        } else if (tipo === 'MENSAL') {
+            valorPorDia = valorTotal / 30;
+        }
+        
+        row.find('.valor-por-dia').val(valorPorDia.toFixed(4));
+        
+        recalcularTotal();
+    }
+    
+    // Função para recalcular o total
+    function recalcularTotal() {
+        let total = 0;
+        
+        $('.valor-por-dia').each(function() {
+            total += parseFloat($(this).val()) || 0;
+        });
+        
+        $('#custoTotalDia').text(total.toFixed(4));
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{% if estimativa %}Editar{% else %}Nova{% endif %} Estimativa de Custo Fixo</h2>
+        <a href="{% url 'core:estimativa_custo_fixo_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <div class="card">
+        <div class="card-body">
+            <form id="estimativaForm" method="post">
+                {% csrf_token %}
+                <input type="hidden" id="itens_data" name="itens_data" value="">
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="data_estimativa" class="form-label">Data da Estimativa</label>
+                        <input type="date" class="form-control" id="data_estimativa" name="data_estimativa" value="{% if estimativa %}{{ estimativa.data_estimativa|date:'Y-m-d' }}{% else %}{% now 'Y-m-d' %}{% endif %}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="conjunto" class="form-label">Conjunto</label>
+                        <select class="form-select" id="conjunto" name="conjunto" required>
+                            <option value="">Selecione um conjunto</option>
+                            {% for conjunto in conjuntos %}
+                                <option value="{{ conjunto.id }}" {% if estimativa and estimativa.conjunto.id == conjunto.id %}selected{% endif %}>
+                                    {{ conjunto.caminhao.placa }} - {{ conjunto.carreta1.placa }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5>Itens de Custo Fixo</h5>
+                        <button type="button" class="btn btn-sm btn-success" id="addItem">
+                            <i class="fas fa-plus-circle"></i> Adicionar Item
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="itensContainer">
+                            <!-- Itens serão adicionados aqui via JavaScript -->
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="alert alert-info">
+                                    <strong>Custo Total por Dia: R$ <span id="custoTotalDia">0.0000</span></strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

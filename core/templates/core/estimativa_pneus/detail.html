@@ -1,0 +1,162 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Detalhes da Estimativa de Pneus</h2>
+        <a href="{% url 'core:estimativa_pneus_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Informações Gerais</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="mb-3">Caminhão</h6>
+                    <p><strong>Placa:</strong> {{ estimativa.conjunto.caminhao.placa }}</p>
+                    <p><strong>Marca/Modelo:</strong> {{ estimativa.conjunto.caminhao.marca }} {{ estimativa.conjunto.caminhao.modelo }}</p>
+                    <p><strong>Ano:</strong> {{ estimativa.conjunto.caminhao.ano }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="mb-3">Carreta</h6>
+                    <p><strong>Placa:</strong> {{ estimativa.conjunto.carreta1.placa }}</p>
+                    <p><strong>Marca/Modelo:</strong> {{ estimativa.conjunto.carreta1.marca }} {{ estimativa.conjunto.carreta1.modelo }}</p>
+                    <p><strong>Ano:</strong> {{ estimativa.conjunto.carreta1.ano }}</p>
+                </div>
+            </div>
+            <hr>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <p><strong>Data da Estimativa:</strong> {{ estimativa.data_estimativa|date:"d/m/Y" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Custo por Km:</strong> R$ {{ estimativa.custo_total_km|floatformat:2 }}</p>
+                    <p><strong>Status:</strong> 
+                        {% if estimativa.is_active %}
+                            <span class="badge bg-success">Ativo</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inativo</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Pneus Dianteiros</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Quantidade:</strong> {{ estimativa.qtd_pneus_dianteiros }}</p>
+                    <p><strong>Preço Unitário:</strong> R$ {{ estimativa.preco_pneu_dianteiro|floatformat:2 }}</p>
+                    <p><strong>Vida Útil:</strong> {{ estimativa.km_vida_util_dianteiro|floatformat:0 }} km</p>
+                    <p><strong>Recapagens:</strong> {{ estimativa.num_recapagens_dianteiro }}</p>
+                    <p><strong>Custo Recapagem:</strong> R$ {{ estimativa.custo_recapagem_dianteiro|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Pneus Traseiros</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Quantidade:</strong> {{ estimativa.qtd_pneus_traseiros }}</p>
+                    <p><strong>Preço Unitário:</strong> R$ {{ estimativa.preco_pneu_traseiro|floatformat:2 }}</p>
+                    <p><strong>Vida Útil:</strong> {{ estimativa.km_vida_util_traseiro|floatformat:0 }} km</p>
+                    <p><strong>Recapagens:</strong> {{ estimativa.num_recapagens_traseiro }}</p>
+                    <p><strong>Custo Recapagem:</strong> R$ {{ estimativa.custo_recapagem_traseiro|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Pneus da Carreta</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Quantidade:</strong> {{ estimativa.qtd_pneus_carreta }}</p>
+                    <p><strong>Preço Unitário:</strong> R$ {{ estimativa.preco_pneu_carreta|floatformat:2 }}</p>
+                    <p><strong>Vida Útil:</strong> {{ estimativa.km_vida_util_carreta|floatformat:0 }} km</p>
+                    <p><strong>Recapagens:</strong> {{ estimativa.num_recapagens_carreta }}</p>
+                    <p><strong>Custo Recapagem:</strong> R$ {{ estimativa.custo_recapagem_carreta|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if resultados %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Resultados Detalhados</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6>Pneus Dianteiros</h6>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Custo Total:</strong> R$ {{ resultados.dianteiros.custo_total|floatformat:2 }}</p>
+                            <p><strong>Km Total:</strong> {{ resultados.dianteiros.km_total|floatformat:0 }} km</p>
+                            <p><strong>Custo por Km:</strong> R$ {{ resultados.dianteiros.custo_por_km|floatformat:4 }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6>Pneus Traseiros</h6>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Custo Total:</strong> R$ {{ resultados.traseiros.custo_total|floatformat:2 }}</p>
+                            <p><strong>Km Total:</strong> {{ resultados.traseiros.km_total|floatformat:0 }} km</p>
+                            <p><strong>Custo por Km:</strong> R$ {{ resultados.traseiros.custo_por_km|floatformat:4 }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6>Pneus da Carreta</h6>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Custo Total:</strong> R$ {{ resultados.carreta.custo_total|floatformat:2 }}</p>
+                            <p><strong>Km Total:</strong> {{ resultados.carreta.km_total|floatformat:0 }} km</p>
+                            <p><strong>Custo por Km:</strong> R$ {{ resultados.carreta.custo_por_km|floatformat:4 }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <h5 class="mb-3">Custo Total por Km: R$ {{ resultados.custo_total_km|floatformat:4 }}</h5>
+                        <p class="mb-0">Este valor representa o custo total de pneus por quilômetro rodado, considerando todos os tipos de pneus, suas vidas úteis e recapagens.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if estimativa.is_active %}
+    <div class="mt-4">
+        <a href="{% url 'core:estimativa_pneus_edit' estimativa.id %}" class="btn btn-primary">
+            <i class="fas fa-edit"></i> Editar Estimativa
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

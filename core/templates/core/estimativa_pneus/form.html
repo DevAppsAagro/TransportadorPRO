@@ -1,0 +1,188 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ titulo }}</h2>
+    
+    <form method="post" class="mt-4">
+        {% csrf_token %}
+        
+        <div class="card">
+            <div class="card-header">
+                <h5>Selecione o Conjunto</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="conjunto">Conjunto</label>
+                    <select name="conjunto" id="conjunto" class="form-control" required>
+                        <option value="">Selecione um conjunto...</option>
+                        {% for conjunto in conjuntos %}
+                            <option value="{{ conjunto.id }}" {% if estimativa and estimativa.conjunto_id == conjunto.id %}selected{% endif %}>
+                                Caminhão: {{ conjunto.caminhao.placa }} - {{ conjunto.caminhao.marca }} {{ conjunto.caminhao.modelo }} | 
+                                Carreta: {{ conjunto.carreta1.placa }} - {{ conjunto.carreta1.marca }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Data da Estimativa</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="data_estimativa">Data</label>
+                    <input type="date" class="form-control" id="data_estimativa" name="data_estimativa" value="{{ estimativa.data_estimativa|date:'Y-m-d'|default:today }}" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Quantidade de Pneus</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="qtd_pneus_dianteiros">Pneus Dianteiros</label>
+                            <input type="number" class="form-control" id="qtd_pneus_dianteiros" name="qtd_pneus_dianteiros" value="{{ estimativa.qtd_pneus_dianteiros|default:2 }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="qtd_pneus_traseiros">Pneus Traseiros</label>
+                            <input type="number" class="form-control" id="qtd_pneus_traseiros" name="qtd_pneus_traseiros" value="{{ estimativa.qtd_pneus_traseiros|default:8 }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="qtd_pneus_carreta">Pneus da Carreta</label>
+                            <input type="number" class="form-control" id="qtd_pneus_carreta" name="qtd_pneus_carreta" value="{{ estimativa.qtd_pneus_carreta|default:12 }}" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Preços dos Pneus</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="preco_pneu_dianteiro">Pneu Dianteiro (R$)</label>
+                            <input type="number" step="0.01" class="form-control" id="preco_pneu_dianteiro" name="preco_pneu_dianteiro" value="{{ estimativa.preco_pneu_dianteiro|default:'' }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="preco_pneu_traseiro">Pneu Traseiro (R$)</label>
+                            <input type="number" step="0.01" class="form-control" id="preco_pneu_traseiro" name="preco_pneu_traseiro" value="{{ estimativa.preco_pneu_traseiro|default:'' }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="preco_pneu_carreta">Pneu da Carreta (R$)</label>
+                            <input type="number" step="0.01" class="form-control" id="preco_pneu_carreta" name="preco_pneu_carreta" value="{{ estimativa.preco_pneu_carreta|default:'' }}" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Vida Útil dos Pneus</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="km_vida_util_dianteiro">Pneu Dianteiro (km)</label>
+                            <input type="number" class="form-control" id="km_vida_util_dianteiro" name="km_vida_util_dianteiro" value="{{ estimativa.km_vida_util_dianteiro|default:'' }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="km_vida_util_traseiro">Pneu Traseiro (km)</label>
+                            <input type="number" class="form-control" id="km_vida_util_traseiro" name="km_vida_util_traseiro" value="{{ estimativa.km_vida_util_traseiro|default:'' }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="km_vida_util_carreta">Pneu da Carreta (km)</label>
+                            <input type="number" class="form-control" id="km_vida_util_carreta" name="km_vida_util_carreta" value="{{ estimativa.km_vida_util_carreta|default:'' }}" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Número de Recapagens</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="num_recapagens_dianteiro">Pneu Dianteiro</label>
+                            <input type="number" class="form-control" id="num_recapagens_dianteiro" name="num_recapagens_dianteiro" value="{{ estimativa.num_recapagens_dianteiro|default:1 }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="num_recapagens_traseiro">Pneu Traseiro</label>
+                            <input type="number" class="form-control" id="num_recapagens_traseiro" name="num_recapagens_traseiro" value="{{ estimativa.num_recapagens_traseiro|default:2 }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="num_recapagens_carreta">Pneu da Carreta</label>
+                            <input type="number" class="form-control" id="num_recapagens_carreta" name="num_recapagens_carreta" value="{{ estimativa.num_recapagens_carreta|default:2 }}" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Custo de Recapagem</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="custo_recapagem_dianteiro">Pneu Dianteiro (R$)</label>
+                            <input type="number" step="0.01" class="form-control" id="custo_recapagem_dianteiro" name="custo_recapagem_dianteiro" value="{{ estimativa.custo_recapagem_dianteiro|default:'' }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="custo_recapagem_traseiro">Pneu Traseiro (R$)</label>
+                            <input type="number" step="0.01" class="form-control" id="custo_recapagem_traseiro" name="custo_recapagem_traseiro" value="{{ estimativa.custo_recapagem_traseiro|default:'' }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="custo_recapagem_carreta">Pneu da Carreta (R$)</label>
+                            <input type="number" step="0.01" class="form-control" id="custo_recapagem_carreta" name="custo_recapagem_carreta" value="{{ estimativa.custo_recapagem_carreta|default:'' }}" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group mt-4">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a href="{% url 'core:estimativa_pneus_list' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

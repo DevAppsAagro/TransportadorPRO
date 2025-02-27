@@ -1,0 +1,129 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Relatórios</h2>
+            <div class="card">
+                <div class="card-body">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">DRE</h5>
+                                    <p class="card-text">Demonstração do Resultado do Exercício.</p>
+                                    <a href="#" class="btn btn-primary">Gerar Relatório</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Fluxo de Caixa</h5>
+                                    <p class="card-text">Acompanhe o fluxo de caixa da sua empresa.</p>
+                                    <a href="#" class="btn btn-primary">Gerar Relatório</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row justify-content-center">
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Relatório de Fretes</h5>
+                                    <p class="card-text">Analise os fretes realizados e seus resultados.</p>
+                                    <a href="#" class="btn btn-primary">Gerar Relatório</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Relatório de Veículos</h5>
+                                    <p class="card-text">Acompanhe o desempenho e manutenção da sua frota.</p>
+                                    <a href="#" class="btn btn-primary">Gerar Relatório</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Filtros</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label for="report_type" class="form-label">Tipo de Relatório</label>
+                                                <select class="form-select" id="report_type" name="report_type">
+                                                    <option value="">Selecione um tipo</option>
+                                                    <option value="financial">Financeiro</option>
+                                                    <option value="vehicles">Veículos</option>
+                                                    <option value="trips">Viagens</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="start_date" class="form-label">Data Inicial</label>
+                                                <input type="date" class="form-control" id="start_date" name="start_date">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="end_date" class="form-label">Data Final</label>
+                                                <input type="date" class="form-control" id="end_date" name="end_date">
+                                            </div>
+                                        </div>
+                                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                            <button type="submit" class="btn btn-primary">Gerar Relatório</button>
+                                            <button type="button" class="btn btn-secondary">Exportar PDF</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Filtros</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label for="report_type" class="form-label">Tipo de Relatório</label>
+                                                <select class="form-select" id="report_type" name="report_type">
+                                                    <option value="">Selecione um tipo</option>
+                                                    <option value="financial">Financeiro</option>
+                                                    <option value="vehicles">Veículos</option>
+                                                    <option value="trips">Viagens</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="start_date" class="form-label">Data Inicial</label>
+                                                <input type="date" class="form-control" id="start_date" name="start_date">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="end_date" class="form-label">Data Final</label>
+                                                <input type="date" class="form-control" id="end_date" name="end_date">
+                                            </div>
+                                        </div>
+                                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                            <button type="submit" class="btn btn-primary">Gerar Relatório</button>
+                                            <button type="button" class="btn btn-secondary">Exportar PDF</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

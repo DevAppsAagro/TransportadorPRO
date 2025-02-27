@@ -1,0 +1,378 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Relatório de Veículo - {{ caminhao.placa }}{% endblock %}
+
+{% block custom_css %}
+<style>
+    .report-header {
+        background-color: #f8f9fc;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .report-section {
+        margin-bottom: 30px;
+    }
+    .report-section h5 {
+        border-bottom: 1px solid #e3e6f0;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+    }
+    .metric-card {
+        background-color: #fff;
+        border-left: 4px solid #4e73df;
+        border-radius: 4px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        margin-bottom: 20px;
+        padding: 15px;
+    }
+    .metric-card.positive {
+        border-left: 4px solid #1cc88a;
+    }
+    .metric-card.negative {
+        border-left: 4px solid #e74a3b;
+    }
+    .metric-card.warning {
+        border-left: 4px solid #f6c23e;
+    }
+    .metric-card .metric-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    .metric-card.positive .metric-value {
+        color: #1cc88a;
+    }
+    .metric-card.negative .metric-value {
+        color: #e74a3b;
+    }
+    .metric-card .metric-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #4e73df;
+    }
+    .text-success {
+        color: #1cc88a !important;
+    }
+    .text-danger {
+        color: #e74a3b !important;
+    }
+    .table-costs th {
+        background-color: #f8f9fc;
+    }
+    .table-costs .category {
+        font-weight: bold;
+    }
+    .table-costs .subcategory {
+        padding-left: 20px;
+    }
+    .table-costs .total-row {
+        font-weight: bold;
+        background-color: #f2f2f2;
+    }
+    .print-btn {
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Botão de impressão -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <a href="{% url 'core:relatorio_veiculo' %}" class="btn btn-secondary mr-2">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+            <button class="btn btn-primary print-btn" onclick="window.print()">
+                <i class="fas fa-print"></i> Imprimir Relatório
+            </button>
+        </div>
+    </div>
+
+    <!-- Cabeçalho do Relatório -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Relatório de Veículo</h6>
+        </div>
+        <div class="card-body">
+            <div class="report-header">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>{{ caminhao.marca }} {{ caminhao.modelo }} - {{ caminhao.placa }}</h4>
+                        {% if conjunto %}
+                            <p><strong>Carreta:</strong> {{ conjunto.carreta1.marca }} {{ conjunto.carreta1.modelo }} - {{ conjunto.carreta1.placa }}</p>
+                        {% endif %}
+                        <p><strong>Período:</strong> {{ data_inicio|date:"d/m/Y" }} a {{ data_fim|date:"d/m/Y" }}</p>
+                        <p><strong>Dias no período:</strong> {{ dias_periodo }}</p>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <p><strong>Data do relatório:</strong> {% now "d/m/Y" %}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Métricas Operacionais -->
+            <div class="report-section">
+                <h5>Métricas Operacionais</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Quilometragem Total</div>
+                            <div class="metric-value">{{ km_total|intcomma }} km</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Total de Diesel</div>
+                            <div class="metric-value">{{ total_diesel|floatformat:2|intcomma }} L</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Média Km/L</div>
+                            <div class="metric-value">{{ media_km_l|floatformat:2 }} km/L</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Valor Médio Diesel</div>
+                            <div class="metric-value">R$ {{ valor_medio_diesel|floatformat:2|intcomma }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Métricas Financeiras -->
+            <div class="report-section">
+                <h5>Métricas Financeiras</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Receita Bruta</div>
+                            <div class="metric-value">R$ {{ receita_total|floatformat:2|intcomma }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Comissão Motorista</div>
+                            <div class="metric-value">R$ {{ comissao_total|floatformat:2|intcomma }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Custo Total</div>
+                            <div class="metric-value">R$ {{ total_custos|floatformat:2|intcomma }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card {% if lucro_operacional > 0 %}positive{% else %}negative{% endif %}">
+                            <div class="metric-title">Lucro Operacional</div>
+                            <div class="metric-value">
+                                R$ {{ lucro_operacional|floatformat:2|intcomma }}
+                                {% if lucro_operacional > 0 %}
+                                    <small class="text-success">(LUCRO)</small>
+                                {% else %}
+                                    <small class="text-danger">(PREJUÍZO)</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <div class="metric-card {% if lucro_liquido > 0 %}positive{% else %}negative{% endif %}">
+                            <div class="metric-title">Lucro Líquido</div>
+                            <div class="metric-value">
+                                R$ {{ lucro_liquido|floatformat:2|intcomma }}
+                                {% if lucro_liquido > 0 %}
+                                    <small class="text-success">(LUCRO)</small>
+                                {% else %}
+                                    <small class="text-danger">(PREJUÍZO)</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Custo Fixo por Km</div>
+                            <div class="metric-value">R$ {{ custo_fixo_km|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Custo Variável por Km</div>
+                            <div class="metric-value">R$ {{ custo_variavel_km|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Custo Total por Km</div>
+                            <div class="metric-value">R$ {{ custo_total_km|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custos Fixos Estimados -->
+            <div class="report-section">
+                <h5>Custos Fixos Estimados</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-costs">
+                        <thead>
+                            <tr>
+                                <th>Descrição</th>
+                                <th class="text-right">Valor (R$)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="category">Depreciação do Caminhão</td>
+                                <td class="text-right">{{ custos_fixos_estimados.depreciacao_caminhao|floatformat:2|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td class="category">Depreciação da Carreta</td>
+                                <td class="text-right">{{ custos_fixos_estimados.depreciacao_carreta|floatformat:2|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td class="category">Seguro e Outros Custos Fixos</td>
+                                <td class="text-right">{{ custos_fixos_estimados.seguro|floatformat:2|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td class="category">Manutenção e Reparos Planejados</td>
+                                <td class="text-right">{{ custos_fixos_estimados.manutencao|floatformat:2|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td class="category">Pneus (Planejado)</td>
+                                <td class="text-right">{{ custos_fixos_estimados.pneus|floatformat:2|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td class="category">Custos Administrativos</td>
+                                <td class="text-right">{{ custos_fixos_estimados.administrativo|floatformat:2|intcomma }}</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td>Total Custos Fixos</td>
+                                <td class="text-right">{{ total_custos_fixos_estimados|floatformat:2|intcomma }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Custos Variáveis Realizados -->
+            <div class="report-section">
+                <h5>Custos Variáveis Realizados</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-costs">
+                        <thead>
+                            <tr>
+                                <th>Categoria/Subcategoria</th>
+                                <th class="text-right">Valor (R$)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for categoria, subcategorias in despesas_por_categoria.items %}
+                                {% for subcategoria, valor in subcategorias.items %}
+                                    <tr>
+                                        <td class="category">{{ categoria }} - {{ subcategoria }}</td>
+                                        <td class="text-right">{{ valor|floatformat:2|intcomma }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center">Nenhuma despesa variável registrada no período</td>
+                                </tr>
+                            {% endfor %}
+                            <tr class="total-row">
+                                <td>Total Custos Variáveis</td>
+                                <td class="text-right">{{ total_custos_variaveis|floatformat:2|intcomma }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Resumo dos Fretes -->
+            <div class="report-section">
+                <h5>Resumo dos Fretes</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Cliente</th>
+                                <th>Origem/Destino</th>
+                                <th class="text-right">Km</th>
+                                <th class="text-right">Valor (R$)</th>
+                                <th class="text-right">Comissão (R$)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for frete in fretes %}
+                                <tr>
+                                    <td>{{ frete.data_saida|date:"d/m/Y" }}</td>
+                                    <td>{{ frete.cliente.nome_completo }}</td>
+                                    <td>{{ frete.origem }} → {{ frete.destino }}</td>
+                                    <td class="text-right">{{ frete.km_total }}</td>
+                                    <td class="text-right">{{ frete.valor_total|floatformat:2|intcomma }}</td>
+                                    <td class="text-right">{{ frete.valor_comissao_motorista|floatformat:2|intcomma }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">Nenhum frete registrado no período</td>
+                                </tr>
+                            {% endfor %}
+                            <tr class="total-row">
+                                <td colspan="3" class="text-right">Total</td>
+                                <td class="text-right">{{ km_total }}</td>
+                                <td class="text-right">{{ receita_total|floatformat:2|intcomma }}</td>
+                                <td class="text-right">{{ comissao_total|floatformat:2|intcomma }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+    $(document).ready(function() {
+        // Adiciona estilos para impressão
+        var style = `
+            @media print {
+                .sidebar, .topbar, .footer, .print-btn, .navbar, .scroll-to-top {
+                    display: none !important;
+                }
+                .container-fluid {
+                    width: 100% !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                }
+                .card {
+                    border: none !important;
+                    box-shadow: none !important;
+                }
+                .card-header {
+                    background-color: #f8f9fc !important;
+                    color: #000 !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                body {
+                    padding: 0 !important;
+                    margin: 0 !important;
+                }
+                .table-responsive {
+                    overflow-x: visible !important;
+                }
+            }
+        `;
+        $('head').append('<style>' + style + '</style>');
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Relatório de Frete{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Relatório de Frete</h1>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Selecione um Frete</h6>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'core:relatorio_frete' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="frete">Frete:</label>
+                    <select class="form-control" id="frete" name="frete" required>
+                        <option value="">Selecione um frete</option>
+                        {% for frete in fretes %}
+                            <option value="{{ frete.id }}">
+                                #{{ frete.id }} - {{ frete.data_saida|date:"d/m/Y" }} - 
+                                {{ frete.origem }} → {{ frete.destino }} - 
+                                {{ frete.cliente }} - R$ {{ frete.valor_total|floatformat:2 }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Gerar Relatório</button>
+                <a href="{% url 'core:relatorios' %}" class="btn btn-secondary">Voltar</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+    $(document).ready(function() {
+        $('#frete').select2({
+            placeholder: "Selecione um frete",
+            allowClear: true,
+            width: '100%'
+        });
+    });
+</script>
+{% endblock %}

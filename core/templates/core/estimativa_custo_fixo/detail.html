@@ -1,0 +1,210 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<style>
+    .dataTables_filter {
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        // Inicializar DataTables
+        $('#itensTable').DataTable({
+            "language": {
+                "sEmptyTable": "Nenhum registro encontrado",
+                "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
+                "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
+                "sInfoFiltered": "(Filtrados de _MAX_ registros)",
+                "sInfoPostFix": "",
+                "sInfoThousands": ".",
+                "sLengthMenu": "_MENU_ resultados por página",
+                "sLoadingRecords": "Carregando...",
+                "sProcessing": "Processando...",
+                "sZeroRecords": "Nenhum registro encontrado",
+                "sSearch": "Pesquisar",
+                "oPaginate": {
+                    "sNext": "Próximo",
+                    "sPrevious": "Anterior",
+                    "sFirst": "Primeiro",
+                    "sLast": "Último"
+                }
+            },
+            "paging": false,
+            "info": false,
+            "searching": true,
+            "ordering": true,
+            "order": [[3, "desc"]], // Ordenar por valor/dia em ordem decrescente
+            "responsive": true
+        });
+        
+        // Dados para o gráfico
+        var descricoes = [];
+        var valoresPorDia = [];
+        
+        {% for item in itens %}
+            descricoes.push("{{ item.descricao }}");
+            valoresPorDia.push({{ item.valor_por_dia }});
+        {% endfor %}
+        
+        // Criar gráfico
+        var ctx = document.getElementById('custosChart').getContext('2d');
+        var custosChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: descricoes,
+                datasets: [{
+                    label: 'Custo por Dia (R$)',
+                    data: valoresPorDia,
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.5)',
+                        'rgba(255, 99, 132, 0.5)',
+                        'rgba(255, 206, 86, 0.5)',
+                        'rgba(75, 192, 192, 0.5)',
+                        'rgba(153, 102, 255, 0.5)',
+                        'rgba(255, 159, 64, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'R$ ' + context.parsed.y.toFixed(4);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            Detalhes da Estimativa de Custo Fixo
+            {% if estimativa.ativa %}
+                <span class="badge bg-success">Ativa</span>
+            {% else %}
+                <span class="badge bg-secondary">Inativa</span>
+            {% endif %}
+        </h2>
+        <div>
+            <a href="{% url 'core:estimativa_custo_fixo_edit' estimativa.id %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="{% url 'core:estimativa_custo_fixo_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Informações Gerais</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tr>
+                            <th>Data da Estimativa:</th>
+                            <td>{{ estimativa.data_estimativa|date:"d/m/Y" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Conjunto:</th>
+                            <td>
+                                Caminhão: {{ estimativa.conjunto.caminhao.placa }} - {{ estimativa.conjunto.caminhao.marca }} {{ estimativa.conjunto.caminhao.modelo }}<br>
+                                Carreta: {{ estimativa.conjunto.carreta1.placa }} - {{ estimativa.conjunto.carreta1.marca }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Custo Total por Dia:</th>
+                            <td class="fw-bold">R$ {{ estimativa.custo_total_dia|floatformat:4 }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Itens de Custo Fixo</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="itensTable" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Descrição</th>
+                            <th>Tipo</th>
+                            <th>Valor Total (R$)</th>
+                            <th>Valor/Dia (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in itens %}
+                            <tr>
+                                <td>{{ item.descricao }}</td>
+                                <td>{{ item.get_tipo_display }}</td>
+                                <td>R$ {{ item.valor_total|floatformat:2 }}</td>
+                                <td>R$ {{ item.valor_por_dia|floatformat:4 }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">Nenhum item de custo fixo cadastrado.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="3" class="text-end">Custo Total por Dia:</th>
+                            <th>R$ {{ estimativa.custo_total_dia|floatformat:4 }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Gráfico de Custos</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="custosChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}

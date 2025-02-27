@@ -1,0 +1,33 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h4>Confirmar Exclusão</h4>
+        </div>
+        <div class="card-body">
+            <p class="lead">Tem certeza que deseja excluir a despesa abaixo?</p>
+            
+            <div class="alert alert-warning">
+                <strong>Categoria:</strong> {{ despesa.categoria.nome }} - {{ despesa.subcategoria.nome }}<br>
+                <strong>Data de Vencimento:</strong> {{ despesa.data_vencimento|date:"d/m/Y" }}<br>
+                <strong>Valor:</strong> R$ {{ despesa.valor|floatformat:2 }}<br>
+                <strong>Destino:</strong> {{ despesa.destino_display }}<br>
+                <strong>Status:</strong> {{ despesa.status_display }}
+            </div>
+            
+            <p class="text-danger"><strong>Atenção:</strong> Esta ação não pode ser desfeita!</p>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'core:despesa_list' %}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-danger">Confirmar Exclusão</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

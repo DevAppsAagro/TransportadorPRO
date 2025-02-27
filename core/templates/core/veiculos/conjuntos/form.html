@@ -1,0 +1,89 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{% if conjunto %}Editar{% else %}Novo{% endif %} Conjunto{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">{% if conjunto %}Editar{% else %}Novo{% endif %} Conjunto</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="data_configuracao" class="form-label">Data de Configuração</label>
+                            <input type="date" class="form-control" id="data_configuracao" name="data_configuracao" value="{{ conjunto.data_configuracao|date:'Y-m-d'|default:'' }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="caminhao" class="form-label">Caminhão</label>
+                            <select class="form-select" id="caminhao" name="caminhao" required>
+                                <option value="">Selecione um caminhão</option>
+                                {% for caminhao in caminhoes %}
+                                    <option value="{{ caminhao.id }}" {% if conjunto and conjunto.caminhao.id == caminhao.id %}selected{% endif %}>
+                                        {{ caminhao.placa }} - {{ caminhao.marca }} {{ caminhao.modelo }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="carreta1" class="form-label">Carreta 1</label>
+                            <select class="form-select" id="carreta1" name="carreta1" required>
+                                <option value="">Selecione a primeira carreta</option>
+                                {% for carreta in carretas %}
+                                    <option value="{{ carreta.id }}" {% if conjunto and conjunto.carreta1.id == carreta.id %}selected{% endif %}>
+                                        {{ carreta.placa }} - {{ carreta.marca }} {{ carreta.modelo }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="carreta2" class="form-label">Carreta 2 (Opcional)</label>
+                            <select class="form-select" id="carreta2" name="carreta2">
+                                <option value="">Selecione a segunda carreta (opcional)</option>
+                                {% for carreta in carretas %}
+                                    <option value="{{ carreta.id }}" {% if conjunto and conjunto.carreta2.id == carreta.id %}selected{% endif %}>
+                                        {{ carreta.placa }} - {{ carreta.marca }} {{ carreta.modelo }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="carreta3" class="form-label">Carreta 3 (Opcional)</label>
+                            <select class="form-select" id="carreta3" name="carreta3">
+                                <option value="">Selecione a terceira carreta (opcional)</option>
+                                {% for carreta in carretas %}
+                                    <option value="{{ carreta.id }}" {% if conjunto and conjunto.carreta3.id == carreta.id %}selected{% endif %}>
+                                        {{ carreta.placa }} - {{ carreta.marca }} {{ carreta.modelo }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="ATIVO" {% if conjunto and conjunto.status == 'ATIVO' %}selected{% endif %}>Ativo</option>
+                                <option value="INATIVO" {% if conjunto and conjunto.status == 'INATIVO' %}selected{% endif %}>Inativo</option>
+                            </select>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'core:conjuntos' %}" class="btn btn-secondary me-md-2">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
