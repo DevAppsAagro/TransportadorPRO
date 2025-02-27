@@ -567,6 +567,9 @@ def fluxo_caixa(request):
     except ValueError:
         ano_selecionado = datetime.now().year
     
+    # Verificar se deve considerar custos fixos estimados
+    considerar_estimados = request.GET.get('considerar_estimados') == 'on'
+    
     # Lista de anos disponíveis (últimos 5 anos)
     ano_atual = datetime.now().year
     anos_disponiveis = list(range(ano_atual - 4, ano_atual + 1))
@@ -597,6 +600,27 @@ def fluxo_caixa(request):
             total=Coalesce(Sum('valor'), Decimal('0'))
         )['total']
         
+        # Adicionar custos fixos estimados se solicitado
+        custos_fixos_estimados = Decimal('0')
+        if considerar_estimados:
+            # Buscar estimativas de custos fixos do usuário através dos conjuntos
+            conjuntos_usuario = Conjunto.objects.filter(
+                caminhao__usuario=request.user
+            )
+            
+            # Buscar as estimativas mais recentes para cada conjunto
+            estimativas_custo_fixo = EstimativaCustoFixo.objects.filter(
+                conjunto__in=conjuntos_usuario
+            )
+            
+            # Calcular o custo mensal total das estimativas
+            for estimativa in estimativas_custo_fixo:
+                # Custo diário * 30 dias = custo mensal aproximado
+                custos_fixos_estimados += estimativa.custo_total_dia * Decimal('30')
+            
+            # Adicionar às despesas
+            despesas += custos_fixos_estimados
+        
         # Saldo do mês
         saldo_mes = receitas - despesas
         
@@ -611,7 +635,8 @@ def fluxo_caixa(request):
                 9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
             }[mes],
             'receitas': receitas,
-            'despesas': despesas,
+            'despesas': despesas - custos_fixos_estimados,  # Despesas sem os custos fixos
+            'custos_fixos_estimados': custos_fixos_estimados,  # Custos fixos separados
             'saldo_mes': saldo_mes,
             'saldo_acumulado': saldo_acumulado
         })
@@ -622,6 +647,7 @@ def fluxo_caixa(request):
         'anos_disponiveis': anos_disponiveis,
         'anos': anos_disponiveis,  # Para compatibilidade com o template
         'ano_selecionado': ano_selecionado,
+        'considerar_estimados': considerar_estimados,
         
         # Totais para os cards
         'total_receitas': sum(item['receitas'] for item in fluxo_caixa_mensal),
@@ -647,30 +673,66 @@ def dre(request):
     regime de competência (o que foi contabilizado no período, independente do pagamento).
     """
     # Obter parâmetros do formulário
-    data_inicio = request.GET.get('data_inicio')
-    data_fim = request.GET.get('data_fim')
+    ano_selecionado = request.GET.get('ano')
+    mes_selecionado = request.GET.get('mes')
     regime = request.GET.get('regime', 'competencia')  # Padrão: regime de competência
     
     # Valores padrão para data (mês atual)
     hoje = datetime.now().date()
-    primeiro_dia_mes = hoje.replace(day=1)
-    ultimo_dia_mes = (primeiro_dia_mes.replace(month=primeiro_dia_mes.month % 12 + 1, day=1) - timedelta(days=1)) if primeiro_dia_mes.month < 12 else primeiro_dia_mes.replace(year=primeiro_dia_mes.year + 1, month=1, day=1) - timedelta(days=1)
+    ano_atual = hoje.year
+    mes_atual = hoje.month
     
-    # Se as datas não foram especificadas, usa o mês atual
-    if not data_inicio:
-        data_inicio = primeiro_dia_mes.strftime('%Y-%m-%d')
-    if not data_fim:
-        data_fim = ultimo_dia_mes.strftime('%Y-%m-%d')
+    # Lista de anos disponíveis (últimos 5 anos)
+    anos_disponiveis = list(range(ano_atual - 4, ano_atual + 1))
     
-    # Converte as datas para o formato correto
-    try:
-        data_inicio_dt = datetime.strptime(data_inicio, '%Y-%m-%d').date()
-        data_fim_dt = datetime.strptime(data_fim, '%Y-%m-%d').date()
-    except ValueError:
-        data_inicio_dt = primeiro_dia_mes
-        data_fim_dt = ultimo_dia_mes
-        data_inicio = primeiro_dia_mes.strftime('%Y-%m-%d')
-        data_fim = ultimo_dia_mes.strftime('%Y-%m-%d')
+    # Lista de meses
+    meses = [
+        {'valor': 1, 'nome': 'Janeiro'},
+        {'valor': 2, 'nome': 'Fevereiro'},
+        {'valor': 3, 'nome': 'Março'},
+        {'valor': 4, 'nome': 'Abril'},
+        {'valor': 5, 'nome': 'Maio'},
+        {'valor': 6, 'nome': 'Junho'},
+        {'valor': 7, 'nome': 'Julho'},
+        {'valor': 8, 'nome': 'Agosto'},
+        {'valor': 9, 'nome': 'Setembro'},
+        {'valor': 10, 'nome': 'Outubro'},
+        {'valor': 11, 'nome': 'Novembro'},
+        {'valor': 12, 'nome': 'Dezembro'}
+    ]
+    
+    # Se o ano não foi especificado, usa o ano atual
+    if not ano_selecionado:
+        ano_selecionado = ano_atual
+    else:
+        try:
+            ano_selecionado = int(ano_selecionado)
+        except ValueError:
+            ano_selecionado = ano_atual
+    
+    # Se o mês não foi especificado, usa o mês atual
+    if not mes_selecionado:
+        mes_selecionado = mes_atual
+    else:
+        try:
+            mes_selecionado = int(mes_selecionado)
+            if mes_selecionado < 1 or mes_selecionado > 12:
+                mes_selecionado = mes_atual
+        except ValueError:
+            mes_selecionado = mes_atual
+    
+    # Calcula o primeiro e último dia do mês selecionado
+    primeiro_dia_mes = datetime(ano_selecionado, mes_selecionado, 1).date()
+    if mes_selecionado == 12:
+        ultimo_dia_mes = datetime(ano_selecionado + 1, 1, 1).date() - timedelta(days=1)
+    else:
+        ultimo_dia_mes = datetime(ano_selecionado, mes_selecionado + 1, 1).date() - timedelta(days=1)
+    
+    # Define as datas de início e fim
+    data_inicio_dt = primeiro_dia_mes
+    data_fim_dt = ultimo_dia_mes
+    data_inicio = primeiro_dia_mes.strftime('%Y-%m-%d')
+    data_fim = ultimo_dia_mes.strftime('%Y-%m-%d')
     
     # Filtros de data para receitas e despesas
     if regime == 'caixa':
@@ -725,30 +787,14 @@ def dre(request):
     }
     
     # Prepara o contexto para o template
-    ano_atual = datetime.now().year
-    anos_disponiveis = list(range(ano_atual - 5, ano_atual + 1))
-    meses = [
-        {'numero': 1, 'nome': 'Janeiro'},
-        {'numero': 2, 'nome': 'Fevereiro'},
-        {'numero': 3, 'nome': 'Março'},
-        {'numero': 4, 'nome': 'Abril'},
-        {'numero': 5, 'nome': 'Maio'},
-        {'numero': 6, 'nome': 'Junho'},
-        {'numero': 7, 'nome': 'Julho'},
-        {'numero': 8, 'nome': 'Agosto'},
-        {'numero': 9, 'nome': 'Setembro'},
-        {'numero': 10, 'nome': 'Outubro'},
-        {'numero': 11, 'nome': 'Novembro'},
-        {'numero': 12, 'nome': 'Dezembro'},
-    ]
-    
     context = {
         'data_inicio': data_inicio,
         'data_fim': data_fim,
         'regime': regime,
         'anos': anos_disponiveis,
         'meses': meses,
-        'ano_atual': ano_atual,
+        'ano_selecionado': ano_selecionado,
+        'mes_selecionado': mes_selecionado,
         'receitas': {'total': total_receitas},
         'despesas': {'total': total_despesas},
         'despesas_por_categoria': despesas_por_categoria,

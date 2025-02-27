@@ -376,7 +376,7 @@
                                         <td>{{ abastecimento.data|date:"d/m/Y" }}</td>
                                         <td>{{ abastecimento.posto }}</td>
                                         <td>{{ abastecimento.litros|floatformat:2 }}</td>
-                                        <td>R$ {{ abastecimento.valor_unitario|floatformat:3 }}</td>
+                                        <td>R$ {{ abastecimento.valor_litro|floatformat:3 }}</td>
                                         <td>R$ {{ abastecimento.total_valor|floatformat:2 }}</td>
                                     </tr>
                                 {% endfor %}

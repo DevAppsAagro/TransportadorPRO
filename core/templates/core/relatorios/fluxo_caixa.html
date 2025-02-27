@@ -244,6 +244,16 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Manter o estado do checkbox após submissão
+    const considerarEstimadosCheckbox = document.getElementById('considerar_estimados');
+    if (considerarEstimadosCheckbox) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const considerarEstimados = urlParams.get('considerar_estimados');
+        if (considerarEstimados === 'on') {
+            considerarEstimadosCheckbox.checked = true;
+        }
+    }
+    
     // Dados para o gráfico
     const labels = {{ chart_labels|safe }};
     const receitas = {{ chart_receitas|safe }};

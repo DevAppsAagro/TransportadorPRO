@@ -287,6 +287,11 @@
             },
             "order": [[0, "desc"]]
         });
+        
+        // Preencher os campos do formulário com os valores do relatório gerado
+        document.getElementById('cliente').value = '{{ cliente.id }}';
+        document.getElementById('data_inicio').value = '{{ data_inicio|date:"Y-m-d" }}';
+        document.getElementById('data_fim').value = '{{ data_fim|date:"Y-m-d" }}';
         {% endif %}
         
         // Exportar para Excel

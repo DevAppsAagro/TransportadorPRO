@@ -348,6 +348,16 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Manter o valor do regime selecionado
+    const regimeSelect = document.getElementById('regime');
+    if (regimeSelect) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const regimeParam = urlParams.get('regime');
+        if (regimeParam) {
+            regimeSelect.value = regimeParam;
+        }
+    }
+    
     // Dados para o gráfico
     const labels = {{ chart_labels|safe }};
     const values = {{ chart_values|safe }};
