@@ -2,18 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "transportador_pro/wsgi.py",
+      "src": "vercel_app.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "transportador_pro/wsgi.py"
+      "dest": "vercel_app.py"
     }
-  ],
-  "env": {
-    "DJANGO_SETTINGS_MODULE": "transportador_pro.settings",
-    "PYTHONPATH": "."
-  }
+  ]
 }
