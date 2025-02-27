@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
 
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -94,7 +95,15 @@ WSGI_APPLICATION = 'transportador_pro.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-if os.environ.get('VERCEL'):
+if os.environ.get('DATABASE_URL'):
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+elif os.environ.get('VERCEL'):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
