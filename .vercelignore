@@ -1,0 +1,42 @@
+# Arquivos e diretórios a serem ignorados pelo Vercel
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Arquivos de banco de dados
+*.sqlite3
+db.sqlite3
+db.sqlite3-journal
+
+# Arquivos de mídia e estáticos (o Vercel vai coletar os estáticos durante o build)
+media/
+
+# Arquivos de ambiente
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Arquivos de IDE
+.idea/
+.vscode/
+*.swp
+*.swo
