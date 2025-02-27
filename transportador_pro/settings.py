@@ -43,8 +43,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'crispy_forms',
+    'crispy_bootstrap4',
     'core',
 ]
+
+# Crispy Forms Configuration
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
+CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap4'
 
 # Supabase Configuration
 SUPABASE_URL = os.getenv('SUPABASE_URL')
