@@ -21,7 +21,15 @@ def despesa_list(request):
     """Lista todas as despesas com filtros por status"""
     status_filter = request.GET.get('status', '')
     
-    despesas = Despesa.objects.all().order_by('-data_vencimento')
+    # Filtrar despesas pelo usuário logado através dos relacionamentos
+    # Uma despesa pode estar relacionada a um caminhão, carreta, frete ou empresa
+    # Todos esses modelos têm um campo 'usuario'
+    despesas = Despesa.objects.filter(
+        Q(caminhao__usuario=request.user) | 
+        Q(carreta__usuario=request.user) | 
+        Q(frete__caminhao__usuario=request.user) | 
+        Q(empresa__usuario=request.user)
+    ).distinct().order_by('-data_vencimento')
     
     # Aplicar filtros
     if status_filter:

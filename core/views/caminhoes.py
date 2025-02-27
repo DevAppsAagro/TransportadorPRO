@@ -39,8 +39,8 @@ def caminhao_novo(request):
     return render(request, 'core/veiculos/caminhoes/form.html')
 
 @login_required
-def caminhao_editar(request, pk):
-    caminhao = get_object_or_404(Caminhao, id=pk, usuario=request.user)
+def caminhao_editar(request, id):
+    caminhao = get_object_or_404(Caminhao, id=id, usuario=request.user)
     
     if request.method == 'POST':
         try:
@@ -77,3 +77,8 @@ def caminhao_excluir(request, id):
     except Exception as e:
         messages.error(request, f'Erro ao excluir caminhão: {str(e)}')
     return redirect('core:caminhoes')
+
+@login_required
+def caminhao_detalhes(request, id):
+    caminhao = get_object_or_404(Caminhao, id=id, usuario=request.user)
+    return render(request, 'core/veiculos/caminhoes/detalhes.html', {'caminhao': caminhao})

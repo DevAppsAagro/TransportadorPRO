@@ -287,14 +287,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for categoria, valor in despesas.items|dictsort:1|dictsortreversed:1 %}
-                            {% if categoria != 'total' %}
-                                <tr>
-                                    <td class="text-left">{{ categoria }}</td>
-                                    <td class="text-right">R$ {{ valor|floatformat:2|intcomma }}</td>
-                                    <td class="text-right">{{ valor|percentage:receitas.total|floatformat:2 }}%</td>
-                                </tr>
-                            {% endif %}
+                        {% for item in despesas_por_categoria %}
+                        <tr>
+                            <td class="text-left">{{ item.categoria__nome }}</td>
+                            <td class="text-right">R$ {{ item.total|floatformat:2|intcomma }}</td>
+                            <td class="text-right">{{ item.total|percentage:receitas.total|floatformat:2 }}%</td>
+                        </tr>
                         {% endfor %}
                         <tr class="total-row">
                             <td class="text-left">Total de Despesas</td>

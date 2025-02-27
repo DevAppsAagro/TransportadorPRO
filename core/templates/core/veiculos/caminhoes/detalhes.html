@@ -1,0 +1,173 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Detalhes do Caminhão{% endblock %}
+
+{% block custom_css %}
+<style>
+    .detail-card {
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    .detail-card .card-header {
+        background-color: #4e73df;
+        color: white;
+        font-weight: bold;
+        padding: 15px 20px;
+    }
+    .detail-card .card-body {
+        padding: 20px;
+    }
+    .info-box {
+        background-color: #f8f9fc;
+        border-left: 4px solid #4e73df;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+    }
+    .info-box h6 {
+        margin-bottom: 10px;
+        color: #4e73df;
+        font-weight: bold;
+    }
+    .info-label {
+        font-weight: bold;
+        color: #5a5c69;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-truck fa-sm text-primary-50 mr-1"></i> Detalhes do Caminhão: {{ caminhao.placa }}
+        </h1>
+        <div class="action-buttons">
+            <a href="{% url 'core:caminhao_editar' caminhao.id %}" class="btn btn-primary">
+                <i class="fas fa-edit fa-sm text-white-50 mr-1"></i> Editar
+            </a>
+            <a href="{% url 'core:caminhoes' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left fa-sm text-white-50 mr-1"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Informações Básicas -->
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="detail-card">
+                <div class="card-header">
+                    Informações Básicas
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="info-box">
+                                <h6>Placa</h6>
+                                <p>{{ caminhao.placa }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="info-box">
+                                <h6>Marca / Modelo</h6>
+                                <p>{{ caminhao.marca }} / {{ caminhao.modelo }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="info-box">
+                                <h6>Ano</h6>
+                                <p>{{ caminhao.ano }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="info-box">
+                                <h6>Chassi</h6>
+                                <p>{{ caminhao.chassi }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="info-box">
+                                <h6>Renavam</h6>
+                                <p>{{ caminhao.renavam }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informações Financeiras -->
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="detail-card">
+                <div class="card-header">
+                    Informações Financeiras
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="info-box">
+                                <h6>Valor de Compra</h6>
+                                <p>R$ {{ caminhao.valor_compra|floatformat:2|intcomma }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="info-box">
+                                <h6>Vida Útil (anos)</h6>
+                                <p>{{ caminhao.vida_util }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="info-box">
+                                <h6>Valor Residual</h6>
+                                <p>R$ {{ caminhao.valor_residual|floatformat:2|intcomma }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informações Operacionais -->
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="detail-card">
+                <div class="card-header">
+                    Informações Operacionais
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="info-box">
+                                <h6>Capacidade de Carga</h6>
+                                <p>{{ caminhao.capacidade_carga|floatformat:2|intcomma }} kg</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="info-box">
+                                <h6>Quilometragem Atual</h6>
+                                <p>{{ caminhao.quilometragem|default:"Não informado" }} km</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="info-box">
+                                <h6>Última Manutenção</h6>
+                                <p>{{ caminhao.ultima_manutencao|date:"d/m/Y"|default:"Não informado" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

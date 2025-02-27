@@ -10,7 +10,8 @@ import datetime
 
 @login_required
 def estimativa_pneus_list(request):
-    estimativas = EstimativaPneus.objects.all().order_by('-data_estimativa')
+    # Filtrar estimativas pelo usuário logado através do conjunto
+    estimativas = EstimativaPneus.objects.filter(conjunto__usuario=request.user).order_by('-data_estimativa')
     paginator = Paginator(estimativas, 10)
     page = request.GET.get('page')
     estimativas_paginadas = paginator.get_page(page)

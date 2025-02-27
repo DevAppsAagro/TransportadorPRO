@@ -30,8 +30,8 @@ def categoria_nova(request):
     return render(request, 'core/categorias/categoria_form.html')
 
 @login_required
-def categoria_editar(request, pk):
-    categoria = get_object_or_404(Categoria, pk=pk)
+def categoria_editar(request, id):
+    categoria = get_object_or_404(Categoria, pk=id)
     
     if request.method == 'POST':
         categoria.nome = request.POST.get('nome')
@@ -45,8 +45,8 @@ def categoria_editar(request, pk):
     return render(request, 'core/categorias/categoria_form.html', {'categoria': categoria})
 
 @login_required
-def categoria_excluir(request, pk):
-    categoria = get_object_or_404(Categoria, pk=pk)
+def categoria_excluir(request, id):
+    categoria = get_object_or_404(Categoria, pk=id)
     categoria.delete()
     messages.success(request, 'Categoria excluída com sucesso!')
     return redirect('core:categorias')
@@ -75,8 +75,8 @@ def subcategoria_nova(request):
     return render(request, 'core/categorias/subcategoria_form.html', {'categorias': categorias})
 
 @login_required
-def subcategoria_editar(request, pk):
-    subcategoria = get_object_or_404(Subcategoria, pk=pk)
+def subcategoria_editar(request, id):
+    subcategoria = get_object_or_404(Subcategoria, pk=id)
     
     if request.method == 'POST':
         subcategoria.nome = request.POST.get('nome')
@@ -94,8 +94,8 @@ def subcategoria_editar(request, pk):
     })
 
 @login_required
-def subcategoria_excluir(request, pk):
-    subcategoria = get_object_or_404(Subcategoria, pk=pk)
+def subcategoria_excluir(request, id):
+    subcategoria = get_object_or_404(Subcategoria, pk=id)
     subcategoria.delete()
     messages.success(request, 'Subcategoria excluída com sucesso!')
     return redirect('core:subcategorias')

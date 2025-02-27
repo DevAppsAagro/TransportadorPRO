@@ -30,8 +30,8 @@ def carga_nova(request):
     return render(request, 'core/cargas/form.html')
 
 @login_required
-def carga_editar(request, pk):
-    carga = get_object_or_404(Carga, pk=pk, usuario=request.user)
+def carga_editar(request, id):
+    carga = get_object_or_404(Carga, pk=id, usuario=request.user)
     
     if request.method == 'POST':
         try:
@@ -48,8 +48,8 @@ def carga_editar(request, pk):
     return render(request, 'core/cargas/form.html', {'carga': carga})
 
 @login_required
-def carga_excluir(request, pk):
-    carga = get_object_or_404(Carga, pk=pk, usuario=request.user)
+def carga_excluir(request, id):
+    carga = get_object_or_404(Carga, pk=id, usuario=request.user)
     
     try:
         carga.delete()
@@ -57,4 +57,4 @@ def carga_excluir(request, pk):
     except Exception as e:
         messages.error(request, f'Erro ao excluir carga: {str(e)}')
     
-    return redirect('cargas')
+    return redirect('core:cargas')

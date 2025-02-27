@@ -10,8 +10,9 @@ from core.models.frete import Frete
 
 @login_required
 def abastecimentos(request):
-    abastecimentos_list = Abastecimento.objects.all().order_by('-data')
-    total_valor = Abastecimento.objects.aggregate(total=Sum('total_valor'))['total'] or 0
+    # Filtrar abastecimentos pelo usuário logado através do caminhão
+    abastecimentos_list = Abastecimento.objects.filter(caminhao__usuario=request.user).order_by('-data')
+    total_valor = abastecimentos_list.aggregate(total=Sum('total_valor'))['total'] or 0
     return render(request, 'core/abastecimentos/lista.html', {
         'abastecimentos': abastecimentos_list,
         'total_valor': total_valor
@@ -55,8 +56,8 @@ def abastecimento_novo(request):
     return render(request, 'core/abastecimentos/form.html', context)
 
 @login_required
-def abastecimento_editar(request, pk):
-    abastecimento = get_object_or_404(Abastecimento, pk=pk)
+def abastecimento_editar(request, id):
+    abastecimento = get_object_or_404(Abastecimento, pk=id)
     
     if request.method == 'POST':
         try:
@@ -94,11 +95,11 @@ def abastecimento_editar(request, pk):
         'postos': Contato.objects.filter(tipo='POSTO'),
         'fretes': Frete.objects.filter(status='EM_ANDAMENTO')
     }
-    return render(request, 'core/abastecimento_form.html', context)
+    return render(request, 'core/abastecimentos/form.html', context)
 
 @login_required
-def abastecimento_excluir(request, pk):
-    abastecimento = get_object_or_404(Abastecimento, pk=pk)
+def abastecimento_excluir(request, id):
+    abastecimento = get_object_or_404(Abastecimento, pk=id)
     try:
         abastecimento.delete()
         messages.success(request, 'Abastecimento excluído com sucesso!')

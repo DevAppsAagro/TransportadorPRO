@@ -11,7 +11,8 @@ import json
 
 @login_required
 def estimativa_custo_fixo_list(request):
-    estimativas = EstimativaCustoFixo.objects.all().order_by('-data_estimativa')
+    # Filtrar estimativas pelo usuário logado através do conjunto
+    estimativas = EstimativaCustoFixo.objects.filter(conjunto__usuario=request.user).order_by('-data_estimativa')
     
     # Marcar as estimativas ativas
     for estimativa in estimativas:
@@ -23,7 +24,8 @@ def estimativa_custo_fixo_list(request):
 
 @login_required
 def estimativa_custo_fixo_create(request):
-    conjuntos = Conjunto.objects.all()
+    # Filtrar conjuntos pelo usuário logado
+    conjuntos = Conjunto.objects.filter(usuario=request.user)
     
     if request.method == 'POST':
         data_estimativa = request.POST.get('data_estimativa')
@@ -75,8 +77,10 @@ def estimativa_custo_fixo_create(request):
 
 @login_required
 def estimativa_custo_fixo_edit(request, pk):
-    estimativa = get_object_or_404(EstimativaCustoFixo, pk=pk)
-    conjuntos = Conjunto.objects.all()
+    # Buscar a estimativa garantindo que pertença ao usuário logado
+    estimativa = get_object_or_404(EstimativaCustoFixo, pk=pk, conjunto__usuario=request.user)
+    # Filtrar conjuntos pelo usuário logado
+    conjuntos = Conjunto.objects.filter(usuario=request.user)
     itens = estimativa.itens.all()
     
     if request.method == 'POST':
@@ -134,7 +138,8 @@ def estimativa_custo_fixo_edit(request, pk):
 
 @login_required
 def estimativa_custo_fixo_delete(request, pk):
-    estimativa = get_object_or_404(EstimativaCustoFixo, pk=pk)
+    # Buscar a estimativa garantindo que pertença ao usuário logado
+    estimativa = get_object_or_404(EstimativaCustoFixo, pk=pk, conjunto__usuario=request.user)
     
     try:
         estimativa.delete()
@@ -146,7 +151,8 @@ def estimativa_custo_fixo_delete(request, pk):
 
 @login_required
 def detalhes_estimativa_custo_fixo(request, pk):
-    estimativa = get_object_or_404(EstimativaCustoFixo, pk=pk)
+    # Buscar a estimativa garantindo que pertença ao usuário logado
+    estimativa = get_object_or_404(EstimativaCustoFixo, pk=pk, conjunto__usuario=request.user)
     itens = estimativa.itens.all()
     
     # Marcar se está ativa
@@ -162,20 +168,18 @@ def calcular_valor_por_dia(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            valor_total = Decimal(data.get('valor_total', '0'))
-            tipo = data.get('tipo', 'ANUAL')
+            valor_mensal = Decimal(data.get('valor_mensal', 0))
             
-            if tipo == 'ANUAL':
-                valor_por_dia = valor_total / Decimal('365')
-            elif tipo == 'MENSAL':
-                valor_por_dia = valor_total / Decimal('30')
-            else:
-                valor_por_dia = Decimal('0')
+            # Cálculo do valor por dia
+            dias_mes = 30  # Média aproximada de dias por mês
+            valor_por_dia = valor_mensal / dias_mes if valor_mensal > 0 else 0
             
             return JsonResponse({
-                'valor_por_dia': float(valor_por_dia.quantize(Decimal('0.0001')))
+                'valor_por_dia': float(valor_por_dia)
             })
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+            return JsonResponse({
+                'error': str(e)
+            }, status=400)
     
     return JsonResponse({'error': 'Método não permitido'}, status=405)

@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 
 @login_required
 def fretes(request):
-    fretes_list = Frete.objects.all().order_by('-data_saida')
+    # Filtrar fretes pelo usuário logado através do caminhão
+    fretes_list = Frete.objects.filter(caminhao__usuario=request.user).order_by('-data_saida')
     
     # Calculate metrics that were previously in template filters
     fretes_concluidos = sum(1 for frete in fretes_list if frete.data_chegada)
@@ -31,8 +32,9 @@ def fretes(request):
     return render(request, 'core/fretes/fretes.html', context)
 
 @login_required
-def frete_detalhes(request, pk):
-    frete = get_object_or_404(Frete, pk=pk)
+def frete_detalhes(request, id):
+    # Garantir que o usuário só possa ver seus próprios fretes
+    frete = get_object_or_404(Frete, pk=id, caminhao__usuario=request.user)
     
     # Buscar despesas relacionadas a este frete
     from ..models.despesa import Despesa
@@ -169,8 +171,8 @@ def frete_novo(request):
     })
 
 @login_required
-def frete_editar(request, pk):
-    frete = get_object_or_404(Frete, pk=pk)
+def frete_editar(request, id):
+    frete = get_object_or_404(Frete, pk=id)
     
     if request.method == 'POST':
         try:
@@ -254,8 +256,8 @@ def frete_editar(request, pk):
     })
 
 @login_required
-def frete_excluir(request, pk):
-    frete = get_object_or_404(Frete, pk=pk)
+def frete_excluir(request, id):
+    frete = get_object_or_404(Frete, pk=id)
     try:
         logger.info('Excluindo frete...')
         frete.delete()
@@ -267,8 +269,8 @@ def frete_excluir(request, pk):
     return redirect('core:fretes')
 
 @login_required
-def frete_receber(request, pk):
-    frete = get_object_or_404(Frete, pk=pk)
+def frete_receber(request, id):
+    frete = get_object_or_404(Frete, pk=id)
     if request.method == 'POST':
         try:
             logger.info('Registrando recebimento de frete...')
@@ -281,4 +283,4 @@ def frete_receber(request, pk):
         except Exception as e:
             logger.error(f'Erro ao registrar recebimento: {str(e)}')
             messages.error(request, f'Erro ao registrar recebimento: {str(e)}')
-    return redirect('core:frete_detalhes', pk=pk)
+    return redirect('core:frete_detalhes', id=id)

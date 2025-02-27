@@ -11,7 +11,8 @@ import json
 
 @login_required
 def estimativa_manutencao_list(request):
-    estimativas = EstimativaManutencao.objects.all().order_by('-data_estimativa')
+    # Filtrar estimativas pelo usuário logado através do conjunto
+    estimativas = EstimativaManutencao.objects.filter(conjunto__usuario=request.user).order_by('-data_estimativa')
     
     # Marcar as estimativas ativas
     for estimativa in estimativas:

@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Avg, F, DecimalField
 from django.db.models.functions import Coalesce
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timedelta
 from core.models.caminhao import Caminhao
 from core.models.conjunto import Conjunto
 from core.models.frete import Frete
@@ -24,7 +24,7 @@ def relatorios(request):
 
 @login_required
 def relatorio_veiculo(request):
-    caminhoes = Caminhao.objects.filter(status='ATIVO').order_by('placa')
+    caminhoes = Caminhao.objects.filter(status='ATIVO', usuario=request.user).order_by('placa')
     
     if request.method == 'POST':
         caminhao_id = request.POST.get('caminhao')
@@ -36,8 +36,8 @@ def relatorio_veiculo(request):
             data_inicio = datetime.strptime(data_inicio, '%Y-%m-%d').date()
             data_fim = datetime.strptime(data_fim, '%Y-%m-%d').date()
             
-            # Busca o caminhão
-            caminhao = get_object_or_404(Caminhao, id=caminhao_id)
+            # Busca o caminhão e verifica se pertence ao usuário
+            caminhao = get_object_or_404(Caminhao, id=caminhao_id, usuario=request.user)
             
             # Busca o conjunto ativo do caminhão
             conjunto = Conjunto.objects.filter(caminhao=caminhao, status='ATIVO').first()
@@ -248,25 +248,24 @@ def relatorio_veiculo(request):
 
 @login_required
 def relatorio_frete(request, pk=None):
-    """
-    Gera um relatório detalhado para um frete específico, incluindo receitas, despesas e lucratividade.
-    """
-    # Se um ID de frete foi passado diretamente na URL
     if pk:
-        frete = get_object_or_404(Frete, pk=pk)
+        # Buscar o frete específico, garantindo que pertença ao usuário logado
+        frete = get_object_or_404(Frete, pk=pk, caminhao__usuario=request.user)
         return gerar_relatorio_frete(request, frete)
     
-    # Se estamos selecionando um frete através do formulário
-    fretes = Frete.objects.all().order_by('-data_saida')
-    
+    # Processar o formulário quando enviado via POST
     if request.method == 'POST':
         frete_id = request.POST.get('frete')
-        
         if frete_id:
-            frete = get_object_or_404(Frete, pk=frete_id)
+            frete = get_object_or_404(Frete, pk=frete_id, caminhao__usuario=request.user)
             return gerar_relatorio_frete(request, frete)
     
-    return render(request, 'core/relatorios/frete_form.html', {'fretes': fretes})
+    # Listar todos os fretes para seleção, filtrando pelo usuário logado
+    fretes = Frete.objects.filter(caminhao__usuario=request.user).order_by('-data_saida')
+    
+    return render(request, 'core/relatorios/frete_form.html', {
+        'fretes': fretes
+    })
 
 def gerar_relatorio_frete(request, frete):
     """
@@ -471,8 +470,8 @@ def relatorio_cliente(request):
     Gera um relatório de fretes por cliente, mostrando todos os fretes realizados
     para um cliente específico em um determinado período.
     """
-    # Buscar todos os clientes
-    clientes = Contato.objects.filter(tipo='CLIENTE').order_by('nome_completo')
+    # Filtrar apenas clientes do usuário logado
+    clientes = Contato.objects.filter(tipo='CLIENTE', usuario=request.user).order_by('nome_completo')
     
     context = {
         'clientes': clientes,
@@ -489,15 +488,16 @@ def relatorio_cliente(request):
             data_inicio = datetime.strptime(data_inicio, '%Y-%m-%d').date()
             data_fim = datetime.strptime(data_fim, '%Y-%m-%d').date()
             
-            # Busca o cliente
-            cliente = get_object_or_404(Contato, id=cliente_id, tipo='CLIENTE')
+            # Busca o cliente e verifica se pertence ao usuário
+            cliente = get_object_or_404(Contato, id=cliente_id, usuario=request.user)
             
-            # Busca os fretes do cliente no período
+            # Busca os fretes do cliente no período, filtrando pelo usuário logado
             fretes = Frete.objects.filter(
                 cliente=cliente,
                 data_saida__gte=data_inicio,
-                data_saida__lte=data_fim
-            ).order_by('data_saida')
+                data_saida__lte=data_fim,
+                caminhao__usuario=request.user
+            ).order_by('-data_saida')
             
             # Calcula totais
             total_fretes = fretes.count()
@@ -560,146 +560,84 @@ def fluxo_caixa(request):
     Gera um relatório de fluxo de caixa mensal, mostrando receitas, despesas, 
     saldo mensal e saldo acumulado para cada mês do ano selecionado.
     """
-    # Obtém o ano atual
+    # Obter o ano selecionado (padrão: ano atual)
+    ano_selecionado = request.GET.get('ano', datetime.now().year)
+    try:
+        ano_selecionado = int(ano_selecionado)
+    except ValueError:
+        ano_selecionado = datetime.now().year
+    
+    # Lista de anos disponíveis (últimos 5 anos)
     ano_atual = datetime.now().year
+    anos_disponiveis = list(range(ano_atual - 4, ano_atual + 1))
     
-    # Lista de anos para o filtro (últimos 5 anos + ano atual)
-    anos = list(range(ano_atual - 5, ano_atual + 1))
+    # Dados do fluxo de caixa por mês
+    fluxo_caixa_mensal = []
+    saldo_acumulado = 0
     
-    # Obtém o ano selecionado do formulário ou usa o ano atual como padrão
-    ano_selecionado = int(request.GET.get('ano', ano_atual))
-    
-    # Verifica se deve considerar custos fixos estimados
-    considerar_estimados = request.GET.get('considerar_estimados', 'off') == 'on'
-    
-    # Inicializa os dados do fluxo de caixa
-    fluxo_caixa = []
-    saldo_acumulado = Decimal('0')
-    
-    # Se estamos no primeiro mês do ano, precisamos buscar o saldo acumulado dos anos anteriores
-    if ano_selecionado > 0:
-        # Receitas de anos anteriores
-        receitas_anteriores = Frete.objects.filter(
-            data_saida__year__lt=ano_selecionado
-        ).aggregate(
-            total=Coalesce(Sum('valor_total'), Decimal('0'))
-        )['total']
-        
-        # Despesas de anos anteriores (despesas pagas)
-        despesas_anteriores = Despesa.objects.filter(
-            data_vencimento__year__lt=ano_selecionado,
-            data_pagamento__isnull=False
-        ).aggregate(
-            total=Coalesce(Sum('valor'), Decimal('0'))
-        )['total']
-        
-        # Calcula o saldo acumulado dos anos anteriores
-        saldo_acumulado = receitas_anteriores - despesas_anteriores
-    
-    # Dados para o gráfico
-    chart_labels = []
-    chart_receitas = []
-    chart_despesas = []
-    chart_saldo_mensal = []
-    chart_saldo_acumulado = []
-    
-    # Para cada mês do ano
     for mes in range(1, 13):
-        # Nome do mês
-        nome_mes = {
-            1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril',
-            5: 'Maio', 6: 'Junho', 7: 'Julho', 8: 'Agosto',
-            9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
-        }[mes]
-        
-        # Receitas do mês (fretes com data de saída no mês)
-        receitas_mes = Frete.objects.filter(
+        # Receitas do mês (fretes)
+        receitas = Frete.objects.filter(
+            caminhao__usuario=request.user,
             data_saida__year=ano_selecionado,
             data_saida__month=mes
         ).aggregate(
             total=Coalesce(Sum('valor_total'), Decimal('0'))
         )['total']
         
-        # Despesas pagas no mês
-        despesas_pagas = Despesa.objects.filter(
+        # Despesas do mês
+        despesas = Despesa.objects.filter(
+            Q(caminhao__usuario=request.user) | 
+            Q(carreta__usuario=request.user) | 
+            Q(frete__caminhao__usuario=request.user) | 
+            Q(empresa__usuario=request.user),
             data_vencimento__year=ano_selecionado,
-            data_vencimento__month=mes,
-            data_pagamento__isnull=False
+            data_vencimento__month=mes
         ).aggregate(
             total=Coalesce(Sum('valor'), Decimal('0'))
         )['total']
         
-        # Despesas a pagar no mês (para competência de caixa)
-        hoje = datetime.now().date()
-        despesas_a_pagar = Despesa.objects.filter(
-            data_vencimento__year=ano_selecionado,
-            data_vencimento__month=mes,
-            data_pagamento__isnull=True
-        ).aggregate(
-            total=Coalesce(Sum('valor'), Decimal('0'))
-        )['total']
-        
-        # Total de despesas do mês (pagas + a pagar)
-        despesas_mes = despesas_pagas + despesas_a_pagar
-        
-        # Custos fixos estimados (se solicitado)
-        custos_fixos_estimados = Decimal('0')
-        if considerar_estimados:
-            # Busca todos os conjuntos ativos
-            conjuntos_ativos = Conjunto.objects.filter(status='ATIVO')
-            
-            # Para cada conjunto, busca a estimativa de custo fixo mais recente
-            for conjunto in conjuntos_ativos:
-                estimativa = EstimativaCustoFixo.objects.filter(
-                    conjunto=conjunto
-                ).order_by('-data_estimativa').first()
-                
-                if estimativa:
-                    # Adiciona o custo fixo mensal estimado
-                    custos_fixos_estimados += estimativa.custo_total_dia * Decimal('30')  # Aproximação para um mês
-        
-        # Adiciona os custos fixos estimados às despesas do mês (se solicitado)
-        if considerar_estimados:
-            despesas_mes += custos_fixos_estimados
-        
-        # Calcula o saldo do mês
-        saldo_mes = receitas_mes - despesas_mes
+        # Saldo do mês
+        saldo_mes = receitas - despesas
         
         # Atualiza o saldo acumulado
         saldo_acumulado += saldo_mes
         
         # Adiciona os dados do mês ao fluxo de caixa
-        fluxo_caixa.append({
-            'mes': nome_mes,
-            'receitas': receitas_mes,
-            'despesas': despesas_mes,
-            'custos_fixos_estimados': custos_fixos_estimados if considerar_estimados else None,
+        fluxo_caixa_mensal.append({
+            'mes': {
+                1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril',
+                5: 'Maio', 6: 'Junho', 7: 'Julho', 8: 'Agosto',
+                9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
+            }[mes],
+            'receitas': receitas,
+            'despesas': despesas,
             'saldo_mes': saldo_mes,
             'saldo_acumulado': saldo_acumulado
         })
-        
-        # Adiciona os dados para o gráfico
-        chart_labels.append(nome_mes)
-        chart_receitas.append(float(receitas_mes))
-        chart_despesas.append(float(despesas_mes))
-        chart_saldo_mensal.append(float(saldo_mes))
-        chart_saldo_acumulado.append(float(saldo_acumulado))
     
     # Prepara o contexto para o template
     context = {
-        'fluxo_caixa': fluxo_caixa,
-        'anos': anos,
+        'fluxo_caixa_mensal': fluxo_caixa_mensal,
+        'anos_disponiveis': anos_disponiveis,
+        'anos': anos_disponiveis,  # Para compatibilidade com o template
         'ano_selecionado': ano_selecionado,
-        'considerar_estimados': considerar_estimados,
-        'chart_labels': chart_labels,
-        'chart_receitas': chart_receitas,
-        'chart_despesas': chart_despesas,
-        'chart_saldo_mensal': chart_saldo_mensal,
-        'chart_saldo_acumulado': chart_saldo_acumulado,
+        
+        # Totais para os cards
+        'total_receitas': sum(item['receitas'] for item in fluxo_caixa_mensal),
+        'total_despesas': sum(item['despesas'] for item in fluxo_caixa_mensal),
+        'saldo_anual': sum(item['saldo_mes'] for item in fluxo_caixa_mensal),
+        'saldo_acumulado_final': fluxo_caixa_mensal[-1]['saldo_acumulado'] if fluxo_caixa_mensal else Decimal('0'),
+        
+        # Dados para o gráfico
+        'chart_labels': json.dumps([item['mes'] for item in fluxo_caixa_mensal]),
+        'chart_receitas': json.dumps([float(item['receitas']) for item in fluxo_caixa_mensal]),
+        'chart_despesas': json.dumps([float(item['despesas']) for item in fluxo_caixa_mensal]),
+        'chart_saldo_mensal': json.dumps([float(item['saldo_mes']) for item in fluxo_caixa_mensal]),
+        'chart_saldo_acumulado': json.dumps([float(item['saldo_acumulado']) for item in fluxo_caixa_mensal]),
     }
     
     return render(request, 'core/relatorios/fluxo_caixa.html', context)
-
 
 @login_required
 def dre(request):
@@ -708,119 +646,247 @@ def dre(request):
     com opção de visualizar por regime de caixa (o que foi efetivamente pago/recebido) ou
     regime de competência (o que foi contabilizado no período, independente do pagamento).
     """
-    # Obtém o ano atual
-    ano_atual = datetime.now().year
+    # Obter parâmetros do formulário
+    data_inicio = request.GET.get('data_inicio')
+    data_fim = request.GET.get('data_fim')
+    regime = request.GET.get('regime', 'competencia')  # Padrão: regime de competência
     
-    # Lista de anos para o filtro (últimos 5 anos + ano atual)
-    anos = list(range(ano_atual - 5, ano_atual + 1))
+    # Valores padrão para data (mês atual)
+    hoje = datetime.now().date()
+    primeiro_dia_mes = hoje.replace(day=1)
+    ultimo_dia_mes = (primeiro_dia_mes.replace(month=primeiro_dia_mes.month % 12 + 1, day=1) - timedelta(days=1)) if primeiro_dia_mes.month < 12 else primeiro_dia_mes.replace(year=primeiro_dia_mes.year + 1, month=1, day=1) - timedelta(days=1)
     
-    # Obtém o ano selecionado do formulário ou usa o ano atual como padrão
-    ano_selecionado = int(request.GET.get('ano', ano_atual))
+    # Se as datas não foram especificadas, usa o mês atual
+    if not data_inicio:
+        data_inicio = primeiro_dia_mes.strftime('%Y-%m-%d')
+    if not data_fim:
+        data_fim = ultimo_dia_mes.strftime('%Y-%m-%d')
     
-    # Obtém o mês selecionado do formulário ou usa todos os meses como padrão
-    mes_selecionado = request.GET.get('mes', 'todos')
+    # Converte as datas para o formato correto
+    try:
+        data_inicio_dt = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+        data_fim_dt = datetime.strptime(data_fim, '%Y-%m-%d').date()
+    except ValueError:
+        data_inicio_dt = primeiro_dia_mes
+        data_fim_dt = ultimo_dia_mes
+        data_inicio = primeiro_dia_mes.strftime('%Y-%m-%d')
+        data_fim = ultimo_dia_mes.strftime('%Y-%m-%d')
     
-    # Obtém o regime selecionado (caixa ou competência)
-    regime = request.GET.get('regime', 'competencia')
-    
-    # Lista de meses para o filtro
-    meses = [
-        {'valor': 'todos', 'nome': 'Todos os meses'},
-        {'valor': '1', 'nome': 'Janeiro'},
-        {'valor': '2', 'nome': 'Fevereiro'},
-        {'valor': '3', 'nome': 'Março'},
-        {'valor': '4', 'nome': 'Abril'},
-        {'valor': '5', 'nome': 'Maio'},
-        {'valor': '6', 'nome': 'Junho'},
-        {'valor': '7', 'nome': 'Julho'},
-        {'valor': '8', 'nome': 'Agosto'},
-        {'valor': '9', 'nome': 'Setembro'},
-        {'valor': '10', 'nome': 'Outubro'},
-        {'valor': '11', 'nome': 'Novembro'},
-        {'valor': '12', 'nome': 'Dezembro'}
-    ]
-    
-    # Inicializa os filtros de data
-    filtro_data_receitas = Q(data_saida__year=ano_selecionado)
-    filtro_data_despesas = Q(data_vencimento__year=ano_selecionado)
-    
-    # Se um mês específico foi selecionado, adiciona ao filtro
-    if mes_selecionado != 'todos':
-        filtro_data_receitas &= Q(data_saida__month=int(mes_selecionado))
-        filtro_data_despesas &= Q(data_vencimento__month=int(mes_selecionado))
-    
-    # Inicializa as variáveis para armazenar os resultados
-    receitas = {}
-    despesas = {}
-    resultados = {}
+    # Filtros de data para receitas e despesas
+    if regime == 'caixa':
+        # No regime de caixa, considera a data de recebimento/pagamento
+        filtro_data_receitas = Q(data_recebimento__gte=data_inicio_dt, data_recebimento__lte=data_fim_dt)
+        filtro_data_despesas = Q(data_pagamento__gte=data_inicio_dt, data_pagamento__lte=data_fim_dt)
+    else:
+        # No regime de competência, considera a data de saída do frete e a data de vencimento da despesa
+        filtro_data_receitas = Q(data_saida__gte=data_inicio_dt, data_saida__lte=data_fim_dt)
+        filtro_data_despesas = Q(data_vencimento__gte=data_inicio_dt, data_vencimento__lte=data_fim_dt)
     
     # === RECEITAS ===
     # Receitas de fretes
-    receitas_fretes = Frete.objects.filter(filtro_data_receitas)
+    receitas_fretes = Frete.objects.filter(filtro_data_receitas, caminhao__usuario=request.user)
     
     # Se o regime for de caixa, considera apenas os fretes pagos
     if regime == 'caixa':
-        receitas_fretes = receitas_fretes.filter(status_pagamento='PAGO')
+        receitas_fretes = receitas_fretes.filter(data_recebimento__isnull=False)
     
-    total_receitas_fretes = receitas_fretes.aggregate(
-        total=Coalesce(Sum('valor_total'), Decimal('0'))
-    )['total']
-    
-    receitas['fretes'] = total_receitas_fretes
-    receitas['total'] = total_receitas_fretes
+    total_receitas = receitas_fretes.aggregate(total=Coalesce(Sum('valor_total'), Decimal('0')))['total']
     
     # === DESPESAS ===
+    # Filtro adicional para despesas no regime de caixa
+    if regime == 'caixa':
+        filtro_data_despesas = filtro_data_despesas & Q(data_pagamento__isnull=False)
+    
+    # Filtrar despesas pelo usuário logado
+    filtro_usuario = Q(caminhao__usuario=request.user) | Q(carreta__usuario=request.user) | Q(frete__caminhao__usuario=request.user) | Q(empresa__usuario=request.user)
+    
     # Despesas por categoria
-    categorias_despesa = Categoria.objects.all()
+    despesas_por_categoria = Despesa.objects.filter(filtro_usuario, filtro_data_despesas).values(
+        'categoria__nome'
+    ).annotate(
+        total=Sum('valor')
+    ).order_by('categoria__nome')
     
-    total_despesas = Decimal('0')
+    chart_labels = []
+    chart_values = []
     
-    for categoria in categorias_despesa:
-        nome_categoria = categoria.nome
-        
-        # Filtra despesas por categoria
-        query_despesas = Despesa.objects.filter(filtro_data_despesas, categoria=categoria)
-        
-        # Se o regime for de caixa, considera apenas as despesas pagas
-        if regime == 'caixa':
-            query_despesas = query_despesas.filter(data_pagamento__isnull=False)
-        
-        valor_categoria = query_despesas.aggregate(
-            total=Coalesce(Sum('valor'), Decimal('0'))
-        )['total']
-        
-        # Só adiciona a categoria se tiver despesas no período
-        if valor_categoria > 0:
-            despesas[nome_categoria] = valor_categoria
-            total_despesas += valor_categoria
+    for item in despesas_por_categoria:
+        chart_labels.append(item['categoria__nome'])
+        chart_values.append(float(item['total']))
     
-    despesas['total'] = total_despesas
+    total_despesas = sum(item['total'] for item in despesas_por_categoria)
     
     # === RESULTADOS ===
-    resultados['receita_liquida'] = receitas['total']
-    resultados['despesas_totais'] = despesas['total']
-    resultados['resultado_liquido'] = resultados['receita_liquida'] - resultados['despesas_totais']
-    resultados['margem'] = (resultados['resultado_liquido'] / resultados['receita_liquida'] * 100) if resultados['receita_liquida'] > 0 else Decimal('0')
-    
-    # Prepara os dados para o gráfico
-    despesas_ordenadas = {k: v for k, v in despesas.items() if k != 'total'}
-    despesas_ordenadas = dict(sorted(despesas_ordenadas.items(), key=lambda item: item[1], reverse=True))
-    
-    chart_labels = list(despesas_ordenadas.keys())
-    chart_values = [float(despesas_ordenadas[categoria]) for categoria in chart_labels]
+    resultados = {
+        'receita_liquida': total_receitas,
+        'despesas_totais': total_despesas,
+        'resultado_liquido': total_receitas - total_despesas,
+        'margem': (total_receitas - total_despesas) / total_receitas * 100 if total_receitas > 0 else Decimal('0')
+    }
     
     # Prepara o contexto para o template
+    ano_atual = datetime.now().year
+    anos_disponiveis = list(range(ano_atual - 5, ano_atual + 1))
+    meses = [
+        {'numero': 1, 'nome': 'Janeiro'},
+        {'numero': 2, 'nome': 'Fevereiro'},
+        {'numero': 3, 'nome': 'Março'},
+        {'numero': 4, 'nome': 'Abril'},
+        {'numero': 5, 'nome': 'Maio'},
+        {'numero': 6, 'nome': 'Junho'},
+        {'numero': 7, 'nome': 'Julho'},
+        {'numero': 8, 'nome': 'Agosto'},
+        {'numero': 9, 'nome': 'Setembro'},
+        {'numero': 10, 'nome': 'Outubro'},
+        {'numero': 11, 'nome': 'Novembro'},
+        {'numero': 12, 'nome': 'Dezembro'},
+    ]
+    
     context = {
-        'anos': anos,
-        'ano_selecionado': ano_selecionado,
-        'meses': meses,
-        'mes_selecionado': mes_selecionado,
+        'data_inicio': data_inicio,
+        'data_fim': data_fim,
         'regime': regime,
-        'receitas': receitas,
-        'despesas': despesas,
+        'anos': anos_disponiveis,
+        'meses': meses,
+        'ano_atual': ano_atual,
+        'receitas': {'total': total_receitas},
+        'despesas': {'total': total_despesas},
+        'despesas_por_categoria': despesas_por_categoria,
         'resultados': resultados,
         'chart_labels': json.dumps(chart_labels),
         'chart_values': json.dumps(chart_values)
     }
     
     return render(request, 'core/relatorios/dre.html', context)
+
+@login_required
+def relatorio_manutencao(request):
+    """
+    Gera um relatório de manutenções realizadas em um período específico,
+    agrupadas por veículo e tipo de manutenção.
+    """
+    # Filtrar apenas veículos do usuário logado
+    caminhoes = Caminhao.objects.filter(usuario=request.user, status='ATIVO').order_by('placa')
+    carretas = Carreta.objects.filter(usuario=request.user, status='ATIVO').order_by('placa')
+    
+    if request.method == 'POST':
+        veiculo_tipo = request.POST.get('veiculo_tipo')
+        veiculo_id = request.POST.get('veiculo_id')
+        data_inicio = request.POST.get('data_inicio')
+        data_fim = request.POST.get('data_fim')
+        
+        if veiculo_tipo and veiculo_id and data_inicio and data_fim:
+            # Converte as datas para o formato correto
+            data_inicio = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+            data_fim = datetime.strptime(data_fim, '%Y-%m-%d').date()
+            
+            # Busca as manutenções do veículo no período
+            if veiculo_tipo == 'caminhao':
+                veiculo = get_object_or_404(Caminhao, id=veiculo_id, usuario=request.user)
+                manutencoes = Manutencao.objects.filter(
+                    caminhao=veiculo,
+                    data__gte=data_inicio,
+                    data__lte=data_fim
+                ).order_by('-data')
+                
+                veiculo_nome = f"Caminhão {veiculo.marca} {veiculo.modelo} - Placa: {veiculo.placa}"
+            else:
+                veiculo = get_object_or_404(Carreta, id=veiculo_id, usuario=request.user)
+                manutencoes = Manutencao.objects.filter(
+                    carreta=veiculo,
+                    data__gte=data_inicio,
+                    data__lte=data_fim
+                ).order_by('-data')
+                
+                veiculo_nome = f"Carreta {veiculo.marca} {veiculo.modelo} - Placa: {veiculo.placa}"
+            
+            # Agrupa as manutenções por tipo
+            manutencoes_por_tipo = {}
+            for manutencao in manutencoes:
+                tipo_nome = manutencao.tipo.nome
+                
+                if tipo_nome not in manutencoes_por_tipo:
+                    manutencoes_por_tipo[tipo_nome] = []
+                
+                manutencoes_por_tipo[tipo_nome].append(manutencao)
+            
+            # Prepara o contexto para o template
+            context = {
+                'veiculo_nome': veiculo_nome,
+                'manutencoes_por_tipo': manutencoes_por_tipo,
+                'data_inicio': data_inicio,
+                'data_fim': data_fim,
+            }
+            
+            return render(request, 'core/relatorios/manutencao_resultado.html', context)
+    
+    return render(request, 'core/relatorios/manutencao_form.html', {
+        'caminhoes': caminhoes,
+        'carretas': carretas
+    })
+
+@login_required
+def relatorio_despesa(request):
+    """
+    Gera um relatório de despesas por categoria em um período específico.
+    """
+    # Obter parâmetros do formulário
+    data_inicio = request.GET.get('data_inicio')
+    data_fim = request.GET.get('data_fim')
+    
+    # Valores padrão para data (mês atual)
+    hoje = datetime.now().date()
+    primeiro_dia_mes = hoje.replace(day=1)
+    ultimo_dia_mes = (primeiro_dia_mes.replace(month=primeiro_dia_mes.month % 12 + 1, day=1) - timedelta(days=1)) if primeiro_dia_mes.month < 12 else primeiro_dia_mes.replace(year=primeiro_dia_mes.year + 1, month=1, day=1) - timedelta(days=1)
+    
+    # Se as datas não foram especificadas, usa o mês atual
+    if not data_inicio:
+        data_inicio = primeiro_dia_mes.strftime('%Y-%m-%d')
+    if not data_fim:
+        data_fim = ultimo_dia_mes.strftime('%Y-%m-%d')
+    
+    # Converte as datas para o formato correto
+    try:
+        data_inicio_dt = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+        data_fim_dt = datetime.strptime(data_fim, '%Y-%m-%d').date()
+    except ValueError:
+        data_inicio_dt = primeiro_dia_mes
+        data_fim_dt = ultimo_dia_mes
+        data_inicio = primeiro_dia_mes.strftime('%Y-%m-%d')
+        data_fim = ultimo_dia_mes.strftime('%Y-%m-%d')
+    
+    # Filtro de usuário
+    filtro_usuario = Q(caminhao__usuario=request.user) | Q(carreta__usuario=request.user) | Q(frete__caminhao__usuario=request.user) | Q(empresa__usuario=request.user)
+    
+    # Despesas por categoria
+    despesas_por_categoria = Despesa.objects.filter(
+        data_vencimento__gte=data_inicio_dt,
+        data_vencimento__lte=data_fim_dt
+    ).filter(
+        filtro_usuario
+    ).values(
+        'categoria__nome'
+    ).annotate(
+        total=Sum('valor')
+    ).order_by('-total')
+    
+    chart_labels = []
+    chart_values = []
+    
+    for item in despesas_por_categoria:
+        chart_labels.append(item['categoria__nome'])
+        chart_values.append(float(item['total']))
+    
+    total_despesas = sum(item['total'] for item in despesas_por_categoria)
+    
+    # Prepara o contexto para o template
+    context = {
+        'data_inicio': data_inicio,
+        'data_fim': data_fim,
+        'despesas_por_categoria': despesas_por_categoria,
+        'total_despesas': total_despesas,
+        'chart_labels': json.dumps(chart_labels),
+        'chart_values': json.dumps(chart_values)
+    }
+    
+    return render(request, 'core/relatorios/despesas.html', context)
