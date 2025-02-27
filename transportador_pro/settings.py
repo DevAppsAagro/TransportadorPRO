@@ -95,39 +95,20 @@ WSGI_APPLICATION = 'transportador_pro.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-if os.environ.get('DATABASE_URL'):
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
-    }
-elif os.environ.get('VERCEL'):
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('POSTGRES_NAME', 'verceldb'),
-            'USER': os.environ.get('POSTGRES_USER', 'default'),
-            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', ''),
-            'HOST': os.environ.get('POSTGRES_HOST', 'ep-cool-flower-a1xjlx5y-pooler.us-east-1.postgres.vercel-storage.com'),
-            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+# Usar as mesmas configurações do Supabase em todos os ambientes
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'HOST': os.environ.get('DB_HOST', 'aws-0-sa-east-1.pooler.supabase.com'),
+        'NAME': os.environ.get('DB_NAME', 'postgres'),
+        'USER': os.environ.get('DB_USER', 'postgres.hejhbdkofhkdnzokjklr'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'c1M8gCiYJIbNx8No'),
+        'PORT': os.environ.get('DB_PORT', '6543'),
+        'OPTIONS': {
+            'sslmode': 'require'
         }
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'HOST': 'aws-0-sa-east-1.pooler.supabase.com',
-            'NAME': 'postgres',
-            'USER': 'postgres.hejhbdkofhkdnzokjklr',
-            'PASSWORD': 'c1M8gCiYJIbNx8No',
-            'PORT': '6543',
-            'OPTIONS': {
-                'sslmode': 'require'
-            }
-        }
-    }
+}
 
 
 # Password validation
