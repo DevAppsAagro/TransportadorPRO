@@ -151,11 +151,12 @@ def despesa_edit(request, pk):
     # Garantir que a despesa pertence ao usuário
     despesa = get_object_or_404(
         Despesa, 
-        pk=pk,
-        Q(caminhao__usuario=request.user) | 
-        Q(carreta__usuario=request.user) | 
-        Q(frete__caminhao__usuario=request.user) | 
-        Q(empresa__usuario=request.user)
+        filter=Q(pk=pk) & (
+            Q(caminhao__usuario=request.user) | 
+            Q(carreta__usuario=request.user) | 
+            Q(frete__caminhao__usuario=request.user) | 
+            Q(empresa__usuario=request.user)
+        )
     )
     
     # Filtrar por usuário
@@ -240,11 +241,12 @@ def despesa_delete(request, pk):
     # Garantir que a despesa pertence ao usuário
     despesa = get_object_or_404(
         Despesa, 
-        pk=pk,
-        Q(caminhao__usuario=request.user) | 
-        Q(carreta__usuario=request.user) | 
-        Q(frete__caminhao__usuario=request.user) | 
-        Q(empresa__usuario=request.user)
+        filter=Q(pk=pk) & (
+            Q(caminhao__usuario=request.user) | 
+            Q(carreta__usuario=request.user) | 
+            Q(frete__caminhao__usuario=request.user) | 
+            Q(empresa__usuario=request.user)
+        )
     )
     
     if request.method == 'POST':
@@ -266,11 +268,12 @@ def despesa_detail(request, pk):
     # Garantir que a despesa pertence ao usuário
     despesa = get_object_or_404(
         Despesa, 
-        pk=pk,
-        Q(caminhao__usuario=request.user) | 
-        Q(carreta__usuario=request.user) | 
-        Q(frete__caminhao__usuario=request.user) | 
-        Q(empresa__usuario=request.user)
+        filter=Q(pk=pk) & (
+            Q(caminhao__usuario=request.user) | 
+            Q(carreta__usuario=request.user) | 
+            Q(frete__caminhao__usuario=request.user) | 
+            Q(empresa__usuario=request.user)
+        )
     )
     
     return render(request, 'core/despesa/detail.html', {
@@ -285,11 +288,12 @@ def registrar_pagamento(request, pk):
             # Garantir que a despesa pertence ao usuário
             despesa = get_object_or_404(
                 Despesa, 
-                pk=pk,
-                Q(caminhao__usuario=request.user) | 
-                Q(carreta__usuario=request.user) | 
-                Q(frete__caminhao__usuario=request.user) | 
-                Q(empresa__usuario=request.user)
+                filter=Q(pk=pk) & (
+                    Q(caminhao__usuario=request.user) | 
+                    Q(carreta__usuario=request.user) | 
+                    Q(frete__caminhao__usuario=request.user) | 
+                    Q(empresa__usuario=request.user)
+                )
             )
             
             data_pagamento = request.POST.get('data_pagamento')
@@ -317,8 +321,9 @@ def get_subcategorias(request):
     # Verificar se a categoria pertence ao usuário ou é padrão (usuário nulo)
     categoria = get_object_or_404(
         Categoria, 
-        id=categoria_id,
-        Q(usuario=request.user) | Q(usuario__isnull=True)
+        filter=Q(id=categoria_id) & (
+            Q(usuario=request.user) | Q(usuario__isnull=True)
+        )
     )
     
     subcategorias = Subcategoria.objects.filter(categoria_id=categoria_id).values('id', 'nome')
@@ -333,8 +338,9 @@ def get_destinos_por_alocacao(request):
         # Verificar se a categoria pertence ao usuário ou é padrão (usuário nulo)
         categoria = get_object_or_404(
             Categoria, 
-            id=categoria_id,
-            Q(usuario=request.user) | Q(usuario__isnull=True)
+            filter=Q(id=categoria_id) & (
+                Q(usuario=request.user) | Q(usuario__isnull=True)
+            )
         )
         
         alocacao = categoria.alocacao
