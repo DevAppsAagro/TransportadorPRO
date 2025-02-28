@@ -56,13 +56,14 @@ def despesa_list(request):
 @login_required
 def despesa_create(request):
     """Cria uma nova despesa"""
-    categorias = Categoria.objects.all()
-    subcategorias = Subcategoria.objects.all()
-    caminhoes = Caminhao.objects.all()
-    carretas = Carreta.objects.all()
-    fretes = Frete.objects.all()
-    empresas = Empresa.objects.all()
-    contatos = Contato.objects.all()
+    # Filtrar por usuário
+    categorias = Categoria.objects.filter(Q(usuario=request.user) | Q(usuario__isnull=True))
+    subcategorias = Subcategoria.objects.filter(categoria__in=categorias)
+    caminhoes = Caminhao.objects.filter(usuario=request.user)
+    carretas = Carreta.objects.filter(usuario=request.user)
+    fretes = Frete.objects.filter(caminhao__usuario=request.user)
+    empresas = Empresa.objects.filter(usuario=request.user)
+    contatos = Contato.objects.filter(usuario=request.user)
     
     if request.method == 'POST':
         try:
@@ -87,12 +88,29 @@ def despesa_create(request):
             empresa_id = None
             
             if alocacao == 'VEICULO':
-                caminhao_id = request.POST.get('caminhao') or None
-                carreta_id = request.POST.get('carreta') or None
+                # Verificar se o caminhão pertence ao usuário
+                if request.POST.get('caminhao'):
+                    caminhao = get_object_or_404(Caminhao, id=request.POST.get('caminhao'), usuario=request.user)
+                    caminhao_id = caminhao.id
+                # Verificar se a carreta pertence ao usuário
+                if request.POST.get('carreta'):
+                    carreta = get_object_or_404(Carreta, id=request.POST.get('carreta'), usuario=request.user)
+                    carreta_id = carreta.id
             elif alocacao == 'FRETE':
-                frete_id = request.POST.get('frete') or None
+                # Verificar se o frete pertence ao usuário
+                if request.POST.get('frete'):
+                    frete = get_object_or_404(Frete, id=request.POST.get('frete'), caminhao__usuario=request.user)
+                    frete_id = frete.id
             elif alocacao == 'ADMINISTRATIVO':
-                empresa_id = request.POST.get('empresa') or None
+                # Verificar se a empresa pertence ao usuário
+                if request.POST.get('empresa'):
+                    empresa = get_object_or_404(Empresa, id=request.POST.get('empresa'), usuario=request.user)
+                    empresa_id = empresa.id
+            
+            # Verificar se o contato pertence ao usuário
+            if contato_id:
+                contato = get_object_or_404(Contato, id=contato_id, usuario=request.user)
+                contato_id = contato.id
             
             # Criar a despesa
             despesa = Despesa(
@@ -130,14 +148,24 @@ def despesa_create(request):
 @login_required
 def despesa_edit(request, pk):
     """Edita uma despesa existente"""
-    despesa = get_object_or_404(Despesa, pk=pk)
-    categorias = Categoria.objects.all()
-    subcategorias = Subcategoria.objects.all()
-    caminhoes = Caminhao.objects.all()
-    carretas = Carreta.objects.all()
-    fretes = Frete.objects.all()
-    empresas = Empresa.objects.all()
-    contatos = Contato.objects.all()
+    # Garantir que a despesa pertence ao usuário
+    despesa = get_object_or_404(
+        Despesa, 
+        pk=pk,
+        Q(caminhao__usuario=request.user) | 
+        Q(carreta__usuario=request.user) | 
+        Q(frete__caminhao__usuario=request.user) | 
+        Q(empresa__usuario=request.user)
+    )
+    
+    # Filtrar por usuário
+    categorias = Categoria.objects.filter(Q(usuario=request.user) | Q(usuario__isnull=True))
+    subcategorias = Subcategoria.objects.filter(categoria__in=categorias)
+    caminhoes = Caminhao.objects.filter(usuario=request.user)
+    carretas = Carreta.objects.filter(usuario=request.user)
+    fretes = Frete.objects.filter(caminhao__usuario=request.user)
+    empresas = Empresa.objects.filter(usuario=request.user)
+    contatos = Contato.objects.filter(usuario=request.user)
     
     if request.method == 'POST':
         try:
@@ -148,7 +176,6 @@ def despesa_edit(request, pk):
             despesa.valor = request.POST.get('valor')
             despesa.categoria_id = request.POST.get('categoria')
             despesa.subcategoria_id = request.POST.get('subcategoria')
-            despesa.contato_id = request.POST.get('contato') or None
             despesa.observacao = request.POST.get('observacao', '')
             
             # Obter destino baseado na alocação da categoria
@@ -160,14 +187,33 @@ def despesa_edit(request, pk):
             despesa.carreta_id = None
             despesa.frete_id = None
             despesa.empresa_id = None
+            despesa.contato_id = None
+            
+            # Verificar se o contato pertence ao usuário
+            contato_id = request.POST.get('contato')
+            if contato_id:
+                contato = get_object_or_404(Contato, id=contato_id, usuario=request.user)
+                despesa.contato_id = contato.id
             
             if alocacao == 'VEICULO':
-                despesa.caminhao_id = request.POST.get('caminhao') or None
-                despesa.carreta_id = request.POST.get('carreta') or None
+                # Verificar se o caminhão pertence ao usuário
+                if request.POST.get('caminhao'):
+                    caminhao = get_object_or_404(Caminhao, id=request.POST.get('caminhao'), usuario=request.user)
+                    despesa.caminhao_id = caminhao.id
+                # Verificar se a carreta pertence ao usuário
+                if request.POST.get('carreta'):
+                    carreta = get_object_or_404(Carreta, id=request.POST.get('carreta'), usuario=request.user)
+                    despesa.carreta_id = carreta.id
             elif alocacao == 'FRETE':
-                despesa.frete_id = request.POST.get('frete') or None
+                # Verificar se o frete pertence ao usuário
+                if request.POST.get('frete'):
+                    frete = get_object_or_404(Frete, id=request.POST.get('frete'), caminhao__usuario=request.user)
+                    despesa.frete_id = frete.id
             elif alocacao == 'ADMINISTRATIVO':
-                despesa.empresa_id = request.POST.get('empresa') or None
+                # Verificar se a empresa pertence ao usuário
+                if request.POST.get('empresa'):
+                    empresa = get_object_or_404(Empresa, id=request.POST.get('empresa'), usuario=request.user)
+                    despesa.empresa_id = empresa.id
             
             despesa.save()
             
@@ -191,7 +237,15 @@ def despesa_edit(request, pk):
 @login_required
 def despesa_delete(request, pk):
     """Exclui uma despesa"""
-    despesa = get_object_or_404(Despesa, pk=pk)
+    # Garantir que a despesa pertence ao usuário
+    despesa = get_object_or_404(
+        Despesa, 
+        pk=pk,
+        Q(caminhao__usuario=request.user) | 
+        Q(carreta__usuario=request.user) | 
+        Q(frete__caminhao__usuario=request.user) | 
+        Q(empresa__usuario=request.user)
+    )
     
     if request.method == 'POST':
         try:
@@ -209,7 +263,15 @@ def despesa_delete(request, pk):
 @login_required
 def despesa_detail(request, pk):
     """Exibe os detalhes de uma despesa"""
-    despesa = get_object_or_404(Despesa, pk=pk)
+    # Garantir que a despesa pertence ao usuário
+    despesa = get_object_or_404(
+        Despesa, 
+        pk=pk,
+        Q(caminhao__usuario=request.user) | 
+        Q(carreta__usuario=request.user) | 
+        Q(frete__caminhao__usuario=request.user) | 
+        Q(empresa__usuario=request.user)
+    )
     
     return render(request, 'core/despesa/detail.html', {
         'despesa': despesa
@@ -220,7 +282,16 @@ def registrar_pagamento(request, pk):
     """Registra o pagamento de uma despesa"""
     if request.method == 'POST':
         try:
-            despesa = get_object_or_404(Despesa, pk=pk)
+            # Garantir que a despesa pertence ao usuário
+            despesa = get_object_or_404(
+                Despesa, 
+                pk=pk,
+                Q(caminhao__usuario=request.user) | 
+                Q(carreta__usuario=request.user) | 
+                Q(frete__caminhao__usuario=request.user) | 
+                Q(empresa__usuario=request.user)
+            )
+            
             data_pagamento = request.POST.get('data_pagamento')
             
             if data_pagamento:
@@ -242,6 +313,14 @@ def registrar_pagamento(request, pk):
 def get_subcategorias(request):
     """Retorna as subcategorias de uma categoria em formato JSON"""
     categoria_id = request.GET.get('categoria_id')
+    
+    # Verificar se a categoria pertence ao usuário ou é padrão (usuário nulo)
+    categoria = get_object_or_404(
+        Categoria, 
+        id=categoria_id,
+        Q(usuario=request.user) | Q(usuario__isnull=True)
+    )
+    
     subcategorias = Subcategoria.objects.filter(categoria_id=categoria_id).values('id', 'nome')
     return JsonResponse(list(subcategorias), safe=False)
 
@@ -251,25 +330,34 @@ def get_destinos_por_alocacao(request):
     categoria_id = request.GET.get('categoria_id')
     
     try:
-        categoria = Categoria.objects.get(id=categoria_id)
+        # Verificar se a categoria pertence ao usuário ou é padrão (usuário nulo)
+        categoria = get_object_or_404(
+            Categoria, 
+            id=categoria_id,
+            Q(usuario=request.user) | Q(usuario__isnull=True)
+        )
+        
         alocacao = categoria.alocacao
         
         if alocacao == 'VEICULO':
-            caminhoes = list(Caminhao.objects.values('id', 'placa', 'marca', 'modelo'))
-            carretas = list(Carreta.objects.values('id', 'placa', 'marca', 'modelo'))
+            # Filtrar por usuário
+            caminhoes = list(Caminhao.objects.filter(usuario=request.user).values('id', 'placa', 'marca', 'modelo'))
+            carretas = list(Carreta.objects.filter(usuario=request.user).values('id', 'placa', 'marca', 'modelo'))
             return JsonResponse({
                 'alocacao': alocacao,
                 'caminhoes': caminhoes,
                 'carretas': carretas
             })
         elif alocacao == 'FRETE':
-            fretes = list(Frete.objects.values('id', 'cliente__nome_completo', 'origem', 'destino', 'data_saida'))
+            # Filtrar por usuário
+            fretes = list(Frete.objects.filter(caminhao__usuario=request.user).values('id', 'cliente__nome_completo', 'origem', 'destino', 'data_saida'))
             return JsonResponse({
                 'alocacao': alocacao,
                 'fretes': fretes
             })
         elif alocacao == 'ADMINISTRATIVO':
-            empresas = list(Empresa.objects.values('id', 'nome', 'razao_social', 'cnpj'))
+            # Filtrar por usuário
+            empresas = list(Empresa.objects.filter(usuario=request.user).values('id', 'nome_fantasia', 'razao_social', 'cnpj'))
             return JsonResponse({
                 'alocacao': alocacao,
                 'empresas': empresas
