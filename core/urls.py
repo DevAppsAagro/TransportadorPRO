@@ -21,8 +21,18 @@ from .views.landing import landing_page
 app_name = 'core'
 
 urlpatterns = [
+    # Landing page (para domínio principal)
     path('', landing_page, name='landing_page'),
+    
+    # Sistema (app)
     path('dashboard/', dashboard, name='dashboard'),
+    path('login/', login_view, name='login'),
+    path('password_reset/', auth_views.PasswordResetView.as_view(template_name='core/auth/password_reset.html'), name='password_reset'),
+    path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='core/auth/password_reset_done.html'), name='password_reset_done'),
+    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='core/auth/password_reset_confirm.html'), name='password_reset_confirm'),
+    path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='core/auth/password_reset_complete.html'), name='password_reset_complete'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='core:login'), name='logout'),
+    path('register/', register, name='register'),
     path('index/', landing_page, name='landing_page'),
     path('financeiro/', financeiro, name='financeiro'),
     path('veiculos/', veiculos, name='veiculos'),
@@ -96,15 +106,6 @@ urlpatterns = [
     path('abastecimentos/novo/', abastecimento_novo, name='abastecimento_novo'),
     path('abastecimentos/<int:id>/editar/', abastecimento_editar, name='abastecimento_editar'),
     path('abastecimentos/<int:id>/excluir/', abastecimento_excluir, name='abastecimento_excluir'),
-    
-    # Rotas de autenticação
-    path('login/', login_view, name='login'),
-    path('password_reset/', auth_views.PasswordResetView.as_view(template_name='core/auth/password_reset.html'), name='password_reset'),
-    path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='core/auth/password_reset_done.html'), name='password_reset_done'),
-    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='core/auth/password_reset_confirm.html'), name='password_reset_confirm'),
-    path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='core/auth/password_reset_complete.html'), name='password_reset_complete'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='core:login'), name='logout'),
-    path('register/', register, name='register'),
     
     # Rotas de estimativa de pneus
     path('estimativa-pneus/', estimativa_pneus_list, name='estimativa_pneus_list'),

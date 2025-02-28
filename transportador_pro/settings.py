@@ -68,6 +68,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'core.middleware.DomainRedirectMiddleware',  # Novo middleware para redirecionamento de domínio
 ]
 
 ROOT_URLCONF = 'transportador_pro.urls'
