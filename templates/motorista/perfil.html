@@ -1,0 +1,138 @@
+{% extends 'motorista/base.html' %}
+
+{% block title %}Meu Perfil - Área do Motorista{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Meu Perfil</h1>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Informações Pessoais</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-center mb-3 mb-md-0">
+                            {% if user.perfil.foto %}
+                            <img src="{{ user.perfil.foto.url }}" class="rounded-circle img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;" alt="Foto do Perfil">
+                            {% else %}
+                            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px;">
+                                <i class="bi bi-person-fill display-4"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-8">
+                            <h4>{{ user.get_full_name }}</h4>
+                            <p class="text-muted">{{ user.email }}</p>
+                            
+                            <dl class="row">
+                                <dt class="col-sm-4">Telefone:</dt>
+                                <dd class="col-sm-8">{{ user.perfil.telefone|default:"Não informado" }}</dd>
+                                
+                                <dt class="col-sm-4">Data de Cadastro:</dt>
+                                <dd class="col-sm-8">{{ user.date_joined|date:"d/m/Y H:i" }}</dd>
+                                
+                                <dt class="col-sm-4">Último Acesso:</dt>
+                                <dd class="col-sm-8">{{ user.perfil.ultimo_acesso|date:"d/m/Y H:i"|default:"Não disponível" }}</dd>
+                            </dl>
+                            
+                            <a href="{% url 'motorista:alterar_senha' %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-key me-1"></i> Alterar Senha
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Dados da CNH</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Número:</dt>
+                                <dd class="col-sm-8">{{ user.perfil.cnh|default:"Não informado" }}</dd>
+                                
+                                <dt class="col-sm-4">Categoria:</dt>
+                                <dd class="col-sm-8">{{ user.perfil.categoria_cnh|default:"Não informada" }}</dd>
+                                
+                                <dt class="col-sm-4">Validade:</dt>
+                                <dd class="col-sm-8">
+                                    {{ user.perfil.validade_cnh|date:"d/m/Y"|default:"Não informada" }}
+                                    {% if user.perfil.validade_cnh and user.perfil.validade_cnh < now.date %}
+                                    <span class="badge bg-danger ms-2">Vencida</span>
+                                    {% elif user.perfil.validade_cnh and user.perfil.validade_cnh|timeuntil:now.date < '30 dias' %}
+                                    <span class="badge bg-warning text-dark ms-2">Próxima ao vencimento</span>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <div class="bg-light p-3 rounded">
+                                <i class="bi bi-card-text display-4 text-primary"></i>
+                                <p class="mt-2 text-muted small">Para atualizar os dados da sua CNH, entre em contato com a administração.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Caminhão Atual</h5>
+                </div>
+                <div class="card-body">
+                    {% if user.perfil.caminhao_atual %}
+                    <div class="text-center mb-3">
+                        <i class="bi bi-truck display-4 text-primary"></i>
+                    </div>
+                    <dl class="row">
+                        <dt class="col-sm-4">Placa:</dt>
+                        <dd class="col-sm-8">{{ user.perfil.caminhao_atual.placa }}</dd>
+                        
+                        <dt class="col-sm-4">Modelo:</dt>
+                        <dd class="col-sm-8">{{ user.perfil.caminhao_atual.marca }} {{ user.perfil.caminhao_atual.modelo }}</dd>
+                        
+                        <dt class="col-sm-4">Ano:</dt>
+                        <dd class="col-sm-8">{{ user.perfil.caminhao_atual.ano }}</dd>
+                        
+                        <dt class="col-sm-4">Cor:</dt>
+                        <dd class="col-sm-8">{{ user.perfil.caminhao_atual.cor|default:"Não informada" }}</dd>
+                    </dl>
+                    {% else %}
+                    <div class="text-center">
+                        <i class="bi bi-exclamation-triangle display-4 text-warning mb-3"></i>
+                        <p>Nenhum caminhão associado ao seu perfil.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Suporte</h5>
+                </div>
+                <div class="card-body">
+                    <p>Caso precise de ajuda ou tenha alguma dúvida, entre em contato com a equipe de suporte.</p>
+                    <div class="d-grid gap-2">
+                        <a href="mailto:suporte@transportadorpro.com" class="btn btn-outline-primary">
+                            <i class="bi bi-envelope me-1"></i> E-mail de Suporte
+                        </a>
+                        <a href="tel:+551195555555" class="btn btn-outline-secondary">
+                            <i class="bi bi-telephone me-1"></i> (11) 9555-5555
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

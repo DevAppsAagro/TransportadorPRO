@@ -5,8 +5,8 @@ class Contato(models.Model):
     TIPO_CHOICES = [
         ('FORNECEDOR', 'Fornecedor'),
         ('CLIENTE', 'Cliente'),
-        ('MOTORISTA', 'Motorista'),
-        ('FUNCIONARIO', 'Funcionário')
+        ('FUNCIONARIO', 'Funcionário'),
+        ('POSTO', 'Posto de Combustível')
     ]
 
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Usuário')
@@ -28,6 +28,7 @@ class Contato(models.Model):
     # Campos de controle
     data_criacao = models.DateTimeField('Data de Criação', auto_now_add=True)
     data_atualizacao = models.DateTimeField('Data de Atualização', auto_now=True)
+    ativo = models.BooleanField('Ativo', default=True)
     
     class Meta:
         verbose_name = 'Contato'

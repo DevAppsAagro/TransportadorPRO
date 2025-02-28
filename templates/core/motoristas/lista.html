@@ -1,0 +1,147 @@
+{% extends "base/base.html" %}
+
+{% block title %}Motoristas{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3">
+                <i class="bi bi-people text-primary me-2"></i> Motoristas
+            </h1>
+            <p class="text-muted">Gerenciamento de motoristas cadastrados no sistema.</p>
+        </div>
+        <a href="{% url 'core:criar_motorista' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus me-1"></i> Novo Motorista
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" id="pesquisar" class="form-control" placeholder="Pesquisar motoristas...">
+                        <button class="btn btn-outline-secondary" type="button">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" style="width: 50px;">#</th>
+                            <th scope="col">Nome</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Telefone</th>
+                            <th scope="col">CNH</th>
+                            <th scope="col">Caminhão</th>
+                            <th scope="col">Status</th>
+                            <th scope="col" style="width: 150px;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if motoristas %}
+                            {% for motorista in motoristas %}
+                            <tr>
+                                <td>{{ motorista.id }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if motorista.perfil.foto %}
+                                            <img src="{{ motorista.perfil.foto.url }}" alt="{{ motorista.get_full_name }}" class="rounded-circle me-2" width="40" height="40">
+                                        {% else %}
+                                            <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                <i class="bi bi-person text-white"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <div class="fw-bold">{{ motorista.get_full_name }}</div>
+                                            <small class="text-muted">@{{ motorista.username }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ motorista.email }}</td>
+                                <td>{{ motorista.perfil.telefone|default:"-" }}</td>
+                                <td>
+                                    {% if motorista.perfil.cnh %}
+                                        {{ motorista.perfil.cnh }} <span class="badge bg-info ms-1">{{ motorista.perfil.categoria_cnh }}</span>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if motorista.perfil.caminhao_atual %}
+                                        {{ motorista.perfil.caminhao_atual.placa }} - {{ motorista.perfil.caminhao_atual.modelo }}
+                                    {% else %}
+                                        <span class="text-muted">Não atribuído</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if motorista.is_active %}
+                                        <span class="badge bg-success">Ativo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inativo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'core:detalhe_motorista' motorista.id %}" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Ver detalhes">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{% url 'core:editar_motorista' motorista.id %}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{% url 'core:resetar_senha_motorista' motorista.id %}" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Resetar senha" onclick="return confirm('Tem certeza que deseja resetar a senha deste motorista?')">
+                                            <i class="bi bi-key"></i>
+                                        </a>
+                                        <a href="{% url 'core:excluir_motorista' motorista.id %}" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir este motorista?')">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <div class="py-5">
+                                        <i class="bi bi-exclamation-circle display-4 text-muted"></i>
+                                        <p class="mt-3">Nenhum motorista cadastrado ainda.</p>
+                                        <a href="{% url 'core:criar_motorista' %}" class="btn btn-primary mt-2">
+                                            <i class="bi bi-person-plus me-1"></i> Cadastrar motorista
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Inicializa tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+    
+    // Filtro na tabela
+    $("#pesquisar").on("keyup", function() {
+        var value = $(this).val().toLowerCase();
+        $("table tbody tr").filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
+    });
+});
+</script>
+{% endblock %}

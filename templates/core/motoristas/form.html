@@ -1,0 +1,158 @@
+{% extends "base/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if motorista %}Editar{% else %}Novo{% endif %} Motorista{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3">
+                {% if motorista %}
+                    <i class="bi bi-pencil-square text-primary me-2"></i> Editar Motorista
+                {% else %}
+                    <i class="bi bi-person-plus text-primary me-2"></i> Novo Motorista
+                {% endif %}
+            </h1>
+            <p class="text-muted">
+                {% if motorista %}
+                    Edite as informações do motorista.
+                {% else %}
+                    Cadastre um novo motorista para ter acesso ao sistema de abastecimentos.
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" action="{% if motorista %}{% url 'core:editar_motorista' motorista.id %}{% else %}{% url 'core:criar_motorista' %}{% endif %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nome" class="form-label">Nome <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="nome" name="nome" value="{{ motorista.first_name|default:'' }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="sobrenome" class="form-label">Sobrenome <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="sobrenome" name="sobrenome" value="{{ motorista.last_name|default:'' }}" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ motorista.email|default:'' }}" {% if motorista %}readonly{% endif %} required>
+                                {% if motorista %}
+                                <div class="form-text text-muted">O email não pode ser alterado, pois é utilizado como identificador.</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="telefone" class="form-label">Telefone <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="telefone" name="telefone" value="{{ motorista.perfil.telefone|default:'' }}" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="cnh" class="form-label">CNH <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="cnh" name="cnh" value="{{ motorista.perfil.cnh|default:'' }}" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="categoria_cnh" class="form-label">Categoria CNH <span class="text-danger">*</span></label>
+                                <select class="form-select" id="categoria_cnh" name="categoria_cnh" required>
+                                    <option value="" {% if not motorista.perfil.categoria_cnh %}selected{% endif %}>Selecione</option>
+                                    <option value="A" {% if motorista.perfil.categoria_cnh == 'A' %}selected{% endif %}>A</option>
+                                    <option value="B" {% if motorista.perfil.categoria_cnh == 'B' %}selected{% endif %}>B</option>
+                                    <option value="C" {% if motorista.perfil.categoria_cnh == 'C' %}selected{% endif %}>C</option>
+                                    <option value="D" {% if motorista.perfil.categoria_cnh == 'D' %}selected{% endif %}>D</option>
+                                    <option value="E" {% if motorista.perfil.categoria_cnh == 'E' %}selected{% endif %}>E</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="validade_cnh" class="form-label">Validade CNH <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="validade_cnh" name="validade_cnh" value="{{ motorista.perfil.validade_cnh|date:'Y-m-d'|default:'' }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="caminhao" class="form-label">Caminhão</label>
+                            <select class="form-select" id="caminhao" name="caminhao">
+                                <option value="">Selecione um caminhão (opcional)</option>
+                                {% for caminhao in caminhoes %}
+                                <option value="{{ caminhao.id }}" {% if motorista.perfil.caminhao_atual.id == caminhao.id %}selected{% endif %}>
+                                    {{ caminhao.placa }} - {{ caminhao.modelo }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="foto" class="form-label">Foto do Motorista</label>
+                                <input type="file" class="form-control" id="foto" name="foto" accept="image/*">
+                                {% if motorista.perfil.foto %}
+                                <div class="form-text mt-2">
+                                    <a href="{{ motorista.perfil.foto.url }}" target="_blank">Ver foto atual</a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'core:listar_motoristas' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Voltar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i> Salvar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-info-circle text-primary me-2"></i> Informações
+                    </h5>
+                    <p class="card-text">
+                        Ao cadastrar um novo motorista, um usuário será criado automaticamente e as credenciais de acesso serão enviadas para o email informado.
+                    </p>
+                    <p class="card-text">
+                        O motorista poderá acessar o sistema através do link:
+                        <a href="https://motorista.transportadorpro.com" target="_blank">
+                            https://motorista.transportadorpro.com
+                        </a>
+                    </p>
+                    <p class="card-text">
+                        <strong>Campos obrigatórios:</strong>
+                    </p>
+                    <ul>
+                        <li>Nome e Sobrenome</li>
+                        <li>Email (usado como identificador)</li>
+                        <li>Telefone</li>
+                        <li>CNH, Categoria e Validade</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Máscaras para os campos de CNH e telefone
+    if($.fn.mask) {
+        $('#telefone').mask('(00) 00000-0000');
+        $('#cnh').mask('00000000000');
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base/base.html" %}
+
+{% block title %}Confirmar Exclusão de Motorista{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> Confirmar Exclusão
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Atenção!</strong> Esta ação não pode ser desfeita. Todos os dados deste motorista serão excluídos permanentemente.
+                    </div>
+                    
+                    <p class="mb-4">Você está prestes a excluir o motorista:</p>
+                    
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-person text-white fs-3"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-1">{{ motorista.get_full_name }}</h4>
+                            <p class="text-muted mb-0">{{ motorista.email }}</p>
+                            {% if motorista.perfil.telefone %}
+                            <p class="text-muted mb-0">{{ motorista.perfil.telefone }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body py-2">
+                                    <small class="text-muted d-block">CNH</small>
+                                    <strong>{{ motorista.perfil.cnh }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body py-2">
+                                    <small class="text-muted d-block">Categoria</small>
+                                    <strong>{{ motorista.perfil.categoria_cnh }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'core:listar_motoristas' %}" class="btn btn-outline-secondary me-2">
+                                <i class="bi bi-x-circle me-1"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash me-1"></i> Confirmar Exclusão
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

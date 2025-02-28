@@ -1,4 +1,5 @@
-from django.urls import path
+from django.urls import path, include
+from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
 from .views import dashboard, financeiro, veiculos, relatorios, configuracao
 from .views.auth_views import register, login_view
@@ -17,6 +18,11 @@ from .views.despesa import despesa_list, despesa_create, despesa_edit, despesa_d
 from .views.relatorios import relatorio_veiculo, relatorio_frete, fluxo_caixa, dre, relatorio_cliente, relatorio_manutencao, relatorio_despesa
 from .views.configuracoes import configuracoes_empresa
 from .views.landing import landing_page
+from .views.motoristas import listar_motoristas, criar_motorista, editar_motorista, excluir_motorista, detalhe_motorista, resetar_senha_motorista
+from .views.abastecimentos_pendentes import (
+    listar_abastecimentos_pendentes, detalhe_abastecimento_pendente,
+    aprovar_abastecimento, rejeitar_abastecimento, estatisticas_abastecimentos_pendentes
+)
 
 app_name = 'core'
 
@@ -94,7 +100,7 @@ urlpatterns = [
     path('conjuntos/<int:id>/editar/', conjunto_editar, name='conjunto_editar'),
     path('conjuntos/<int:id>/excluir/', conjunto_excluir, name='conjunto_excluir'),
     
-    # Rotas de fretes
+    # Rotas para manipulação de fretes
     path('fretes/', fretes, name='fretes'),
     path('fretes/novo/', frete_novo, name='frete_novo'),
     path('fretes/<int:id>/editar/', frete_editar, name='frete_editar'),
@@ -106,6 +112,8 @@ urlpatterns = [
     path('abastecimentos/novo/', abastecimento_novo, name='abastecimento_novo'),
     path('abastecimentos/<int:id>/editar/', abastecimento_editar, name='abastecimento_editar'),
     path('abastecimentos/<int:id>/excluir/', abastecimento_excluir, name='abastecimento_excluir'),
+    # Comentando o redirecionamento errado
+    # path('abastecimentos/pendentes/', lambda request: redirect('motorista:listar_abastecimentos_pendentes'), name='abastecimentos_pendentes'),
     
     # Rotas de estimativa de pneus
     path('estimativa-pneus/', estimativa_pneus_list, name='estimativa_pneus_list'),
@@ -138,4 +146,19 @@ urlpatterns = [
     path('despesas/<int:id>/registrar-pagamento/', registrar_pagamento, name='registrar_pagamento'),
     path('api/subcategorias/', get_subcategorias, name='get_subcategorias'),
     path('api/destinos-por-alocacao/', get_destinos_por_alocacao, name='get_destinos_por_alocacao'),
+    
+    # Rotas de abastecimentos pendentes
+    path('abastecimentos/pendentes/', listar_abastecimentos_pendentes, name='listar_abastecimentos_pendentes'),
+    path('abastecimentos/pendentes/<int:id>/', detalhe_abastecimento_pendente, name='detalhe_abastecimento_pendente'),
+    path('abastecimentos/pendentes/<int:id>/aprovar/', aprovar_abastecimento, name='aprovar_abastecimento'),
+    path('abastecimentos/pendentes/<int:id>/rejeitar/', rejeitar_abastecimento, name='rejeitar_abastecimento'),
+    path('abastecimentos/pendentes/estatisticas/', estatisticas_abastecimentos_pendentes, name='estatisticas_abastecimentos_pendentes'),
+    
+    # Rotas de motoristas
+    path('motoristas/', listar_motoristas, name='listar_motoristas'),
+    path('motoristas/novo/', criar_motorista, name='criar_motorista'),
+    path('motoristas/<int:pk>/', detalhe_motorista, name='detalhe_motorista'),
+    path('motoristas/<int:pk>/editar/', editar_motorista, name='editar_motorista'),
+    path('motoristas/<int:pk>/resetar-senha/', resetar_senha_motorista, name='resetar_senha_motorista'),
+    path('motoristas/<int:pk>/excluir/', excluir_motorista, name='excluir_motorista'),
 ]

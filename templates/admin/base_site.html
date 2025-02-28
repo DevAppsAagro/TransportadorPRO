@@ -1,0 +1,64 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('TransportadorPRO - Administração') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        TransportadorPRO - Painel Administrativo
+    </a>
+</h1>
+{% endblock %}
+
+{% block extrastyle %}
+<style>
+    :root {
+        --primary: #0d6efd;
+        --secondary: #343a40;
+        --accent: #3484F0;
+        --primary-fg: #fff;
+    }
+    
+    #header {
+        background: var(--secondary);
+        color: var(--primary-fg);
+    }
+    
+    #user-tools a:focus, #user-tools a:hover {
+        color: var(--accent);
+    }
+    
+    .module h2, .module caption, .inline-group h2 {
+        background: var(--primary);
+    }
+    
+    div.breadcrumbs {
+        background: var(--primary);
+    }
+    
+    a:link, a:visited {
+        color: var(--primary);
+    }
+    
+    .selector-chosen h2 {
+        background: var(--primary) !important;
+    }
+    
+    .button, input[type=submit], input[type=button], .submit-row input, a.button {
+        background: var(--primary);
+    }
+    
+    .button.default, input[type=submit].default, .submit-row input.default {
+        background: var(--primary);
+    }
+    
+    .button:active, input[type=submit]:active, input[type=button]:active, .button:focus, input[type=submit]:focus, input[type=button]:focus, .button:hover, input[type=submit]:hover, input[type=button]:hover {
+        background: var(--accent);
+    }
+    
+    .button.default:active, input[type=submit].default:active, .button.default:focus, input[type=submit].default:focus, .button.default:hover, input[type=submit].default:hover {
+        background: var(--accent);
+    }
+</style>
+{% endblock %}

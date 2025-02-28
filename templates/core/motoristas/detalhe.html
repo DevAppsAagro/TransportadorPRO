@@ -1,0 +1,192 @@
+{% extends "base/base.html" %}
+
+{% block title %}Detalhes do Motorista{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'core:listar_motoristas' %}">Motoristas</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ motorista.get_full_name }}</li>
+                </ol>
+            </nav>
+            <h1 class="h3">
+                <i class="bi bi-person-vcard text-primary me-2"></i> Detalhes do Motorista
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if motorista.perfil.foto %}
+                        <img src="{{ motorista.perfil.foto.url }}" alt="{{ motorista.get_full_name }}" class="rounded-circle mb-3" width="150" height="150">
+                    {% else %}
+                        <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 150px; height: 150px;">
+                            <i class="bi bi-person text-white" style="font-size: 4rem;"></i>
+                        </div>
+                    {% endif %}
+                    <h4>{{ motorista.get_full_name }}</h4>
+                    <p class="text-muted">@{{ motorista.username }}</p>
+                    
+                    <div class="d-grid gap-2 mt-3">
+                        <a href="{% url 'core:editar_motorista' motorista.id %}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil me-1"></i> Editar
+                        </a>
+                        <a href="{% url 'core:resetar_senha_motorista' motorista.id %}" class="btn btn-outline-warning" onclick="return confirm('Tem certeza que deseja resetar a senha deste motorista?')">
+                            <i class="bi bi-key me-1"></i> Resetar Senha
+                        </a>
+                        <a href="{% url 'core:excluir_motorista' motorista.id %}" class="btn btn-outline-danger" onclick="return confirm('Tem certeza que deseja excluir este motorista?')">
+                            <i class="bi bi-trash me-1"></i> Excluir
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i> Informações Básicas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Nome</label>
+                            <p>{{ motorista.first_name }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Sobrenome</label>
+                            <p>{{ motorista.last_name }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Email</label>
+                            <p>{{ motorista.email }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Telefone</label>
+                            <p>{{ motorista.perfil.telefone|default:"-" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Status</label>
+                            <p>
+                                {% if motorista.is_active %}
+                                    <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inativo</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Último acesso</label>
+                            <p>{{ motorista.perfil.ultimo_acesso|date:"d/m/Y H:i"|default:"Nunca acessou" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-card-checklist me-2"></i> Informações de CNH
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Número da CNH</label>
+                            <p>{{ motorista.perfil.cnh|default:"-" }}</p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Categoria</label>
+                            <p>
+                                {% if motorista.perfil.categoria_cnh %}
+                                    <span class="badge bg-info">{{ motorista.perfil.categoria_cnh }}</span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Validade</label>
+                            <p>
+                                {% if motorista.perfil.validade_cnh %}
+                                    {{ motorista.perfil.validade_cnh|date:"d/m/Y" }}
+                                    {% if motorista.perfil.validade_cnh|date:"Y-m-d" < today|date:"Y-m-d" %}
+                                        <span class="badge bg-danger ms-1">Vencida</span>
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-truck me-2"></i> Informações do Caminhão
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if motorista.perfil.caminhao_atual %}
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Placa</label>
+                                <p>{{ motorista.perfil.caminhao_atual.placa }}</p>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Modelo</label>
+                                <p>{{ motorista.perfil.caminhao_atual.modelo }}</p>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Ano</label>
+                                <p>{{ motorista.perfil.caminhao_atual.ano|default:"-" }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Status</label>
+                                <p>
+                                    {% if motorista.perfil.caminhao_atual.status == 'ATIVO' %}
+                                        <span class="badge bg-success">Ativo</span>
+                                    {% elif motorista.perfil.caminhao_atual.status == 'MANUTENCAO' %}
+                                        <span class="badge bg-warning">Em Manutenção</span>
+                                    {% elif motorista.perfil.caminhao_atual.status == 'INATIVO' %}
+                                        <span class="badge bg-danger">Inativo</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ motorista.perfil.caminhao_atual.status }}</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-truck text-muted" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-3">Nenhum caminhão atribuído a este motorista</p>
+                            <a href="{% url 'core:editar_motorista' motorista.id %}" class="btn btn-outline-primary mt-2">
+                                <i class="bi bi-truck me-1"></i> Atribuir Caminhão
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

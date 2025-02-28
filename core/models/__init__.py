@@ -7,5 +7,8 @@ from .estimativa_pneus import EstimativaPneus
 from .estimativa_manutencao import EstimativaManutencao, ItemManutencao
 from .estimativa_custo_fixo import EstimativaCustoFixo, ItemCustoFixo
 from .despesa import Despesa
+from .abastecimento_pendente import AbastecimentoPendente
+from .perfil_usuario import PerfilUsuario
+from .contato import Contato
 
-__all__ = ['Empresa', 'Categoria', 'Subcategoria', 'Caminhao', 'Abastecimento', 'EstimativaPneus', 'EstimativaManutencao', 'ItemManutencao', 'EstimativaCustoFixo', 'ItemCustoFixo', 'Despesa']
+__all__ = ['Empresa', 'Categoria', 'Subcategoria', 'Caminhao', 'Abastecimento', 'EstimativaPneus', 'EstimativaManutencao', 'ItemManutencao', 'EstimativaCustoFixo', 'ItemCustoFixo', 'Despesa', 'AbastecimentoPendente', 'PerfilUsuario', 'Contato']

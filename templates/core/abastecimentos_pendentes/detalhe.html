@@ -1,0 +1,105 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Detalhes do Abastecimento Pendente{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Detalhes do Abastecimento Pendente</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'core:listar_abastecimentos_pendentes' %}">Abastecimentos Pendentes</a></li>
+        <li class="breadcrumb-item active">Detalhes</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-gas-pump me-1"></i>
+            Informações do Abastecimento
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="card-title">Informações Gerais</h5>
+                    <ul class="list-group mb-4">
+                        <li class="list-group-item"><strong>ID:</strong> {{ abastecimento.id }}</li>
+                        <li class="list-group-item"><strong>Data:</strong> {{ abastecimento.data }}</li>
+                        <li class="list-group-item"><strong>Data de Solicitação:</strong> {{ abastecimento.data_solicitacao }}</li>
+                        <li class="list-group-item">
+                            <strong>Status:</strong> 
+                            {% if abastecimento.status == 'PENDENTE' %}
+                            <span class="badge bg-warning">Pendente</span>
+                            {% elif abastecimento.status == 'APROVADO' %}
+                            <span class="badge bg-success">Aprovado</span>
+                            {% elif abastecimento.status == 'REJEITADO' %}
+                            <span class="badge bg-danger">Rejeitado</span>
+                            {% endif %}
+                        </li>
+                        {% if abastecimento.status == 'REJEITADO' and abastecimento.motivo_rejeicao %}
+                        <li class="list-group-item"><strong>Motivo da Rejeição:</strong> {{ abastecimento.motivo_rejeicao }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5 class="card-title">Detalhes do Veículo</h5>
+                    <ul class="list-group mb-4">
+                        <li class="list-group-item"><strong>Motorista:</strong> {{ abastecimento.motorista.get_full_name }}</li>
+                        <li class="list-group-item"><strong>Caminhão:</strong> {{ abastecimento.caminhao.placa }} - {{ abastecimento.caminhao.modelo }}</li>
+                        <li class="list-group-item"><strong>Km Atual:</strong> {{ abastecimento.km_atual }}</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="card-title">Informações do Abastecimento</h5>
+                    <ul class="list-group mb-4">
+                        <li class="list-group-item"><strong>Posto:</strong> {{ abastecimento.posto.nome_completo }}</li>
+                        <li class="list-group-item"><strong>Combustível:</strong> {{ abastecimento.get_combustivel_display }}</li>
+                        <li class="list-group-item"><strong>Litros:</strong> {{ abastecimento.litros }}</li>
+                        <li class="list-group-item"><strong>Valor/Litro:</strong> R$ {{ abastecimento.valor_litro|floatformat:2 }}</li>
+                        <li class="list-group-item"><strong>Valor Total:</strong> R$ {{ abastecimento.valor_total|floatformat:2 }}</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5 class="card-title">Informações Adicionais</h5>
+                    <ul class="list-group mb-4">
+                        {% if abastecimento.observacao %}
+                        <li class="list-group-item"><strong>Observação:</strong> {{ abastecimento.observacao }}</li>
+                        {% endif %}
+                        
+                        {% if abastecimento.comprovante %}
+                        <li class="list-group-item">
+                            <strong>Comprovante:</strong>
+                            <a href="{{ abastecimento.comprovante.url }}" target="_blank" class="btn btn-sm btn-primary mt-2">
+                                <i class="fas fa-file-download me-1"></i> Visualizar Comprovante
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <div class="row">
+                    <div class="col-md-12">
+                        <a href="{% url 'core:listar_abastecimentos_pendentes' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Voltar para Lista
+                        </a>
+                        
+                        {% if abastecimento.status == 'PENDENTE' %}
+                        <div class="btn-group float-end" role="group">
+                            <a href="{% url 'core:aprovar_abastecimento' abastecimento.id %}" class="btn btn-success">
+                                <i class="fas fa-check me-1"></i> Aprovar
+                            </a>
+                            <a href="{% url 'core:rejeitar_abastecimento' abastecimento.id %}" class="btn btn-danger">
+                                <i class="fas fa-times me-1"></i> Rejeitar
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

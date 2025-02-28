@@ -1,0 +1,54 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Confirmar Rejeição de Abastecimento{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Confirmar Rejeição de Abastecimento</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'core:listar_abastecimentos_pendentes' %}">Abastecimentos Pendentes</a></li>
+        <li class="breadcrumb-item active">Confirmar Rejeição</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-gas-pump me-1"></i>
+            Confirmar Rejeição de Abastecimento
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <h5>Você está prestes a rejeitar este abastecimento:</h5>
+                <ul class="list-group mt-3">
+                    <li class="list-group-item"><strong>Data:</strong> {{ abastecimento.data }}</li>
+                    <li class="list-group-item"><strong>Motorista:</strong> {{ abastecimento.motorista.get_full_name }}</li>
+                    <li class="list-group-item"><strong>Caminhão:</strong> {{ abastecimento.caminhao.placa }} - {{ abastecimento.caminhao.modelo }}</li>
+                    <li class="list-group-item"><strong>Posto:</strong> {{ abastecimento.posto.nome_completo }}</li>
+                    <li class="list-group-item"><strong>Combustível:</strong> {{ abastecimento.get_combustivel_display }}</li>
+                    <li class="list-group-item"><strong>Litros:</strong> {{ abastecimento.litros }}</li>
+                    <li class="list-group-item"><strong>Valor/Litro:</strong> R$ {{ abastecimento.valor_litro|floatformat:2 }}</li>
+                    <li class="list-group-item"><strong>Valor Total:</strong> R$ {{ abastecimento.valor_total|floatformat:2 }}</li>
+                </ul>
+            </div>
+
+            <form method="post" action="{% url 'core:rejeitar_abastecimento' abastecimento.id %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="motivo_rejeicao" class="form-label">Motivo da Rejeição</label>
+                    <textarea class="form-control" id="motivo_rejeicao" name="motivo_rejeicao" rows="3" required></textarea>
+                    <div class="form-text">Descreva o motivo pelo qual o abastecimento está sendo rejeitado. Essa informação será visível para o motorista.</div>
+                </div>
+
+                <div class="mt-3 d-flex justify-content-between">
+                    <a href="{% url 'core:detalhe_abastecimento_pendente' abastecimento.id %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Voltar
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times me-1"></i> Confirmar Rejeição
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

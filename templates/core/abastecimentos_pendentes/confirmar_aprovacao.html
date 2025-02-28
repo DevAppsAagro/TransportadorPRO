@@ -1,0 +1,54 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Confirmar Aprovação de Abastecimento{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Confirmar Aprovação de Abastecimento</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'core:listar_abastecimentos_pendentes' %}">Abastecimentos Pendentes</a></li>
+        <li class="breadcrumb-item active">Confirmar Aprovação</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-gas-pump me-1"></i>
+            Confirmar Aprovação de Abastecimento
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <h5>Você está prestes a aprovar este abastecimento:</h5>
+                <ul class="list-group mt-3">
+                    <li class="list-group-item"><strong>Data:</strong> {{ abastecimento.data }}</li>
+                    <li class="list-group-item"><strong>Motorista:</strong> {{ abastecimento.motorista.get_full_name }}</li>
+                    <li class="list-group-item"><strong>Caminhão:</strong> {{ abastecimento.caminhao.placa }} - {{ abastecimento.caminhao.modelo }}</li>
+                    <li class="list-group-item"><strong>Posto:</strong> {{ abastecimento.posto.nome_completo }}</li>
+                    <li class="list-group-item"><strong>Combustível:</strong> {{ abastecimento.get_combustivel_display }}</li>
+                    <li class="list-group-item"><strong>Litros:</strong> {{ abastecimento.litros }}</li>
+                    <li class="list-group-item"><strong>Valor/Litro:</strong> R$ {{ abastecimento.valor_litro|floatformat:2 }}</li>
+                    <li class="list-group-item"><strong>Valor Total:</strong> R$ {{ abastecimento.valor_total|floatformat:2 }}</li>
+                    <li class="list-group-item"><strong>Km Atual:</strong> {{ abastecimento.km_atual }}</li>
+                    {% if abastecimento.observacao %}
+                    <li class="list-group-item"><strong>Observação:</strong> {{ abastecimento.observacao }}</li>
+                    {% endif %}
+                </ul>
+            </div>
+
+            <p>Ao aprovar este abastecimento, ele será registrado no sistema e considerado em relatórios financeiros.</p>
+
+            <form method="post" action="{% url 'core:aprovar_abastecimento' abastecimento.id %}">
+                {% csrf_token %}
+                <div class="mt-3 d-flex justify-content-between">
+                    <a href="{% url 'core:detalhe_abastecimento_pendente' abastecimento.id %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Voltar
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-1"></i> Confirmar Aprovação
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+    &rsaquo; Guia de Configuração de Motoristas
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <div class="module">
+        <h2>Guia para Configuração de Acesso de Motoristas</h2>
+        <div class="form-row">
+            <div style="padding: 20px;">
+                <h3>Como liberar o acesso para motoristas no TransportadorPRO</h3>
+                <p>Para configurar um usuário como motorista e permitir acesso ao painel de motorista, siga os passos abaixo:</p>
+                
+                <ol style="margin-left: 20px; line-height: 1.6;">
+                    <li>
+                        <strong>Crie ou edite um usuário</strong>
+                        <ul>
+                            <li>Acesse: <a href="{% url 'admin:auth_user_changelist' %}">Usuários</a></li>
+                            <li>Clique em "Adicionar usuário" ou selecione um usuário existente</li>
+                            <li>Preencha as informações básicas (nome, usuário, senha)</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Configure o perfil como MOTORISTA</strong>
+                        <ul>
+                            <li>Após criar ou selecionar um usuário, role para baixo até a seção "Perfil do Usuário"</li>
+                            <li>No campo "Tipo de Usuário", selecione "Motorista"</li>
+                            <li>Preencha os campos específicos para motoristas:
+                                <ul>
+                                    <li>CNH</li>
+                                    <li>Categoria CNH</li>
+                                    <li>Validade CNH</li>
+                                    <li>Selecione um caminhão (opcional)</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Salve as alterações</strong>
+                        <ul>
+                            <li>Clique no botão "Salvar" no final da página</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Confirme que o usuário está ativo</strong>
+                        <ul>
+                            <li>Verifique se a opção "Ativo" está marcada no perfil do usuário</li>
+                            <li>Verifique se a opção "Ativo" está marcada nas informações básicas do usuário</li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #0d6efd;">
+                    <h4>Observações importantes:</h4>
+                    <ul>
+                        <li>Apenas usuários com o perfil tipo "MOTORISTA" terão acesso à área de motoristas</li>
+                        <li>O usuário deve estar ativo para poder acessar o sistema</li>
+                        <li>O caminhão atribuído ao motorista aparecerá no dashboard do motorista</li>
+                        <li>Um motorista pode gerenciar apenas os abastecimentos relacionados ao caminhão atribuído a ele</li>
+                    </ul>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <h4>Links úteis:</h4>
+                    <ul>
+                        <li><a href="{% url 'admin:auth_user_changelist' %}">Gerenciar usuários</a></li>
+                        <li><a href="{% url 'admin:core_caminhao_changelist' %}">Gerenciar caminhões</a></li>
+                        <li><a href="{% url 'admin:core_abastecimentopendente_changelist' %}">Gerenciar abastecimentos pendentes</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

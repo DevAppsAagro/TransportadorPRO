@@ -1,0 +1,122 @@
+{% extends 'motorista/base.html' %}
+
+{% block title %}Novo Abastecimento - Área do Motorista{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Novo Abastecimento</h1>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="post" action="{% url 'motorista:criar_abastecimento_pendente' %}" enctype="multipart/form-data" id="formAbastecimento">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="data" class="form-label">Data do Abastecimento</label>
+                                <input type="date" class="form-control" id="data" name="data" required max="{{ today|date:'Y-m-d' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="posto" class="form-label">Posto</label>
+                                <select class="form-select" id="posto" name="posto" required>
+                                    <option value="">Selecione o posto</option>
+                                    {% for posto in postos %}
+                                    <option value="{{ posto.id }}">{{ posto.nome_fantasia|default:posto.nome_completo }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="combustivel" class="form-label">Combustível</label>
+                                <select class="form-select" id="combustivel" name="combustivel" required>
+                                    <option value="">Selecione o combustível</option>
+                                    {% for valor, nome in combustiveis %}
+                                    <option value="{{ valor }}">{{ nome }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="km_atual" class="form-label">Quilometragem Atual</label>
+                                <input type="number" class="form-control" id="km_atual" name="km_atual" required min="0">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="litros" class="form-label">Litros</label>
+                                <input type="number" class="form-control" id="litros" name="litros" required step="0.01" min="0.01" onchange="calcularTotal()">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="valor_litro" class="form-label">Valor por Litro (R$)</label>
+                                <input type="number" class="form-control" id="valor_litro" name="valor_litro" required step="0.01" min="0.01" onchange="calcularTotal()">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="valor_total" class="form-label">Valor Total (R$)</label>
+                                <input type="number" class="form-control" id="valor_total" name="valor_total" required step="0.01" min="0.01">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="comprovante" class="form-label">Comprovante</label>
+                            <input type="file" class="form-control" id="comprovante" name="comprovante" accept="image/*">
+                            <div class="form-text">Envie uma foto ou imagem escaneada do comprovante (opcional, mas recomendado)</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="observacao" class="form-label">Observações</label>
+                            <textarea class="form-control" id="observacao" name="observacao" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'motorista:listar_abastecimentos_pendentes' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Voltar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check2-circle me-1"></i> Salvar Abastecimento
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function calcularTotal() {
+        const litros = parseFloat(document.getElementById('litros').value) || 0;
+        const valorLitro = parseFloat(document.getElementById('valor_litro').value) || 0;
+        const valorTotal = (litros * valorLitro).toFixed(2);
+        
+        document.getElementById('valor_total').value = valorTotal;
+    }
+    
+    // Também calcular quando o valor total é alterado
+    document.getElementById('valor_total').addEventListener('change', function() {
+        const litros = parseFloat(document.getElementById('litros').value) || 0;
+        if (litros > 0) {
+            const valorTotal = parseFloat(this.value) || 0;
+            document.getElementById('valor_litro').value = (valorTotal / litros).toFixed(2);
+        }
+    });
+    
+    // Limitar a data de abastecimento para não ser futura
+    document.addEventListener('DOMContentLoaded', function() {
+        const hoje = new Date();
+        const ano = hoje.getFullYear();
+        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+        const dia = String(hoje.getDate()).padStart(2, '0');
+        const dataHoje = `${ano}-${mes}-${dia}`;
+        
+        document.getElementById('data').setAttribute('max', dataHoje);
+    });
+</script>
+{% endblock %}

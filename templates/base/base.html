@@ -123,6 +123,27 @@
                 <a href="{% url 'core:contatos' %}" class="list-group-item list-group-item-action sidebar-link">
                     <i class="bi bi-people me-2"></i> Contatos
                 </a>
+                
+                <!-- Novo item para Motoristas -->
+                <div class="nav-item">
+                    <a href="#motoristasSubmenu" data-bs-toggle="collapse" class="list-group-item list-group-item-action sidebar-link">
+                        <i class="bi bi-person-badge me-2"></i> Motoristas <i class="bi bi-chevron-down ms-2"></i>
+                    </a>
+                    <div class="collapse" id="motoristasSubmenu">
+                        <div class="list-group">
+                            <a href="{% url 'core:listar_motoristas' %}" class="list-group-item list-group-item-action ps-4">
+                                <i class="bi bi-people me-2"></i> Gerenciar Motoristas
+                            </a>
+                            <a href="{% url 'motorista:login' %}" class="list-group-item list-group-item-action ps-4" target="_blank">
+                                <i class="bi bi-box-arrow-in-right me-2"></i> Área do Motorista
+                            </a>
+                            <a href="{% url 'core:listar_abastecimentos_pendentes' %}" class="list-group-item list-group-item-action ps-4">
+                                <i class="bi bi-fuel-pump me-2"></i> Abastecimentos Pendentes
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
                 <a href="{% url 'core:relatorios' %}" class="list-group-item list-group-item-action sidebar-link">
                     <i class="bi bi-file-earmark-text me-2"></i> Relatórios
                 </a>
@@ -148,6 +169,7 @@
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Perfil</a></li>
+                                <li><a class="dropdown-item" href="{% url 'motorista:login' %}" target="_blank"><i class="bi bi-person-badge me-2"></i>Área do Motorista</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right me-2"></i>Sair</a></li>
                             </ul>
@@ -158,6 +180,14 @@
 
             <!-- Main Content -->
             <div class="container-fluid p-4">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x" style="margin-top:70px; z-index:9999; max-width: 80%; min-width: 50%;" role="alert">
+                            {{ message|safe }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
                 {% block content %}
                 {% endblock %}
             </div>
