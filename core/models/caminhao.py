@@ -9,12 +9,12 @@ class Caminhao(models.Model):
         ('INATIVO', 'Inativo')
     ]
     
-    placa = models.CharField(max_length=8, verbose_name='Placa', unique=True)
+    placa = models.CharField(max_length=8, verbose_name='Placa')
     marca = models.CharField(max_length=50, verbose_name='Marca')
     modelo = models.CharField(max_length=50, verbose_name='Modelo')
     ano = models.IntegerField(verbose_name='Ano')
-    chassi = models.CharField(max_length=17, verbose_name='Chassi', unique=True)
-    renavam = models.CharField(max_length=11, verbose_name='Renavam', unique=True)
+    chassi = models.CharField(max_length=17, verbose_name='Chassi')
+    renavam = models.CharField(max_length=11, verbose_name='Renavam')
     valor_compra = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Valor de Compra')
     vida_util = models.IntegerField(verbose_name='Vida Útil (anos)')
     valor_residual = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Valor Residual')

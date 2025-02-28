@@ -4,6 +4,14 @@ from django.contrib import messages
 from core.models.caminhao import Caminhao
 from datetime import datetime
 
+# Função para converter valores formatados no padrão brasileiro para float
+def converter_para_float(valor_str):
+    if not valor_str:
+        return 0.0
+    # Remove os pontos de milhar e substitui a vírgula decimal por ponto
+    valor_str = valor_str.replace('.', '').replace(',', '.')
+    return float(valor_str)
+
 @login_required
 def caminhoes(request):
     caminhoes = Caminhao.objects.filter(usuario=request.user)
@@ -13,22 +21,42 @@ def caminhoes(request):
 def caminhao_novo(request):
     if request.method == 'POST':
         try:
+            # Obter valores do formulário
+            placa = request.POST['placa'].upper()
+            chassi = request.POST['chassi']
+            renavam = request.POST['renavam']
+            
+            # Verificar se já existe caminhão com a mesma placa, chassi ou renavam PARA ESTE USUÁRIO
+            if Caminhao.objects.filter(placa=placa, usuario=request.user).exists():
+                messages.error(request, f'Você já cadastrou um caminhão com a placa {placa}.')
+                return render(request, 'core/veiculos/caminhoes/form.html', {'form_data': request.POST})
+            
+            if Caminhao.objects.filter(chassi=chassi, usuario=request.user).exists():
+                messages.error(request, f'Você já cadastrou um caminhão com o chassi {chassi}.')
+                return render(request, 'core/veiculos/caminhoes/form.html', {'form_data': request.POST})
+            
+            if Caminhao.objects.filter(renavam=renavam, usuario=request.user).exists():
+                messages.error(request, f'Você já cadastrou um caminhão com o renavam {renavam}.')
+                return render(request, 'core/veiculos/caminhoes/form.html', {'form_data': request.POST})
+            
+            # Converter valores monetários do formato brasileiro para float
+            valor_compra = converter_para_float(request.POST['valor_compra'])
+            valor_residual = converter_para_float(request.POST['valor_residual'])
+            capacidade_carga = converter_para_float(request.POST['capacidade_carga'])
+            
             caminhao = Caminhao(
-                placa=request.POST['placa'].upper(),
+                placa=placa,
                 marca=request.POST['marca'],
                 modelo=request.POST['modelo'],
                 ano=int(request.POST['ano']),
-                chassi=request.POST['chassi'],
-                renavam=request.POST['renavam'],
-                valor_compra=float(request.POST['valor_compra']),
+                chassi=chassi,
+                renavam=renavam,
+                valor_compra=valor_compra,
                 vida_util=int(request.POST['vida_util']),
-                valor_residual=float(request.POST['valor_residual']),
-                capacidade_carga=float(request.POST['capacidade_carga']),
+                valor_residual=valor_residual,
+                capacidade_carga=capacidade_carga,
                 usuario=request.user
             )
-            
-            if request.POST.get('ultima_manutencao'):
-                caminhao.ultima_manutencao = request.POST['ultima_manutencao']
             
             caminhao.save()
             messages.success(request, 'Caminhão cadastrado com sucesso!')
@@ -40,25 +68,47 @@ def caminhao_novo(request):
 
 @login_required
 def caminhao_editar(request, id):
-    caminhao = get_object_or_404(Caminhao, id=id, usuario=request.user)
+    try:
+        caminhao = Caminhao.objects.get(id=id, usuario=request.user)
+    except Caminhao.DoesNotExist:
+        messages.error(request, 'Caminhão não encontrado.')
+        return redirect('core:caminhoes')
     
     if request.method == 'POST':
         try:
-            caminhao.placa = request.POST['placa'].upper()
+            # Obter valores do formulário
+            placa = request.POST['placa'].upper()
+            chassi = request.POST['chassi']
+            renavam = request.POST['renavam']
+            
+            # Verificar se já existe outro caminhão com a mesma placa, chassi ou renavam PARA ESTE USUÁRIO
+            if Caminhao.objects.filter(placa=placa, usuario=request.user).exclude(id=id).exists():
+                messages.error(request, f'Você já cadastrou outro caminhão com a placa {placa}.')
+                return render(request, 'core/veiculos/caminhoes/form.html', {'caminhao': caminhao, 'form_data': request.POST})
+            
+            if Caminhao.objects.filter(chassi=chassi, usuario=request.user).exclude(id=id).exists():
+                messages.error(request, f'Você já cadastrou outro caminhão com o chassi {chassi}.')
+                return render(request, 'core/veiculos/caminhoes/form.html', {'caminhao': caminhao, 'form_data': request.POST})
+            
+            if Caminhao.objects.filter(renavam=renavam, usuario=request.user).exclude(id=id).exists():
+                messages.error(request, f'Você já cadastrou outro caminhão com o renavam {renavam}.')
+                return render(request, 'core/veiculos/caminhoes/form.html', {'caminhao': caminhao, 'form_data': request.POST})
+            
+            # Converter valores monetários do formato brasileiro para float
+            valor_compra = converter_para_float(request.POST['valor_compra'])
+            valor_residual = converter_para_float(request.POST['valor_residual'])
+            capacidade_carga = converter_para_float(request.POST['capacidade_carga'])
+            
+            caminhao.placa = placa
             caminhao.marca = request.POST['marca']
             caminhao.modelo = request.POST['modelo']
             caminhao.ano = int(request.POST['ano'])
-            caminhao.chassi = request.POST['chassi']
-            caminhao.renavam = request.POST['renavam']
-            caminhao.valor_compra = float(request.POST['valor_compra'])
+            caminhao.chassi = chassi
+            caminhao.renavam = renavam
+            caminhao.valor_compra = valor_compra
             caminhao.vida_util = int(request.POST['vida_util'])
-            caminhao.valor_residual = float(request.POST['valor_residual'])
-            caminhao.capacidade_carga = float(request.POST['capacidade_carga'])
-            
-            if request.POST.get('ultima_manutencao'):
-                caminhao.ultima_manutencao = request.POST['ultima_manutencao']
-            else:
-                caminhao.ultima_manutencao = None
+            caminhao.valor_residual = valor_residual
+            caminhao.capacidade_carga = capacidade_carga
             
             caminhao.save()
             messages.success(request, 'Caminhão atualizado com sucesso!')

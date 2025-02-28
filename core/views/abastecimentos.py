@@ -22,7 +22,7 @@ def abastecimentos(request):
 def abastecimento_novo(request):
     if request.method == 'POST':
         try:
-            caminhao = Caminhao.objects.get(id=request.POST['caminhao'])
+            caminhao = Caminhao.objects.get(id=request.POST['caminhao'], usuario=request.user)
             abastecimento = Abastecimento(
                 data=request.POST['data'],
                 data_vencimento=request.POST['data_vencimento'],
@@ -31,12 +31,12 @@ def abastecimento_novo(request):
                 situacao=request.POST['situacao'],
                 litros=Decimal(request.POST['litros']),
                 valor_litro=Decimal(request.POST['valor_litro']),
-                motorista=Contato.objects.get(id=request.POST['motorista']),
-                posto=Contato.objects.get(id=request.POST['posto']),
+                motorista=Contato.objects.get(id=request.POST['motorista'], usuario=request.user),
+                posto=Contato.objects.get(id=request.POST['posto'], usuario=request.user),
                 km_abastecimento=request.POST['km_abastecimento']
             )
             if 'frete' in request.POST and request.POST['frete']:
-                abastecimento.frete = Frete.objects.get(id=request.POST['frete'])
+                abastecimento.frete = Frete.objects.get(id=request.POST['frete'], caminhao__usuario=request.user)
             abastecimento.save()
             
             # Atualiza a quilometragem do caminhão
@@ -48,20 +48,21 @@ def abastecimento_novo(request):
             messages.error(request, f'Erro ao cadastrar abastecimento: {str(e)}')
     
     context = {
-        'caminhoes': Caminhao.objects.all(),
-        'motoristas': Contato.objects.filter(tipo='MOTORISTA'),
-        'postos': Contato.objects.filter(tipo='POSTO'),
-        'fretes': Frete.objects.filter(status='EM_ANDAMENTO')
+        'caminhoes': Caminhao.objects.filter(usuario=request.user),
+        'motoristas': Contato.objects.filter(tipo='MOTORISTA', usuario=request.user),
+        'postos': Contato.objects.filter(tipo='POSTO', usuario=request.user),
+        'fretes': Frete.objects.filter(status='EM_ANDAMENTO', caminhao__usuario=request.user)
     }
     return render(request, 'core/abastecimentos/form.html', context)
 
 @login_required
 def abastecimento_editar(request, id):
-    abastecimento = get_object_or_404(Abastecimento, pk=id)
+    # Garantir que o usuário só possa editar seus próprios abastecimentos
+    abastecimento = get_object_or_404(Abastecimento, pk=id, caminhao__usuario=request.user)
     
     if request.method == 'POST':
         try:
-            caminhao = Caminhao.objects.get(id=request.POST['caminhao'])
+            caminhao = Caminhao.objects.get(id=request.POST['caminhao'], usuario=request.user)
             abastecimento.data = request.POST['data']
             abastecimento.data_vencimento = request.POST['data_vencimento']
             abastecimento.data_pagamento = request.POST.get('data_pagamento')
@@ -69,20 +70,16 @@ def abastecimento_editar(request, id):
             abastecimento.situacao = request.POST['situacao']
             abastecimento.litros = Decimal(request.POST['litros'])
             abastecimento.valor_litro = Decimal(request.POST['valor_litro'])
-            abastecimento.motorista = Contato.objects.get(id=request.POST['motorista'])
-            abastecimento.posto = Contato.objects.get(id=request.POST['posto'])
+            abastecimento.motorista = Contato.objects.get(id=request.POST['motorista'], usuario=request.user)
+            abastecimento.posto = Contato.objects.get(id=request.POST['posto'], usuario=request.user)
             abastecimento.km_abastecimento = request.POST['km_abastecimento']
             
             if 'frete' in request.POST and request.POST['frete']:
-                abastecimento.frete = Frete.objects.get(id=request.POST['frete'])
+                abastecimento.frete = Frete.objects.get(id=request.POST['frete'], caminhao__usuario=request.user)
             else:
                 abastecimento.frete = None
                 
             abastecimento.save()
-            
-            # Atualiza a quilometragem do caminhão
-            caminhao.quilometragem = request.POST['km_abastecimento']
-            caminhao.save()
             messages.success(request, 'Abastecimento atualizado com sucesso!')
             return redirect('core:abastecimentos')
         except Exception as e:
@@ -90,16 +87,17 @@ def abastecimento_editar(request, id):
     
     context = {
         'abastecimento': abastecimento,
-        'caminhoes': Caminhao.objects.all(),
-        'motoristas': Contato.objects.filter(tipo='MOTORISTA'),
-        'postos': Contato.objects.filter(tipo='POSTO'),
-        'fretes': Frete.objects.filter(status='EM_ANDAMENTO')
+        'caminhoes': Caminhao.objects.filter(usuario=request.user),
+        'motoristas': Contato.objects.filter(tipo='MOTORISTA', usuario=request.user),
+        'postos': Contato.objects.filter(tipo='POSTO', usuario=request.user),
+        'fretes': Frete.objects.filter(status='EM_ANDAMENTO', caminhao__usuario=request.user)
     }
     return render(request, 'core/abastecimentos/form.html', context)
 
 @login_required
 def abastecimento_excluir(request, id):
-    abastecimento = get_object_or_404(Abastecimento, pk=id)
+    # Garantir que o usuário só possa excluir seus próprios abastecimentos
+    abastecimento = get_object_or_404(Abastecimento, pk=id, caminhao__usuario=request.user)
     try:
         abastecimento.delete()
         messages.success(request, 'Abastecimento excluído com sucesso!')

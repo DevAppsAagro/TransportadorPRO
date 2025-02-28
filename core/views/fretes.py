@@ -158,10 +158,12 @@ def frete_novo(request):
             logger.error('='*50)
             messages.error(request, f'Erro ao cadastrar frete: {str(e)}')
     
-    caminhoes = Caminhao.objects.all()
-    motoristas = Contato.objects.filter(tipo='MOTORISTA')
-    clientes = Contato.objects.filter(tipo='CLIENTE')
-    cargas = Carga.objects.all()
+    # Filtrar opções apenas do usuário atual
+    caminhoes = Caminhao.objects.filter(usuario=request.user)
+    motoristas = Contato.objects.filter(tipo='MOTORISTA', usuario=request.user)
+    clientes = Contato.objects.filter(tipo='CLIENTE', usuario=request.user)
+    cargas = Carga.objects.filter(usuario=request.user)
+    
     return render(request, 'core/fretes/frete_form.html', {
         'caminhoes': caminhoes,
         'motoristas': motoristas,
@@ -172,7 +174,8 @@ def frete_novo(request):
 
 @login_required
 def frete_editar(request, id):
-    frete = get_object_or_404(Frete, pk=id)
+    # Garantir que o usuário só possa editar seus próprios fretes
+    frete = get_object_or_404(Frete, pk=id, caminhao__usuario=request.user)
     
     if request.method == 'POST':
         try:
@@ -210,13 +213,13 @@ def frete_editar(request, id):
                 valor_total = quantidade_unidades * valor_unitario
                 logger.info(f'Valor total calculado: {valor_total}')
             
+            # Atualizar o objeto frete
             frete.caminhao = caminhao
             frete.motorista = motorista
             frete.data_saida = request.POST.get('data_saida')
             frete.peso_carga = peso_carga
             frete.km_saida = request.POST.get('km_saida')
             frete.conta_bancaria = request.POST.get('conta_bancaria')
-            frete.data_recebimento = request.POST.get('data_recebimento') or None
             frete.carga = carga
             frete.valor_unitario = valor_unitario
             frete.valor_total = valor_total
@@ -227,25 +230,34 @@ def frete_editar(request, id):
             frete.ticket = request.POST.get('ticket')
             frete.comissao_motorista = comissao_motorista
             frete.observacoes = request.POST.get('observacoes')
-            frete.data_chegada = request.POST.get('data_chegada') or None
-            frete.km_chegada = request.POST.get('km_chegada') or None
-            frete.valor_acrescimo = Decimal(request.POST.get('valor_acrescimo', '0').replace(',', '.'))
-            frete.valor_desconto = Decimal(request.POST.get('valor_desconto', '0').replace(',', '.'))
             
-            logger.info('Salvando frete...')
+            # Calcular valor da comissão do motorista
+            frete.valor_comissao_motorista = (frete.valor_total * frete.comissao_motorista) / 100
+            
+            # Verificar se há data de chegada e Km de chegada
+            if request.POST.get('data_chegada'):
+                frete.data_chegada = request.POST.get('data_chegada')
+                frete.km_chegada = request.POST.get('km_chegada')
+            
+            # Verificar se há data de recebimento
+            if request.POST.get('data_recebimento'):
+                frete.data_recebimento = request.POST.get('data_recebimento')
+            else:
+                frete.data_recebimento = None
+            
             frete.save()
-            logger.info('Frete salvo com sucesso!')
-            
             messages.success(request, 'Frete atualizado com sucesso!')
             return redirect('core:fretes')
         except Exception as e:
             logger.error(f'Erro ao atualizar frete: {str(e)}')
             messages.error(request, f'Erro ao atualizar frete: {str(e)}')
     
-    caminhoes = Caminhao.objects.all()
-    motoristas = Contato.objects.filter(tipo='MOTORISTA')
-    clientes = Contato.objects.filter(tipo='CLIENTE')
-    cargas = Carga.objects.all()
+    # Filtrar opções apenas do usuário atual
+    caminhoes = Caminhao.objects.filter(usuario=request.user)
+    motoristas = Contato.objects.filter(tipo='MOTORISTA', usuario=request.user)
+    clientes = Contato.objects.filter(tipo='CLIENTE', usuario=request.user)
+    cargas = Carga.objects.filter(usuario=request.user)
+    
     return render(request, 'core/fretes/frete_form.html', {
         'frete': frete,
         'caminhoes': caminhoes,
@@ -257,7 +269,8 @@ def frete_editar(request, id):
 
 @login_required
 def frete_excluir(request, id):
-    frete = get_object_or_404(Frete, pk=id)
+    # Garantir que o usuário só possa excluir seus próprios fretes
+    frete = get_object_or_404(Frete, pk=id, caminhao__usuario=request.user)
     try:
         logger.info('Excluindo frete...')
         frete.delete()
@@ -270,7 +283,8 @@ def frete_excluir(request, id):
 
 @login_required
 def frete_receber(request, id):
-    frete = get_object_or_404(Frete, pk=id)
+    # Garantir que o usuário só possa receber seus próprios fretes
+    frete = get_object_or_404(Frete, pk=id, caminhao__usuario=request.user)
     if request.method == 'POST':
         try:
             logger.info('Registrando recebimento de frete...')

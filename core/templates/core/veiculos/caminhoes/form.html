@@ -18,17 +18,17 @@
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="placa" class="form-label">Placa*</label>
-                        <input type="text" class="form-control" id="placa" name="placa" value="{{ caminhao.placa|default:'' }}" required maxlength="8">
+                        <input type="text" class="form-control" id="placa" name="placa" value="{% if caminhao %}{{ caminhao.placa|default:'' }}{% elif form_data %}{{ form_data.placa|default:'' }}{% endif %}" required maxlength="8">
                         <div class="invalid-feedback">Por favor, informe a placa do caminhão.</div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="marca" class="form-label">Marca*</label>
-                        <input type="text" class="form-control" id="marca" name="marca" value="{{ caminhao.marca|default:'' }}" required maxlength="50">
+                        <input type="text" class="form-control" id="marca" name="marca" value="{% if caminhao %}{{ caminhao.marca|default:'' }}{% elif form_data %}{{ form_data.marca|default:'' }}{% endif %}" required maxlength="50">
                         <div class="invalid-feedback">Por favor, informe a marca do caminhão.</div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="modelo" class="form-label">Modelo*</label>
-                        <input type="text" class="form-control" id="modelo" name="modelo" value="{{ caminhao.modelo|default:'' }}" required maxlength="50">
+                        <input type="text" class="form-control" id="modelo" name="modelo" value="{% if caminhao %}{{ caminhao.modelo|default:'' }}{% elif form_data %}{{ form_data.modelo|default:'' }}{% endif %}" required maxlength="50">
                         <div class="invalid-feedback">Por favor, informe o modelo do caminhão.</div>
                     </div>
                 </div>
@@ -36,17 +36,17 @@
                 <div class="row">
                     <div class="col-md-3 mb-3">
                         <label for="ano" class="form-label">Ano*</label>
-                        <input type="number" class="form-control" id="ano" name="ano" value="{{ caminhao.ano|default:'' }}" required min="1900">
+                        <input type="number" class="form-control" id="ano" name="ano" value="{% if caminhao %}{{ caminhao.ano|default:'' }}{% elif form_data %}{{ form_data.ano|default:'' }}{% endif %}" required min="1900">
                         <div class="invalid-feedback">Por favor, informe o ano do caminhão.</div>
                     </div>
                     <div class="col-md-5 mb-3">
                         <label for="chassi" class="form-label">Chassi*</label>
-                        <input type="text" class="form-control" id="chassi" name="chassi" value="{{ caminhao.chassi|default:'' }}" required maxlength="17">
+                        <input type="text" class="form-control" id="chassi" name="chassi" value="{% if caminhao %}{{ caminhao.chassi|default:'' }}{% elif form_data %}{{ form_data.chassi|default:'' }}{% endif %}" required maxlength="17">
                         <div class="invalid-feedback">Por favor, informe o chassi do caminhão.</div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="renavam" class="form-label">Renavam*</label>
-                        <input type="text" class="form-control" id="renavam" name="renavam" value="{{ caminhao.renavam|default:'' }}" required maxlength="11">
+                        <input type="text" class="form-control" id="renavam" name="renavam" value="{% if caminhao %}{{ caminhao.renavam|default:'' }}{% elif form_data %}{{ form_data.renavam|default:'' }}{% endif %}" required maxlength="11">
                         <div class="invalid-feedback">Por favor, informe o renavam do caminhão.</div>
                     </div>
                 </div>
@@ -54,17 +54,17 @@
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="valor_compra" class="form-label">Valor de Compra (R$)*</label>
-                        <input type="text" class="form-control money" id="valor_compra" name="valor_compra" value="{{ caminhao.valor_compra|default:'' }}" required>
+                        <input type="text" class="form-control money" id="valor_compra" name="valor_compra" value="{% if caminhao %}{{ caminhao.valor_compra|default:'' }}{% elif form_data %}{{ form_data.valor_compra|default:'' }}{% endif %}" required>
                         <div class="invalid-feedback">Por favor, informe o valor de compra do caminhão.</div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="vida_util" class="form-label">Vida Útil (anos)*</label>
-                        <input type="number" class="form-control" id="vida_util" name="vida_util" value="{{ caminhao.vida_util|default:'' }}" required min="1">
+                        <input type="number" class="form-control" id="vida_util" name="vida_util" value="{% if caminhao %}{{ caminhao.vida_util|default:'' }}{% elif form_data %}{{ form_data.vida_util|default:'' }}{% endif %}" required min="1">
                         <div class="invalid-feedback">Por favor, informe a vida útil do caminhão.</div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="valor_residual" class="form-label">Valor Residual (R$)*</label>
-                        <input type="text" class="form-control money" id="valor_residual" name="valor_residual" value="{{ caminhao.valor_residual|default:'' }}" required>
+                        <input type="text" class="form-control money" id="valor_residual" name="valor_residual" value="{% if caminhao %}{{ caminhao.valor_residual|default:'' }}{% elif form_data %}{{ form_data.valor_residual|default:'' }}{% endif %}" required>
                         <div class="invalid-feedback">Por favor, informe o valor residual do caminhão.</div>
                     </div>
                 </div>
@@ -72,10 +72,9 @@
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="capacidade_carga" class="form-label">Capacidade de Carga (kg)*</label>
-                        <input type="text" class="form-control decimal" id="capacidade_carga" name="capacidade_carga" value="{{ caminhao.capacidade_carga|default:'' }}" required>
+                        <input type="text" class="form-control decimal" id="capacidade_carga" name="capacidade_carga" value="{% if caminhao %}{{ caminhao.capacidade_carga|default:'' }}{% elif form_data %}{{ form_data.capacidade_carga|default:'' }}{% endif %}" required>
                         <div class="invalid-feedback">Por favor, informe a capacidade de carga do caminhão.</div>
                     </div>
-
                 </div>
 
                 <div class="row mt-4">
