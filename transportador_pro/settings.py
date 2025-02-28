@@ -212,11 +212,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
-        'simple': {
-            'format': '{levelname} {message}',
+            'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
     },
@@ -225,25 +221,30 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
-        'file': {
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'debug.log'),
-            'formatter': 'verbose',
-        },
     },
     'loggers': {
         'core': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
         },
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
         },
     },
 }
+
+# Configuração de log para desenvolvimento local
+if not os.environ.get('VERCEL') and DEBUG:
+    LOGGING['handlers']['file'] = {
+        'class': 'logging.FileHandler',
+        'filename': os.path.join(BASE_DIR, 'debug.log'),
+        'formatter': 'verbose',
+    }
+    LOGGING['loggers']['core']['handlers'].append('file')
+    LOGGING['loggers']['django']['handlers'].append('file')
 
 # Configurações de Email
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
