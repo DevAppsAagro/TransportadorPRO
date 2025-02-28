@@ -19,8 +19,9 @@ class DomainRedirectMiddleware:
         if ':' in host:
             host = host.split(':')[0]
         
-        # Verificar se é um subdomínio de motorista
+        # Verificar se é um subdomínio de motorista ou o subdomínio app
         is_motorista_subdomain = host.startswith('motorista.')
+        is_app_subdomain = host.startswith('app.') 
         
         # Se estiver vindo de um subdomínio de motorista, adicionar um atributo
         # ao request para identificá-lo em outras partes da aplicação
@@ -43,6 +44,10 @@ class DomainRedirectMiddleware:
             else:
                 # Adicionar o prefixo /motorista/ a outros paths
                 return HttpResponseRedirect(f'/motorista{request.path}')
+        
+        # Redirecionar app.transportadorpro.com para a área de login
+        if is_app_subdomain and request.path == '/':
+            return HttpResponseRedirect('/accounts/login/')
         
         # Se for um motorista tentando acessar áreas de admin, redirecionar para o dashboard de motorista
         if is_motorista_user and not is_motorista_subdomain and not request.path.startswith('/motorista/'):
