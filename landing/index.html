@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TransportadorPRO - Sistema Completo para Gestão de Transportes</title>
+    
+    <!-- Metadata -->
+    <meta name="description" content="TransportadorPRO: sistema completo para gestão de transportes e logística. Controle de frota, despesas, motoristas e muito mais.">
+    <meta property="og:title" content="TransportadorPRO - Gestão completa para sua empresa de transporte">
+    <meta property="og:description" content="Sistema completo para gestão de transportes e logística. Transforme a gestão da sua frota.">
+    <meta property="og:url" content="https://transportadorpro.com/">
+    <meta property="og:type" content="website">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://transportadorpro.com/">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//favicon.ico" type="image/x-icon">
+    
+    <!-- Bootstrap CSS e Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Fonte personalizada -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS personalizado -->
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --dark-color: #212529;
+            --light-color: #f8f9fa;
+            --success-color: #198754;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: var(--dark-color);
+            overflow-x: hidden;
+        }
+        
+        .hero-section {
+            color: white;
+            padding: 250px 0 160px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            bottom: -50px;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: white;
+            clip-path: polygon(0 0, 100% 50%, 100% 100%, 0% 100%);
+            z-index: 2;
+        }
+        
+        .hero-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+        }
+        
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(13, 110, 253, 0.5);
+            z-index: 1;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 3;
+        }
+        
+        .navbar {
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-card {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+            height: 100%;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .cta-section {
+            background-color: var(--light-color);
+            padding: 80px 0;
+        }
+        
+        .testimonial-card {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+        }
+        
+        .pricing-card {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+            height: 100%;
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-10px);
+        }
+        
+        .highlighted-plan {
+            border: 2px solid var(--primary-color);
+            position: relative;
+        }
+        
+        .highlight-badge {
+            position: absolute;
+            top: -15px;
+            right: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-weight: 600;
+        }
+        
+        .btn-outline-primary {
+            border-radius: 30px;
+            font-weight: 600;
+        }
+        
+        .footer {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 60px 0 30px;
+        }
+        
+        .footer a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            color: white;
+        }
+        
+        .features-section, .testimonials-section, .pricing-section {
+            padding: 80px 0;
+        }
+        
+        .section-title {
+            margin-bottom: 50px;
+        }
+        
+        .section-title h2 {
+            font-weight: 700;
+            position: relative;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        
+        .section-title h2:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: var(--primary-color);
+        }
+        
+        .scroll-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 999;
+        }
+        
+        /* Estilos para dispositivos */
+        .device-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Laptop */
+        .laptop {
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            z-index: 2;
+            animation: slideInLaptop 1.2s ease-out forwards;
+        }
+        
+        .laptop-frame {
+            position: relative;
+            background: #f1f1f1;
+            border-radius: 12px 12px 0 0;
+            padding: 8px 8px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .laptop-screen {
+            position: relative;
+            background: #ffffff;
+            overflow: hidden;
+            border-radius: 2px 2px 0 0;
+            aspect-ratio: 16/10;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .laptop-screen img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain !important;
+            background-color: #fff;
+        }
+        
+        .laptop-base {
+            background: #e0e0e0;
+            height: 10px;
+            position: relative;
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .laptop-base::after {
+            content: '';
+            position: absolute;
+            width: 30%;
+            height: 3px;
+            background: #d0d0d0;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+        
+        /* Smartphone */
+        .smartphone {
+            position: absolute;
+            bottom: -10px;
+            right: -2%;
+            width: 30%;
+            max-width: 230px;
+            background: #f1f1f1;
+            border-radius: 20px;
+            padding: 6px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+            z-index: 3;
+            animation: slideInPhone 1.5s ease-out forwards;
+            animation-delay: 0.5s;
+            opacity: 0;
+        }
+        
+        .smartphone-screen {
+            background: #ffffff;
+            overflow: hidden;
+            border-radius: 15px;
+            aspect-ratio: 9/19;
+            border: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .smartphone-screen img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain !important;
+            background-color: #fff;
+        }
+        
+        .smartphone::before {
+            content: '';
+            position: absolute;
+            width: 40%;
+            height: 3px;
+            background: #d0d0d0;
+            border-radius: 2px;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        /* Animações para os dispositivos */
+        @keyframes slideInLaptop {
+            0% {
+                transform: translateX(-100px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideInPhone {
+            0% {
+                transform: translate(100px, 50px);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(0, 0);
+                opacity: 1;
+            }
+        }
+        
+        /* Media query para ajustar os dispositivos em telas pequenas */
+        @media (max-width: 991.98px) {
+            .device-wrapper {
+                margin-top: 40px;
+                transform: scale(0.9);
+                max-width: 100%;
+                display: flex;
+                justify-content: center;
+            }
+            
+            .laptop {
+                width: 95%;
+            }
+            
+            .smartphone {
+                bottom: -15px;
+                right: -3%;
+                width: 32%;
+            }
+            
+            .col-lg-6.d-none.d-lg-block {
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                <img src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro.svg" alt="TransportadorPRO" height="32">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Funcionalidades</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#testimonials">Depoimentos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#pricing">Planos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contact">Contato</a>
+                    </li>
+                    <li class="nav-item ms-lg-3">
+                        <a class="btn btn-outline-primary" href="https://app.transportadorpro.com">Acessar Sistema</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <video class="hero-video" autoplay muted loop playsinline>
+            <source src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//0228.mp4" type="video/mp4">
+        </video>
+        <div class="hero-overlay"></div>
+        <div class="container hero-content">
+            <div class="row">
+                <div class="col-lg-6">
+                    <h1 class="fw-bold mb-4">Gestão completa para sua empresa de transporte</h1>
+                    <p class="lead mb-4">O TransportadorPRO é o sistema que vai transformar a gestão da sua frota, otimizar rotas e maximizar seus lucros.</p>
+                    <div class="d-flex gap-3 flex-wrap">
+                        <a href="#pricing" class="btn btn-light btn-lg mb-3">Ver Planos</a>
+                        <a href="#demo" class="btn btn-outline-light btn-lg mb-3">Solicitar Demo</a>
+                    </div>
+                </div>
+                <div class="col-lg-6 d-none d-lg-block">
+                    <div class="device-wrapper">
+                        <div class="laptop">
+                            <div class="laptop-frame">
+                                <div class="laptop-screen">
+                                    <img src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//dashboard-laptop.jpg" alt="Dashboard do TransportadorPRO">
+                                </div>
+                            </div>
+                            <div class="laptop-base"></div>
+                        </div>
+                        <div class="smartphone">
+                            <div class="smartphone-screen">
+                                <img src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//dashboard-phone.jpg" alt="App mobile do TransportadorPRO">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section" id="features">
+        <div class="container">
+            <div class="section-title text-center">
+                <h2>Funcionalidades Poderosas</h2>
+                <p class="text-muted">Tudo o que você precisa para gerenciar sua empresa de transporte em um único lugar</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card card p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-truck"></i>
+                        </div>
+                        <h3 class="h5 fw-bold">Gestão de Frota</h3>
+                        <p>Controle total da manutenção, documentação e performance de todos os seus veículos.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card card p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-map"></i>
+                        </div>
+                        <h3 class="h5 fw-bold">Lançamentos via App</h3>
+                        <p>Motoristas podem registrar abastecimentos, despesas e ocorrências diretamente do celular.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card card p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                        <h3 class="h5 fw-bold">Controle Financeiro</h3>
+                        <p>Gestão completa de receitas, despesas, faturamento e lucratividade por viagem.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card card p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h3 class="h5 fw-bold">Gestão de Motoristas</h3>
+                        <p>Controle de jornada, performance, comissões e documentação dos seus motoristas.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card card p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-bar-chart"></i>
+                        </div>
+                        <h3 class="h5 fw-bold">Relatórios e Dashboards</h3>
+                        <p>Visualize o desempenho do seu negócio com relatórios detalhados e dashboards intuitivos.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card card p-4">
+                        <div class="feature-icon">
+                            <i class="bi bi-phone"></i>
+                        </div>
+                        <h3 class="h5 fw-bold">Aplicativo Mobile</h3>
+                        <p>Acesse informações e gerencie sua operação de qualquer lugar através do nosso app mobile.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section" id="demo">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <h2 class="mb-4 fw-bold">Solicite uma demonstração gratuita</h2>
+                    <p class="lead mb-4">Veja na prática como o TransportadorPRO pode transformar sua empresa.</p>
+                    <form class="row g-3 justify-content-center">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" placeholder="Nome">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="email" class="form-control" placeholder="Email">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="tel" class="form-control" placeholder="Telefone">
+                        </div>
+                        <div class="col-12 mt-3">
+                            <button type="submit" class="btn btn-primary btn-lg">Solicitar Demo</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials-section" id="testimonials">
+        <div class="container">
+            <div class="section-title text-center">
+                <h2>O que nossos clientes dizem</h2>
+                <p class="text-muted">Empresas que transformaram sua gestão com o TransportadorPRO</p>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="testimonial-card card p-4 h-100">
+                        <div class="testimonial-content">
+                            <div class="d-flex align-items-center mb-3">
+                                <img src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//carlos.jpg" alt="Carlos Silva" class="rounded-circle me-3" width="60" height="60">
+                                <div>
+                                    <h5 class="mb-0">Carlos Silva</h5>
+                                    <small class="text-muted">Transportadora Silva</small>
+                                </div>
+                            </div>
+                            <p class="mb-0">"Nossa, que diferença! Desde que começamos a usar o TransportadorPRO, cortamos uns 20% dos gastos e a produtividade da frota melhorou demais. O sistema é bem tranquilo de mexer, até eu que não sou fã de tecnologia consegui aprender rapidinho."</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="testimonial-card card p-4 h-100">
+                        <div class="testimonial-content">
+                            <div class="d-flex align-items-center mb-3">
+                                <img src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//ana.jpg" alt="Ana Ferreira" class="rounded-circle me-3" width="60" height="60">
+                                <div>
+                                    <h5 class="mb-0">Ana Ferreira</h5>
+                                    <small class="text-muted">Express Logística</small>
+                                </div>
+                            </div>
+                            <p class="mb-0">"Melhor investimento que fizemos nos últimos anos, sem dúvida! A parte financeira ficou super organizada e o app pros motoristas é sensacional. Eles fazem os lançamentos na hora e isso economiza um tempão pra gente. Crescemos 35% no último ano!"</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="testimonial-card card p-4 h-100">
+                        <div class="testimonial-content">
+                            <div class="d-flex align-items-center mb-3">
+                                <img src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//roberto.jpg" alt="Roberto Santos" class="rounded-circle me-3" width="60" height="60">
+                                <div>
+                                    <h5 class="mb-0">Roberto Santos</h5>
+                                    <small class="text-muted">RS Transportes</small>
+                                </div>
+                            </div>
+                            <p class="mb-0">"O pessoal do suporte é show de bola, sempre dão um jeito de resolver nossos problemas. O módulo de manutenção é meu favorito, reduziu as paradas dos caminhões em quase 70%. Antes era uma dor de cabeça, agora consigo dormir tranquilo!"</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing-section bg-light" id="pricing">
+        <div class="container">
+            <div class="section-title text-center">
+                <h2>Planos e Preços</h2>
+                <p class="text-muted">Escolha o plano ideal para o tamanho da sua operação</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="pricing-card card p-4">
+                        <div class="card-body">
+                            <h5 class="card-title text-center fw-bold">Básico</h5>
+                            <div class="text-center my-4">
+                                <span class="h2 fw-bold">R$97</span>
+                                <span class="text-muted">/mês</span>
+                            </div>
+                            <ul class="list-unstyled mb-4">
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Até 5 veículos</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Gestão de frota</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Controle de despesas</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Relatórios básicos</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Lançamentos via app mobile</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>App mobile</li>
+                            </ul>
+                            <div class="text-center">
+                                <a href="#" class="btn btn-outline-primary">Assinar Agora</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="pricing-card card p-4 highlighted-plan">
+                        <div class="highlight-badge">Mais Popular</div>
+                        <div class="card-body">
+                            <h5 class="card-title text-center fw-bold">Profissional</h5>
+                            <div class="text-center my-4">
+                                <span class="h2 fw-bold">R$ 197</span>
+                                <span class="text-muted">/mês</span>
+                            </div>
+                            <ul class="list-unstyled mb-4">
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Até 15 veículos</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Gestão de frota completa</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Controle financeiro avançado</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Relatórios detalhados</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Lançamentos via app mobile</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>App mobile</li>
+                            </ul>
+                            <div class="text-center">
+                                <a href="#" class="btn btn-primary">Assinar Agora</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="pricing-card card p-4">
+                        <div class="card-body">
+                            <h5 class="card-title text-center fw-bold">Empresarial</h5>
+                            <div class="text-center my-4">
+                                <span class="h2 fw-bold">R$ 497</span>
+                                <span class="text-muted">/mês</span>
+                            </div>
+                            <ul class="list-unstyled mb-4">
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Veículos ilimitados</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Gestão de frota completa</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Controle financeiro premium</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Relatórios personalizados</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Lançamentos via app mobile</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>App mobile completo</li>
+                            </ul>
+                            <div class="text-center">
+                                <a href="#" class="btn btn-outline-primary">Assinar Agora</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="py-5" id="contact">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <h2 class="fw-bold mb-4">Entre em contato</h2>
+                    <p class="text-muted mb-5">Estamos disponíveis para tirar suas dúvidas e ajudar a encontrar a melhor solução para sua empresa</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-4 text-center mb-4 mb-lg-0">
+                    <div class="feature-icon mx-auto mb-3">
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                    <h5>Email</h5>
+                    <p class="text-muted">contatolwlsolutions@gmail.com</p>
+                </div>
+                <div class="col-lg-4 text-center mb-4 mb-lg-0">
+                    <div class="feature-icon mx-auto mb-3">
+                        <i class="bi bi-telephone"></i>
+                    </div>
+                    <h5>Telefone</h5>
+                    <p class="text-muted">(64) 99611-5182</p>
+                </div>
+                <div class="col-lg-4 text-center">
+                    <div class="feature-icon mx-auto mb-3">
+                        <i class="bi bi-whatsapp"></i>
+                    </div>
+                    <h5>WhatsApp</h5>
+                    <p class="text-muted"><a href="https://wa.me/5564996115182?text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20o%20TransportadorPRO" target="_blank" class="text-decoration-none text-muted">(64) 99611-5182</a></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5 class="mb-3"><img src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg" alt="TransportadorPRO" height="30"></h5>
+                    <p class="text-muted">Sistema completo para gestão de empresas de transporte e logística.</p>
+                    <div class="d-flex gap-3 mt-4">
+                        <a href="#"><i class="bi bi-facebook fs-5"></i></a>
+                        <a href="#"><i class="bi bi-instagram fs-5"></i></a>
+                        <a href="#"><i class="bi bi-linkedin fs-5"></i></a>
+                        <a href="#"><i class="bi bi-youtube fs-5"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-4 mb-lg-0">
+                    <h5 class="mb-3">Links</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#">Home</a></li>
+                        <li class="mb-2"><a href="#features">Funcionalidades</a></li>
+                        <li class="mb-2"><a href="#pricing">Planos</a></li>
+                        <li class="mb-2"><a href="#contact">Contato</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-4 mb-lg-0">
+                    <h5 class="mb-3">Empresa</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#">Sobre nós</a></li>
+                        <li class="mb-2"><a href="#">Blog</a></li>
+                        <li class="mb-2"><a href="#">Carreiras</a></li>
+                        <li class="mb-2"><a href="#">Parceiros</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 col-md-4">
+                    <h5 class="mb-3">Newsletter</h5>
+                    <p class="text-muted">Inscreva-se para receber novidades e dicas de gestão.</p>
+                    <div class="input-group mb-3">
+                        <input type="email" class="form-control" placeholder="Seu email">
+                        <button class="btn btn-primary" type="button">Inscrever</button>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4 border-secondary">
+            <div class="row">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="mb-md-0">&copy; 2025 TransportadorPRO. Todos os direitos reservados.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <a href="#" class="me-3">Termos de Uso</a>
+                    <a href="#">Política de Privacidade</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scroll to top button -->
+    <div class="scroll-top" id="scrollTop">
+        <i class="bi bi-arrow-up"></i>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script>
+        // Toggle sidebar
+        document.addEventListener('DOMContentLoaded', function() {
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    if(targetId === '#') return;
+                    
+                    const targetElement = document.querySelector(targetId);
+                    if(targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+            
+            // Navbar background change on scroll
+            window.addEventListener('scroll', function() {
+                const navbar = document.querySelector('.navbar');
+                if (window.scrollY > 50) {
+                    navbar.classList.add('shadow-sm');
+                } else {
+                    navbar.classList.remove('shadow-sm');
+                }
+            });
+            
+            // Scroll to top button
+            const scrollTopButton = document.getElementById('scrollTop');
+            
+            window.addEventListener('scroll', function() {
+                if (window.scrollY > 300) {
+                    scrollTopButton.style.display = 'flex';
+                } else {
+                    scrollTopButton.style.display = 'none';
+                }
+            });
+            
+            scrollTopButton.addEventListener('click', function() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>

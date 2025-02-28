@@ -16,11 +16,13 @@ from .views.estimativa_custo_fixo import estimativa_custo_fixo_list, estimativa_
 from .views.despesa import despesa_list, despesa_create, despesa_edit, despesa_delete, despesa_detail, registrar_pagamento, get_subcategorias, get_destinos_por_alocacao
 from .views.relatorios import relatorio_veiculo, relatorio_frete, fluxo_caixa, dre, relatorio_cliente, relatorio_manutencao, relatorio_despesa
 from .views.configuracoes import configuracoes_empresa
+from .views.landing import landing_page
 
 app_name = 'core'
 
 urlpatterns = [
     path('', dashboard, name='dashboard'),
+    path('index/', landing_page, name='landing_page'),
     path('financeiro/', financeiro, name='financeiro'),
     path('veiculos/', veiculos, name='veiculos'),
     path('contatos/', contatos, name='contatos'),
