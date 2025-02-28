@@ -22,7 +22,7 @@ def login_view(request):
         
         if user is not None:
             login(request, user)
-            return redirect('core:dashboard')
+            return redirect('core:dashboard')  # Modificado para redirecionar para 'core:dashboard'
         else:
             messages.error(request, 'Usuário ou senha inválidos.')
     

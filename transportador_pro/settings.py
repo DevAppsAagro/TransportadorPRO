@@ -192,10 +192,10 @@ if os.environ.get('VERCEL'):
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
     STATIC_URL = '/static/'
 
-# Authentication settings
-LOGIN_URL = '/login/'
+# Configurações de autenticação
+LOGIN_URL = 'core:login'
 LOGIN_REDIRECT_URL = 'core:dashboard'
-LOGOUT_REDIRECT_URL = '/login/'
+LOGOUT_REDIRECT_URL = 'core:landing_page'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

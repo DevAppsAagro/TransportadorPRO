@@ -21,7 +21,8 @@ from .views.landing import landing_page
 app_name = 'core'
 
 urlpatterns = [
-    path('', dashboard, name='dashboard'),
+    path('', landing_page, name='landing_page'),
+    path('dashboard/', dashboard, name='dashboard'),
     path('index/', landing_page, name='landing_page'),
     path('financeiro/', financeiro, name='financeiro'),
     path('veiculos/', veiculos, name='veiculos'),
