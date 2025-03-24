@@ -1,0 +1,412 @@
+{% extends "core/base_print.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Relatório de Fretes para {{ cliente.nome_completo }}{% endblock %}
+
+{% block head_extras %}
+<style>
+    /* Estilos específicos para impressão */
+    @page {
+        size: A4;
+        margin: 1cm;
+        margin-bottom: 1.5cm; /* Margem inferior reduzida */
+    }
+    
+    body {
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        line-height: 1.3;
+        position: relative;
+        min-height: 100vh;
+        padding-bottom: 30px; /* Espaço reduzido para o rodapé */
+    }
+    
+    .print-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 20px;
+    }
+    
+    .company-info {
+        width: 40%;
+    }
+    
+    .report-info {
+        width: 55%;
+        text-align: right;
+    }
+    
+    .logo-area {
+        max-width: 200px;
+        max-height: 60px;
+        margin-bottom: 8px;
+    }
+    
+    .logo-area img {
+        max-width: 100%;
+        max-height: 100%;
+    }
+    
+    .company-name {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .company-razao {
+        font-size: 12px;
+        margin-bottom: 5px;
+    }
+    
+    .company-address {
+        font-size: 11px;
+        margin-bottom: 3px;
+    }
+    
+    .company-contact {
+        font-size: 11px;
+        margin-bottom: 3px;
+    }
+    
+    .report-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    
+    .client-info {
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+    
+    .summary-cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .card {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+        width: calc(25% - 10px);
+        box-sizing: border-box;
+    }
+    
+    .card-title {
+        font-size: 12px;
+        color: #555;
+        margin-bottom: 5px;
+    }
+    
+    .card-value {
+        font-size: 16px;
+        font-weight: bold;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px; /* Espaço reduzido para o rodapé */
+        font-size: 10px;
+    }
+    
+    th, td {
+        border: 1px solid #ddd;
+        padding: 5px;
+        text-align: left;
+    }
+    
+    th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+    
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    
+    .valor-monetario {
+        white-space: nowrap;
+        text-align: right;
+    }
+    
+    .valor-peso {
+        white-space: nowrap;
+        text-align: right;
+    }
+    
+    /* Sobrescrevendo os estilos do rodapé no template base */
+    .print-footer {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        text-align: center !important;
+        font-size: 10px !important;
+        border-top: 1px solid #ddd !important;
+        padding-top: 5px !important;
+        padding-bottom: 5px !important;
+        line-height: 1.2 !important;
+        background-color: white !important;
+        height: 20px !important; /* Altura reduzida para o rodapé */
+        z-index: 1000 !important; /* Garantir que o rodapé fique acima de outros elementos */
+    }
+    
+    .status-concluido {
+        background-color: #28a7454d;
+        padding: 3px 6px;
+        border-radius: 3px;
+    }
+    
+    .status-andamento {
+        background-color: #ffc10754;
+        padding: 3px 6px;
+        border-radius: 3px;
+    }
+    
+    .print-button {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        z-index: 9999;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 15px;
+        font-size: 14px;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .print-button:hover {
+        background-color: #0069d9;
+    }
+    
+    @media print {
+        .print-button {
+            display: none;
+        }
+        
+        body {
+            padding-bottom: 0;
+        }
+        
+        .print-footer {
+            position: fixed !important;
+            bottom: 0 !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Botão de impressão -->
+<button class="print-button" onclick="window.print()">Imprimir Relatório</button>
+
+<div class="print-header">
+    <div class="company-info">
+        <div class="logo-area">
+            <img src="{% static 'img/logo.png' %}" alt="Logo da Empresa">
+        </div>
+        {% if empresa %}
+        <div class="company-name">{{ empresa.nome_fantasia }}</div>
+        <div class="company-razao">{{ empresa.razao_social }}</div>
+        <div class="company-address">{{ empresa.logradouro }}, {{ empresa.numero }}{% if empresa.complemento %}, {{ empresa.complemento }}{% endif %}</div>
+        <div class="company-address">{{ empresa.bairro }}, {{ empresa.cidade }}/{{ empresa.estado }} - CEP: {{ empresa.cep }}</div>
+        <div class="company-contact">Tel: {{ empresa.telefone }}{% if empresa.celular %} / {{ empresa.celular }}{% endif %}</div>
+        <div class="company-contact">E-mail: {{ empresa.email }}</div>
+        <div class="company-contact">CNPJ: {{ empresa.cnpj }}</div>
+        {% if empresa.inscricao_estadual %}
+        <div class="company-contact">Insc. Estadual: {{ empresa.inscricao_estadual }}</div>
+        {% endif %}
+        {% else %}
+        <div class="company-name">Empresa Não Cadastrada</div>
+        {% endif %}
+    </div>
+    <div class="report-info">
+        <div class="report-title">Relatório de Fretes</div>
+        <div class="client-info">Cliente: {{ cliente.nome_completo }}</div>
+        <div>Período: {{ data_inicio|date:"d/m/Y" }} a {{ data_fim|date:"d/m/Y" }}</div>
+        <div>Data de Emissão: {% now "d/m/Y" %}</div>
+    </div>
+</div>
+
+<div class="summary-cards">
+    <!-- Card - Total de Fretes -->
+    <div class="card">
+        <div class="card-title">Total de Fretes</div>
+        <div class="card-value">{{ fretes.count }}</div>
+    </div>
+    
+    <!-- Card - Valor Total -->
+    <div class="card">
+        <div class="card-title">Valor Total</div>
+        <div class="card-value valor-monetario" data-valor="{{ valor_total|floatformat:2 }}">R$ {{ valor_total|floatformat:2|intcomma }}</div>
+    </div>
+    
+    <!-- Card - Peso Total -->
+    <div class="card">
+        <div class="card-title">Peso Total</div>
+        <div class="card-value valor-peso" data-peso="{{ peso_total|floatformat:2 }}">{{ peso_total|floatformat:2|intcomma }} kg</div>
+    </div>
+    
+    <!-- Card - Em Andamento -->
+    <div class="card">
+        <div class="card-title">Em Andamento</div>
+        <div class="card-value">{{ fretes_andamento }}</div>
+    </div>
+    
+    <!-- Card - Valor Médio -->
+    <div class="card">
+        <div class="card-title">Valor Médio</div>
+        <div class="card-value valor-monetario" data-valor="{{ valor_medio|floatformat:2 }}">R$ {{ valor_medio|floatformat:2|intcomma }}</div>
+    </div>
+    
+    <!-- Card - Peso Médio -->
+    <div class="card">
+        <div class="card-title">Peso Médio</div>
+        <div class="card-value valor-peso" data-peso="{{ peso_medio|floatformat:2 }}">{{ peso_medio|floatformat:2|intcomma }} kg</div>
+    </div>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Data</th>
+            <th>Origem → Destino</th>
+            <th>Placa</th>
+            <th>Motorista</th>
+            <th>Valor Unit.</th>
+            <th>Valor Total</th>
+            <th>Peso</th>
+            <th>Carga</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for frete in fretes %}
+        <tr>
+            <td>{{ frete.data_saida|date:"d/m/Y" }}</td>
+            <td>{{ frete.origem }} → {{ frete.destino }}</td>
+            <td>{{ frete.caminhao.placa|default:"-" }}</td>
+            <td>{{ frete.motorista.nome_completo|default:"-" }}</td>
+            <td class="valor-monetario" data-valor="{{ frete.valor_unitario|floatformat:2 }}">R$ {{ frete.valor_unitario|floatformat:2|intcomma }}</td>
+            <td class="valor-monetario" data-valor="{{ frete.valor_total|floatformat:2 }}">R$ {{ frete.valor_total|floatformat:2|intcomma }}</td>
+            <td class="valor-peso" data-peso="{{ frete.peso_carga|floatformat:2 }}">{{ frete.peso_carga|floatformat:2|intcomma }} kg</td>
+            <td>
+                <span class="valor-peso" data-peso="{{ frete.peso_carga|floatformat:2 }}">{{ frete.peso_carga|floatformat:2|intcomma }}</span> {{ frete.carga.unidade_medida }}
+                ({{ frete.carga.nome }})
+            </td>
+            <td>
+                {% if frete.data_chegada %}
+                <span class="status-concluido">Concluído</span>
+                {% else %}
+                <span class="status-andamento">Em Andamento</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+{% block footer %}
+<span>TransportadorPRO.com - (64) 9 9611-5182 | {% if empresa %}{{ empresa.nome_fantasia }}{% else %}Sua Empresa{% endif %} | Página <span class="page-number"></span> | Gerado em {% now "d/m/Y H:i" %}</span>
+{% endblock %}
+
+{% block js_extras %}
+<script>
+    // Formatação de valores monetários para o padrão brasileiro
+    function formatarMoedaBR(valor) {
+        if (isNaN(valor)) return "R$ 0,00";
+        
+        // Formata para ter duas casas decimais
+        valor = parseFloat(valor).toFixed(2);
+        
+        // Divide em parte inteira e decimal
+        let partes = valor.split('.');
+        let parteInteira = partes[0];
+        let parteDecimal = partes[1];
+        
+        // Adiciona separadores de milhar
+        parteInteira = parteInteira.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        
+        // Retorna no formato R$ 1.234,56
+        return "R$ " + parteInteira + "," + parteDecimal;
+    }
+    
+    // Formatação de valores de peso para o padrão brasileiro
+    function formatarPesoBR(valor) {
+        if (isNaN(valor)) return "0,00 kg";
+        
+        // Formata para ter duas casas decimais
+        valor = parseFloat(valor).toFixed(2);
+        
+        // Divide em parte inteira e decimal
+        let partes = valor.split('.');
+        let parteInteira = partes[0];
+        let parteDecimal = partes[1];
+        
+        // Adiciona separadores de milhar
+        parteInteira = parteInteira.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        
+        // Retorna no formato 1.234,56 kg
+        return parteInteira + "," + parteDecimal + " kg";
+    }
+
+    // Formatação de valores em colunas de peso sem a unidade
+    function formatarPesoSemUnidade(valor) {
+        if (isNaN(valor)) return "0,00";
+        
+        // Formata para ter duas casas decimais
+        valor = parseFloat(valor).toFixed(2);
+        
+        // Divide em parte inteira e decimal
+        let partes = valor.split('.');
+        let parteInteira = partes[0];
+        let parteDecimal = partes[1];
+        
+        // Adiciona separadores de milhar
+        parteInteira = parteInteira.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        
+        // Retorna no formato 1.234,56
+        return parteInteira + "," + parteDecimal;
+    }
+
+    // Executa quando a página carrega
+    window.onload = function() {
+        // Numeração automática de páginas
+        document.querySelectorAll('.page-number').forEach(function(el) {
+            el.textContent = "1";
+        });
+        
+        // Formata valores monetários
+        document.querySelectorAll('.valor-monetario').forEach(function(el) {
+            const valorBruto = el.getAttribute('data-valor');
+            if (valorBruto) {
+                el.textContent = formatarMoedaBR(valorBruto);
+            }
+        });
+        
+        // Formata valores de peso
+        document.querySelectorAll('.valor-peso').forEach(function(el) {
+            const pesoBruto = el.getAttribute('data-peso');
+            if (pesoBruto) {
+                // Verifica se o texto atual contém "kg"
+                if (el.textContent.includes('kg')) {
+                    el.textContent = formatarPesoBR(pesoBruto);
+                } else {
+                    el.textContent = formatarPesoSemUnidade(pesoBruto);
+                }
+            }
+        });
+    };
+</script>
+{% endblock %}

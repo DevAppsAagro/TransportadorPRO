@@ -1,0 +1,152 @@
+{% extends 'motorista/base.html' %}
+
+{% block title %}Contatos - Área do Motorista{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Contatos</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{% url 'motorista:contato_novo' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-plus-lg"></i> Novo Contato
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col-auto me-3">
+                            <i class="bi bi-people fs-2 text-primary"></i>
+                        </div>
+                        <div class="col">
+                            <div class="text-xs text-uppercase mb-1 text-primary">Total de Contatos</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_contatos }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col-auto me-3">
+                            <i class="bi bi-shop fs-2 text-success"></i>
+                        </div>
+                        <div class="col">
+                            <div class="text-xs text-uppercase mb-1 text-success">Clientes</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_clientes }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col-auto me-3">
+                            <i class="bi bi-box-seam fs-2 text-info"></i>
+                        </div>
+                        <div class="col">
+                            <div class="text-xs text-uppercase mb-1 text-info">Fornecedores</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_fornecedores }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col-auto me-3">
+                            <i class="bi bi-fuel-pump fs-2 text-warning"></i>
+                        </div>
+                        <div class="col">
+                            <div class="text-xs text-uppercase mb-1 text-warning">Postos</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_postos }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Contatos -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Lista de Contatos</h6>
+            <div class="dropdown no-arrow">
+                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-three-dots-vertical text-gray-400"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="dropdownMenuLink">
+                    <li><a class="dropdown-item" href="{% url 'motorista:contatos' %}">Ver Todos</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'motorista:contato_novo' %}">Novo Contato</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if contatos %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nome</th>
+                            <th>Tipo</th>
+                            <th>Telefone</th>
+                            <th>Email</th>
+                            <th>Cidade/UF</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contato in contatos %}
+                        <tr>
+                            <td>{{ contato.nome_completo }}</td>
+                            <td>
+                                {% if contato.tipo == 'CLIENTE' %}
+                                <span class="badge bg-success">Cliente</span>
+                                {% elif contato.tipo == 'FORNECEDOR' %}
+                                <span class="badge bg-info">Fornecedor</span>
+                                {% elif contato.tipo == 'FUNCIONARIO' %}
+                                <span class="badge bg-secondary">Funcionário</span>
+                                {% elif contato.tipo == 'MOTORISTA' %}
+                                <span class="badge bg-primary">Motorista</span>
+                                {% elif contato.tipo == 'POSTO' %}
+                                <span class="badge bg-warning text-dark">Posto de Combustível</span>
+                                {% else %}
+                                <span class="badge bg-dark">{{ contato.get_tipo_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ contato.telefone|default:"—" }}</td>
+                            <td>{{ contato.email|default:"—" }}</td>
+                            <td>
+                                {% if contato.cidade %}
+                                {{ contato.cidade }}/{{ contato.estado }}
+                                {% else %}
+                                —
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i> Nenhum contato cadastrado.
+                <a href="{% url 'motorista:contato_novo' %}" class="alert-link">Cadastre um novo contato</a>.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

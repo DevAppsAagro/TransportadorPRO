@@ -9,24 +9,53 @@ from ..models.caminhao import Caminhao
 from ..models.contato import Contato
 from ..models.carga import Carga
 from django.utils import timezone
+from django.contrib.auth.models import User
+from django.db.models import Sum, Count, Q, DecimalField, Case, When, Value
+from django.db.models.functions import Coalesce
 
 logger = logging.getLogger(__name__)
 
 @login_required
 def fretes(request):
-    # Filtrar fretes pelo usuário logado através do caminhão
-    fretes_list = Frete.objects.filter(caminhao__usuario=request.user).order_by('-data_saida')
+    # Filtrar fretes pelo usuário logado através do caminhão e pré-carregar relações
+    fretes_list = Frete.objects.filter(caminhao__usuario=request.user).select_related(
+        'caminhao', 'motorista', 'motorista_user', 'cliente', 'carga'
+    ).order_by('-data_saida')
     
-    # Calculate metrics that were previously in template filters
-    fretes_concluidos = sum(1 for frete in fretes_list if frete.data_chegada)
-    fretes_em_andamento = sum(1 for frete in fretes_list if not frete.data_chegada)
-    valor_total = sum(frete.valor_total or 0 for frete in fretes_list)
+    # Calculate metrics using more efficient methods
+    from django.db.models import Sum, Count, Q, DecimalField, Case, When, Value
+    from django.db.models.functions import Coalesce
+    
+    # Get counts and sums directly from the database
+    metrics = {
+        'fretes_concluidos': Frete.objects.filter(caminhao__usuario=request.user, data_chegada__isnull=False).count(),
+        'fretes_em_andamento': Frete.objects.filter(caminhao__usuario=request.user, data_chegada__isnull=True).count(),
+        'valor_total': Frete.objects.filter(caminhao__usuario=request.user).aggregate(
+            total=Coalesce(Sum('valor_total'), Value(0), output_field=DecimalField(max_digits=10, decimal_places=2))
+        )['total'],
+        'valor_recebido': Frete.objects.filter(caminhao__usuario=request.user, status='PAGO').aggregate(
+            total=Coalesce(Sum('valor_total'), Value(0), output_field=DecimalField(max_digits=10, decimal_places=2))
+        )['total'],
+        'valor_a_receber': Frete.objects.filter(caminhao__usuario=request.user, status='PENDENTE').aggregate(
+            total=Coalesce(Sum('valor_total'), Value(0), output_field=DecimalField(max_digits=10, decimal_places=2))
+        )['total'],
+        'valor_vencido': Frete.objects.filter(caminhao__usuario=request.user, status='VENCIDO').aggregate(
+            total=Coalesce(Sum('valor_total'), Value(0), output_field=DecimalField(max_digits=10, decimal_places=2))
+        )['total'],
+        'valor_vence_hoje': Frete.objects.filter(caminhao__usuario=request.user, status='VENCE_HOJE').aggregate(
+            total=Coalesce(Sum('valor_total'), Value(0), output_field=DecimalField(max_digits=10, decimal_places=2))
+        )['total']
+    }
     
     context = {
         'fretes': fretes_list,
-        'fretes_concluidos': fretes_concluidos,
-        'fretes_em_andamento': fretes_em_andamento,
-        'valor_total': valor_total
+        'fretes_concluidos': metrics['fretes_concluidos'],
+        'fretes_em_andamento': metrics['fretes_em_andamento'],
+        'valor_total': metrics['valor_total'],
+        'valor_recebido': metrics['valor_recebido'],
+        'valor_a_receber': metrics['valor_a_receber'],
+        'valor_vencido': metrics['valor_vencido'],
+        'valor_vence_hoje': metrics['valor_vence_hoje']
     }
     
     return render(request, 'core/fretes/fretes.html', context)
@@ -77,8 +106,22 @@ def frete_novo(request):
             caminhao = Caminhao.objects.get(id=request.POST.get('caminhao'))
             logger.info(f'Caminhão encontrado: {caminhao}')
             
-            motorista = Contato.objects.get(id=request.POST.get('motorista'))
-            logger.info(f'Motorista encontrado: {motorista}')
+            # Se o motorista_user foi selecionado, usá-lo; caso contrário, usar o motorista (contato)
+            motorista_user_id = request.POST.get('motorista_user')
+            motorista_id = request.POST.get('motorista')
+            
+            motorista = None
+            motorista_user = None
+            
+            if motorista_user_id and motorista_user_id != '':
+                motorista_user = User.objects.get(id=motorista_user_id)
+                logger.info(f'Motorista (usuário) encontrado: {motorista_user}')
+            elif motorista_id and motorista_id != '':
+                motorista = Contato.objects.get(id=motorista_id)
+                logger.info(f'Motorista (contato) encontrado: {motorista}')
+            else:
+                logger.error('Nenhum motorista selecionado!')
+                raise ValueError('É necessário selecionar um motorista.')
             
             cliente = Contato.objects.get(id=request.POST.get('cliente'))
             logger.info(f'Cliente encontrado: {cliente}')
@@ -123,6 +166,7 @@ def frete_novo(request):
             frete = Frete(
                 caminhao=caminhao,
                 motorista=motorista,
+                motorista_user=motorista_user,
                 data_saida=request.POST.get('data_saida'),
                 peso_carga=peso_carga,
                 km_saida=request.POST.get('km_saida'),
@@ -161,12 +205,18 @@ def frete_novo(request):
     # Filtrar opções apenas do usuário atual
     caminhoes = Caminhao.objects.filter(usuario=request.user)
     motoristas = Contato.objects.filter(tipo='MOTORISTA', usuario=request.user)
+    # Buscar apenas motoristas que são usuários criados pelo usuário atual
+    motoristas_users = User.objects.filter(
+        perfil__tipo_usuario='MOTORISTA',
+        perfil__criado_por=request.user
+    )
     clientes = Contato.objects.filter(tipo='CLIENTE', usuario=request.user)
     cargas = Carga.objects.filter(usuario=request.user)
     
     return render(request, 'core/fretes/frete_form.html', {
         'caminhoes': caminhoes,
         'motoristas': motoristas,
+        'motoristas_users': motoristas_users,
         'clientes': clientes,
         'cargas': cargas,
         'titulo': 'Novo Frete'
@@ -186,11 +236,32 @@ def frete_editar(request, id):
             
             # Buscar objetos relacionados
             caminhao = Caminhao.objects.get(id=request.POST.get('caminhao'))
-            motorista = Contato.objects.get(id=request.POST.get('motorista'))
+            
+            # Se o motorista_user foi selecionado, usá-lo; caso contrário, usar o motorista (contato)
+            motorista_user_id = request.POST.get('motorista_user')
+            motorista_id = request.POST.get('motorista')
+            
+            motorista = None
+            motorista_user = None
+            
+            if motorista_user_id and motorista_user_id != '':
+                motorista_user = User.objects.get(id=motorista_user_id)
+                logger.info(f'Motorista (usuário) encontrado: {motorista_user}')
+            elif motorista_id and motorista_id != '':
+                motorista = Contato.objects.get(id=motorista_id)
+                logger.info(f'Motorista (contato) encontrado: {motorista}')
+            else:
+                logger.error('Nenhum motorista selecionado!')
+                raise ValueError('É necessário selecionar um motorista.')
+            
             cliente = Contato.objects.get(id=request.POST.get('cliente'))
+            logger.info(f'Cliente encontrado: {cliente}')
+            
             carga = Carga.objects.get(id=request.POST.get('carga'))
+            logger.info(f'Carga encontrada: {carga}')
             
             # Log dos valores numéricos
+            logger.info('\nPROCESSANDO VALORES NUMÉRICOS:')
             peso_carga = request.POST.get('peso_carga', '0')
             valor_unitario = request.POST.get('valor_unitario', '0')
             valor_total = request.POST.get('valor_total', '0')
@@ -216,6 +287,7 @@ def frete_editar(request, id):
             # Atualizar o objeto frete
             frete.caminhao = caminhao
             frete.motorista = motorista
+            frete.motorista_user = motorista_user
             frete.data_saida = request.POST.get('data_saida')
             frete.peso_carga = peso_carga
             frete.km_saida = request.POST.get('km_saida')
@@ -255,6 +327,11 @@ def frete_editar(request, id):
     # Filtrar opções apenas do usuário atual
     caminhoes = Caminhao.objects.filter(usuario=request.user)
     motoristas = Contato.objects.filter(tipo='MOTORISTA', usuario=request.user)
+    # Buscar apenas motoristas que são usuários criados pelo usuário atual
+    motoristas_users = User.objects.filter(
+        perfil__tipo_usuario='MOTORISTA',
+        perfil__criado_por=request.user
+    )
     clientes = Contato.objects.filter(tipo='CLIENTE', usuario=request.user)
     cargas = Carga.objects.filter(usuario=request.user)
     
@@ -262,6 +339,7 @@ def frete_editar(request, id):
         'frete': frete,
         'caminhoes': caminhoes,
         'motoristas': motoristas,
+        'motoristas_users': motoristas_users,
         'clientes': clientes,
         'cargas': cargas,
         'titulo': 'Editar Frete'

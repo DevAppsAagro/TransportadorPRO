@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TransportadorPRO - Impressão{% endblock %}</title>
+    
+    <!-- Bootstrap CSS (versão minimalista para impressão) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        /* Estilos gerais para impressão */
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.3;
+            margin: 0;
+            padding: 0;
+            background-color: white;
+            color: black;
+        }
+        
+        /* Remover elementos de navegação e interação */
+        nav, button, .no-print {
+            display: none !important;
+        }
+        
+        /* Assegurar que todo o conteúdo seja impresso */
+        .container, .container-fluid {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        
+        /* Melhorar espaçamento para impressão */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 3px 5px;
+        }
+        
+        /* Forçar a quebra de página correta */
+        .page-break {
+            page-break-after: always;
+        }
+    </style>
+    
+    {% block head_extras %}{% endblock %}
+</head>
+<body class="print-page">
+    <div class="print-content">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <!-- Scripts mínimos necessários -->
+    <script>
+        // Script para imprimir automaticamente ao carregar
+        window.onload = function() {
+            // Dar tempo para o navegador renderizar a página
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+    </script>
+    {% block js_extras %}{% endblock %}
+</body>
+</html>

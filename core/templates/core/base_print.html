@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}Relatório{% endblock %}</title>
+    {% load static %}
+    
+    <!-- Estilo base para impressão -->
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.3;
+            margin: 0;
+            padding: 0;
+            background-color: white;
+            color: black;
+        }
+        
+        /* Esconder elementos não necessários para impressão */
+        .no-print {
+            display: none !important;
+        }
+        
+        /* Quebras de página */
+        .page-break {
+            page-break-after: always;
+        }
+        
+        /* Centralização de conteúdo */
+        .text-center {
+            text-align: center;
+        }
+        
+        /* Cabeçalho e rodapé de impressão */
+        .print-header {
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .print-footer {
+            padding: 10px 0;
+            border-top: 1px solid #ddd;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        
+        /* Logo */
+        .print-logo {
+            height: 60px;
+            margin-right: 20px;
+        }
+        
+        /* Informações da empresa */
+        .company-info {
+            flex-grow: 1;
+        }
+        
+        .company-info p {
+            margin: 0;
+            line-height: 1.2;
+        }
+        
+        /* Tabelas */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        th, td {
+            padding: 5px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        /* Cartões de resumo */
+        .summary-cards {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .summary-card {
+            flex: 1;
+            min-width: 120px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        
+        .summary-card:last-child {
+            margin-right: 0;
+        }
+        
+        .summary-card-title {
+            font-size: 10px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        
+        .summary-card-value {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        /* Quebras de página automáticas */
+        tr {
+            page-break-inside: avoid;
+        }
+        
+        /* Número de página */
+        .page-number:before {
+            content: counter(page);
+        }
+    </style>
+    
+    {% block head_extras %}{% endblock %}
+</head>
+<body>
+    {% block content %}{% endblock %}
+    
+    <!-- Rodapé de impressão com número de página -->
+    <div class="print-footer">
+        {% block footer %}
+        <p>
+            {{ request.user.empresa.nome_fantasia|default:"TransportadorPRO" }} - Documento gerado em {% now "d/m/Y H:i" %} - Página <span class="page-number"></span>
+        </p>
+        {% endblock %}
+    </div>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

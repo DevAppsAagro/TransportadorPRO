@@ -76,28 +76,218 @@
     .print-header {
         display: none;
     }
-    @media print {
-        .print-header {
-            display: block;
-            text-align: center;
+    
+    /* Novos estilos para a tabela */
+    .table-sm-font {
+        font-size: 0.85rem;
+    }
+    .table-sm-font th {
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+    .table-sm-font td {
+        padding: 0.5rem;
+        vertical-align: middle;
+    }
+    .valor-monetario {
+        white-space: nowrap;
+        font-weight: 600;
+    }
+    .data-table-container {
+        overflow-x: auto;
+        width: 100%;
+    }
+    .card {
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        border-radius: 0.35rem;
+        border: none;
+    }
+    @media (max-width: 992px) {
+        .summary-group {
             margin-bottom: 20px;
         }
-        .print-header h2 {
-            margin-bottom: 5px;
+    }
+    
+    /* Stats Cards */
+    .stats-card {
+        border-radius: 0.35rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        border-left: 0.25rem solid;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .stats-card.primary {
+        border-left-color: #4e73df;
+    }
+    .stats-card.success {
+        border-left-color: #1cc88a;
+    }
+    .stats-card.warning {
+        border-left-color: #f6c23e;
+    }
+    .stats-card.danger {
+        border-left-color: #e74a3b;
+    }
+    .stats-card .stats-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #5a5c69;
+        text-transform: uppercase;
+        margin-bottom: 0.25rem;
+    }
+    .stats-card .stats-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 0;
+    }
+    .stats-card .stats-icon {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 2rem;
+        opacity: 0.2;
+    }
+    
+    /* Estilos para impressão */
+    @media print {
+        /* Configuração geral da página */
+        @page {
+            size: A4 portrait;
+            margin: 10mm 15mm 20mm 15mm;
         }
-        .print-header p {
-            margin-bottom: 0;
+        
+        body {
+            background-color: white;
+            font-size: 12pt;
+            color: black;
         }
-        .no-print {
+        
+        .print-header {
+            display: block;
+            margin-bottom: 20mm;
+        }
+        
+        .print-logo {
+            height: 70px;
+            margin-bottom: 10px;
+        }
+        
+        .company-info {
+            margin-bottom: 5mm;
+            font-size: 10pt;
+            color: #555;
+        }
+        
+        .report-title {
+            font-size: 24pt;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5mm;
+        }
+        
+        .report-subtitle {
+            font-size: 14pt;
+            color: #555;
+            margin-bottom: 10mm;
+        }
+        
+        /* Esconder elementos não necessários para impressão */
+        .no-print, 
+        .topbar, 
+        .sidebar, 
+        .card-tools, 
+        nav, 
+        .btn, 
+        .navbar, 
+        .footer, 
+        #wrapper #content-wrapper #content .container-fluid .d-sm-flex,
+        .dataTables_wrapper .dataTables_length, 
+        .dataTables_wrapper .dataTables_filter, 
+        .dataTables_wrapper .dataTables_info, 
+        .dataTables_wrapper .dataTables_paginate {
             display: none !important;
         }
+        
+        /* Quebras de página específicas */
+        .page-break {
+            page-break-before: always;
+        }
+        
+        /* Ajustes na tabela */
+        .table {
+            page-break-inside: auto;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        .table th {
+            background-color: #f3f3f3 !important;
+            color: #333 !important;
+            border: 1px solid #ddd;
+        }
+        
+        .table td {
+            border: 1px solid #ddd;
+        }
+        
+        /* Rodapé da impressão */
+        .print-footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            font-size: 9pt;
+            text-align: center;
+            border-top: 1px solid #ddd;
+            padding-top: 5mm;
+            color: #777;
+        }
+        
+        .print-footer .page-number:after {
+            content: counter(page);
+        }
+        
+        /* Estilização para cards */
         .card {
             border: 1px solid #ddd !important;
             box-shadow: none !important;
+            break-inside: avoid;
         }
+        
         .card-header {
-            background-color: #f8f9fc !important;
-            color: #000 !important;
+            background-color: #f3f3f3 !important;
+            color: #333 !important;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        /* Redefine layout para impressão */
+        .container-fluid {
+            width: 100%;
+            padding: 0;
+        }
+        
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        
+        .col-print-12 {
+            width: 100%;
+        }
+        
+        .col-print-6 {
+            width: 50%;
+        }
+        
+        .col-print-4 {
+            width: 33.333333%;
+        }
+        
+        .col-print-3 {
+            width: 25%;
         }
     }
 </style>
@@ -105,20 +295,47 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4 no-print">
         <h1 class="h3 mb-0 text-gray-800">Relatório de Fretes por Cliente</h1>
-        <a href="{% url 'core:relatorios' %}" class="btn btn-sm btn-secondary no-print">
-            <i class="fas fa-arrow-left mr-1"></i> Voltar
-        </a>
+        <div class="btn-group">
+            <a href="{% url 'core:relatorios' %}" class="btn btn-sm btn-secondary">
+                <i class="fas fa-arrow-left mr-1"></i> Voltar
+            </a>
+            {% if relatorio_gerado %}
+            <a href="{% url 'core:relatorio_cliente_print' %}?cliente_id={{ cliente.id }}&data_inicio={{ data_inicio|date:'Y-m-d' }}&data_fim={{ data_fim|date:'Y-m-d' }}" target="_blank" class="btn btn-sm btn-primary ml-2">
+                <i class="fas fa-print mr-1"></i> Versão de Impressão
+            </a>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Print Header (only visible when printing) -->
     <div class="print-header">
-        <h2>Relatório de Fretes por Cliente</h2>
-        {% if relatorio_gerado %}
-        <p>Cliente: {{ cliente.nome_completo }}</p>
-        <p>Período: {{ data_inicio|date:"d/m/Y" }} a {{ data_fim|date:"d/m/Y" }}</p>
-        {% endif %}
+        <div class="row">
+            <div class="col-6 text-left">
+                <img src="{% static 'img/logo.png' %}" alt="Logo da Empresa" class="print-logo">
+                <div class="company-info">
+                    <!-- Informações da empresa com dados dinâmicos -->
+                    <p>
+                        <strong>{{ request.user.empresa.nome_fantasia|default:"Sua Empresa de Transporte" }}</strong><br>
+                        CNPJ: {{ request.user.empresa.cnpj|default:"00.000.000/0001-00" }}<br>
+                        {{ request.user.empresa.endereco|default:"Endereço: Av. Principal, 1000 - Centro" }}<br>
+                        {{ request.user.empresa.email|default:"contato@suaempresa.com" }} - {{ request.user.empresa.telefone|default:"(00) 0000-0000" }}
+                    </p>
+                </div>
+            </div>
+            <div class="col-6 text-right">
+                <p>Data de Emissão: {{ data_atual|date:"d/m/Y" }}</p>
+                <p>Documento: REL-CLI-{{ cliente.id }}</p>
+            </div>
+        </div>
+        <div class="text-center">
+            <h1 class="report-title">Relatório de Fretes por Cliente</h1>
+            {% if relatorio_gerado %}
+            <h2 class="report-subtitle">Cliente: {{ cliente.nome_completo }}<br>
+            Período: {{ data_inicio|date:"d/m/Y" }} a {{ data_fim|date:"d/m/Y" }}</h2>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Form Section -->
@@ -161,20 +378,60 @@
 
         <!-- Report Actions -->
         <div class="mb-4 text-right no-print">
-            <button onclick="window.print()" class="btn btn-sm btn-primary">
-                <i class="fas fa-print mr-1"></i> Imprimir Relatório
-            </button>
+            <a href="{% url 'core:relatorio_cliente_print' %}?cliente_id={{ cliente.id }}&data_inicio={{ data_inicio|date:'Y-m-d' }}&data_fim={{ data_fim|date:'Y-m-d' }}" class="btn btn-sm btn-primary" target="_blank">
+                <i class="fas fa-print mr-1"></i> Versão para Impressão
+            </a>
             <a href="#" class="btn btn-sm btn-success" id="exportExcel">
                 <i class="fas fa-file-excel mr-1"></i> Exportar para Excel
             </a>
         </div>
 
+        <!-- Stats Cards Row -->
+        <div class="row mb-4">
+            <!-- Total Fretes Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="stats-card primary">
+                    <div class="stats-title">Total de Fretes</div>
+                    <div class="stats-value">{{ total_fretes }}</div>
+                    <div class="stats-icon"><i class="fas fa-shipping-fast"></i></div>
+                </div>
+            </div>
+            
+            <!-- Valor Total Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="stats-card success">
+                    <div class="stats-title">Valor Total</div>
+                    <div class="stats-value">R$ {{ total_valor|floatformat:2|intcomma }}</div>
+                    <div class="stats-icon"><i class="fas fa-money-bill-wave"></i></div>
+                </div>
+            </div>
+            
+            <!-- Peso Total Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="stats-card warning">
+                    <div class="stats-title">Peso Transportado</div>
+                    <div class="stats-value">{{ peso_total|floatformat:2|intcomma }} kg</div>
+                    <div class="stats-icon"><i class="fas fa-weight-hanging"></i></div>
+                </div>
+            </div>
+            
+            <!-- Status Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="stats-card danger">
+                    <div class="stats-title">Fretes em Andamento</div>
+                    <div class="stats-value">{{ fretes_em_andamento }}</div>
+                    <div class="stats-icon"><i class="fas fa-hourglass-half"></i></div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
-            <!-- Summary Card -->
-            <div class="col-lg-4">
+            <!-- Summary Cards Row - Reorganizados -->
+            <div class="col-lg-6 mb-4 summary-group">
+                <!-- Resumo do Relatório -->
                 <div class="summary-card">
                     <div class="card-header">
-                        <i class="fas fa-chart-pie mr-1"></i> Resumo do Relatório
+                        <i class="fas fa-chart-pie mr-1"></i> Detalhes do Relatório
                     </div>
                     <div class="card-body">
                         <div class="summary-item">
@@ -194,14 +451,24 @@
                             <span class="summary-value">R$ {{ total_valor|floatformat:2|intcomma }}</span>
                         </div>
                         <div class="summary-item">
+                            <span class="summary-label">Valor Médio por Frete:</span>
+                            <span class="summary-value">R$ {{ valor_medio_frete|floatformat:2|intcomma }}</span>
+                        </div>
+                        <div class="summary-item">
                             <span class="summary-label">Peso Total Transportado:</span>
                             <span class="summary-value">{{ peso_total|floatformat:2|intcomma }} kg</span>
                         </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Peso Médio por Frete:</span>
+                            <span class="summary-value">{{ peso_medio_frete|floatformat:2|intcomma }} kg</span>
+                        </div>
                     </div>
                 </div>
-                
+            </div>
+            
+            <div class="col-lg-6 mb-4 summary-group">
                 <!-- Resumo por Tipo de Carga -->
-                <div class="summary-card mt-4">
+                <div class="summary-card">
                     <div class="card-header">
                         <i class="fas fa-boxes mr-1"></i> Resumo por Tipo de Carga
                     </div>
@@ -218,21 +485,57 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Fretes Table -->
-            <div class="col-lg-8">
+        <!-- Fretes Table -->
+        <div class="row">
+            <div class="col-lg-12">
                 <div class="card shadow mb-4">
                     <div class="card-header py-3">
                         <h6 class="m-0 font-weight-bold text-primary">Lista de Fretes</h6>
                     </div>
                     <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                                <thead>
+                        <!-- Área de filtros acima da tabela -->
+                        <div class="row mb-2">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-body py-2">
+                                        <h6 class="card-title smaller-text mb-2">Filtros</h6>
+                                        <div class="row g-1">
+                                            <div class="col-md-2">
+                                                <input type="text" class="form-control form-control-sm smaller-text" id="filter-data" placeholder="Data">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <input type="text" class="form-control form-control-sm smaller-text" id="filter-placa" placeholder="Placa">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <input type="text" class="form-control form-control-sm smaller-text" id="filter-motorista" placeholder="Motorista">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <input type="text" class="form-control form-control-sm smaller-text" id="filter-origem" placeholder="Origem/Destino">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <input type="text" class="form-control form-control-sm smaller-text" id="filter-carga" placeholder="Carga">
+                                            </div>
+                                            <div class="col-md-1">
+                                                <button class="btn btn-sm btn-outline-secondary w-100 smaller-text" id="clear-filters">Limpar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="data-table-container">
+                            <table class="table table-bordered table-sm-font" id="dataTable" width="100%" cellspacing="0">
+                                <thead class="table-dark">
                                     <tr>
                                         <th>Data</th>
                                         <th>Origem → Destino</th>
-                                        <th>Valor</th>
+                                        <th>Placa</th>
+                                        <th>Motorista</th>
+                                        <th>Valor Unit.</th>
+                                        <th>Valor Total</th>
                                         <th>Peso</th>
                                         <th>Carga</th>
                                         <th>Status</th>
@@ -244,10 +547,13 @@
                                     <tr>
                                         <td>{{ frete.data_saida|date:"d/m/Y" }}</td>
                                         <td>{{ frete.origem }} → {{ frete.destino }}</td>
-                                        <td>R$ {{ frete.valor_total|floatformat:2|intcomma }}</td>
+                                        <td>{{ frete.caminhao.placa|default:"-" }}</td>
+                                        <td>{{ frete.motorista.nome_completo|default:"-" }}</td>
+                                        <td class="valor-monetario">R$ {{ frete.valor_unitario|floatformat:2|intcomma }}</td>
+                                        <td class="valor-monetario">R$ {{ frete.valor_total|floatformat:2|intcomma }}</td>
                                         <td>{{ frete.peso_carga|floatformat:2|intcomma }} kg</td>
                                         <td>
-                                            {{ frete.quantidade_convertida|floatformat:2|intcomma }} {{ frete.unidade_medida }}
+                                            <span id="quantidade-{{ frete.id }}">{{ frete.peso_carga|floatformat:2|intcomma }}</span> {{ frete.carga.unidade_medida }}
                                             <small class="text-muted d-block">({{ frete.carga.nome }})</small>
                                         </td>
                                         <td>
@@ -280,87 +586,167 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Inicializar datatable se o relatório foi gerado
+        /* eslint-disable */
         {% if relatorio_gerado %}
-        $('#dataTable').DataTable({
+        var dataTable = $('#dataTable').DataTable({
+        /* eslint-enable */
             "language": {
                 "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
             },
-            "order": [[0, "desc"]]
+            "order": [[0, "desc"]],
+            "pageLength": 10,
+            "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Todos"]],
+            "responsive": true,
+            "autoWidth": false,
+            "columnDefs": [
+                { "width": "90px", "targets": 0 }, // Data
+                { "width": "120px", "targets": 2 }, // Placa
+                { "width": "150px", "targets": 3 }, // Motorista
+                { "width": "100px", "targets": 4 }, // Valor Unit.
+                { "width": "100px", "targets": 5 }, // Valor Total
+                { "width": "80px", "targets": 6 }, // Peso
+                { "orderable": false, "targets": [9] } // Ações
+            ],
+            "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"t><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>'
+        });
+        
+        // Conectar filtros às colunas da tabela
+        $('#filter-data').on('keyup change', function() {
+            dataTable.column(0).search(this.value).draw();
+        });
+        
+        $('#filter-placa').on('keyup change', function() {
+            dataTable.column(2).search(this.value).draw();
+        });
+        
+        $('#filter-motorista').on('keyup change', function() {
+            dataTable.column(3).search(this.value).draw();
+        });
+        
+        $('#filter-origem').on('keyup change', function() {
+            dataTable.column(1).search(this.value).draw();
+        });
+        
+        $('#filter-carga').on('keyup change', function() {
+            dataTable.column(7).search(this.value).draw();
+        });
+        
+        // Botão para limpar todos os filtros
+        $('#clear-filters').on('click', function() {
+            // Limpar todos os inputs de filtro
+            $('.card-body input[type="text"]').val('');
+            
+            // Limpar as pesquisas na tabela
+            dataTable.search('').columns().search('').draw();
         });
         
         // Preencher os campos do formulário com os valores do relatório gerado
         document.getElementById('cliente').value = '{{ cliente.id }}';
         document.getElementById('data_inicio').value = '{{ data_inicio|date:"Y-m-d" }}';
         document.getElementById('data_fim').value = '{{ data_fim|date:"Y-m-d" }}';
-        {% endif %}
+        
+        // Calcular quantidade convertida para cada frete
+        /* eslint-disable */
+        {% for frete in fretes %}
+        (function() {
+            try {
+                var pesoCarga = parseFloat('{{ frete.peso_carga }}'.replace(',', '.'));
+                var fatorMultiplicacao = parseFloat('{{ frete.carga.fator_multiplicacao }}'.replace(',', '.'));
+                if (!isNaN(pesoCarga) && !isNaN(fatorMultiplicacao) && fatorMultiplicacao > 0) {
+                    var quantidadeConvertida = (pesoCarga / fatorMultiplicacao).toFixed(2);
+                    var elementoId = 'quantidade-{{ frete.id }}';
+                    var elemento = document.getElementById(elementoId);
+                    if (elemento) {
+                        elemento.textContent = quantidadeConvertida;
+                    }
+                }
+            } catch (e) {
+                console.error('Erro ao calcular quantidade convertida:', e);
+            }
+        })();
+        {% endfor %}
+        /* eslint-enable */
         
         // Exportar para Excel
         document.getElementById('exportExcel').addEventListener('click', function(e) {
             e.preventDefault();
             
             // Criar uma tabela temporária para exportar
-            let table = document.createElement('table');
+            var table = document.createElement('table');
             
             // Cabeçalho do Excel
-            let headerRow = table.insertRow();
-            ['Data', 'Origem → Destino', 'Valor', 'Peso (kg)', 'Carga Convertida', 'Status'].forEach(text => {
-                let cell = headerRow.insertCell();
+            var headerRow = table.insertRow();
+            ['Data', 'Origem → Destino', 'Placa', 'Motorista', 'Valor Unitário', 'Valor Total', 'Peso (kg)', 'Carga Convertida', 'Status'].forEach(function(text) {
+                var cell = headerRow.insertCell();
                 cell.textContent = text;
             });
             
             // Dados
-            {% if relatorio_gerado %}
+            /* eslint-disable */
             {% for frete in fretes %}
-            let row = table.insertRow();
-            
-            let dateCell = row.insertCell();
-            dateCell.textContent = '{{ frete.data_saida|date:"d/m/Y" }}';
-            
-            let routeCell = row.insertCell();
-            routeCell.textContent = '{{ frete.origem }} → {{ frete.destino }}';
-            
-            let valueCell = row.insertCell();
-            valueCell.textContent = 'R$ {{ frete.valor_total|floatformat:2 }}'.replace('.', ',');
-            
-            let weightCell = row.insertCell();
-            weightCell.textContent = '{{ frete.peso_carga|floatformat:2 }} kg'.replace('.', ',');
-            
-            let cargaCell = row.insertCell();
-            cargaCell.textContent = '{{ frete.quantidade_convertida|floatformat:2 }} {{ frete.unidade_medida }} ({{ frete.carga.nome }})'.replace('.', ',');
-            
-            let statusCell = row.insertCell();
-            statusCell.textContent = '{% if frete.data_chegada %}Concluído{% else %}Em Andamento{% endif %}';
+            (function() {
+                var row = table.insertRow();
+                
+                var dateCell = row.insertCell();
+                dateCell.textContent = '{{ frete.data_saida|date:"d/m/Y" }}';
+                
+                var routeCell = row.insertCell();
+                routeCell.textContent = '{{ frete.origem }} → {{ frete.destino }}';
+                
+                var placaCell = row.insertCell();
+                placaCell.textContent = '{{ frete.caminhao.placa|default:"-" }}';
+                
+                var motoristaCell = row.insertCell();
+                motoristaCell.textContent = '{{ frete.motorista.nome_completo|default:"-" }}';
+                
+                var valorUnitCell = row.insertCell();
+                valorUnitCell.textContent = 'R$ {{ frete.valor_unitario|floatformat:2 }}'.replace('.', ',');
+                
+                var valueCell = row.insertCell();
+                valueCell.textContent = 'R$ {{ frete.valor_total|floatformat:2 }}'.replace('.', ',');
+                
+                var weightCell = row.insertCell();
+                weightCell.textContent = '{{ frete.peso_carga|floatformat:2 }} kg'.replace('.', ',');
+                
+                var cargaCell = row.insertCell();
+                var quantidadeElemento = document.getElementById('quantidade-{{ frete.id }}');
+                var quantidadeConvertida = quantidadeElemento ? quantidadeElemento.textContent : '{{ frete.peso_carga|floatformat:2 }}';
+                cargaCell.textContent = quantidadeConvertida.replace('.', ',') + ' {{ frete.carga.unidade_medida }} ({{ frete.carga.nome }})';
+                
+                var statusCell = row.insertCell();
+                statusCell.textContent = '{% if frete.data_chegada %}Concluído{% else %}Em Andamento{% endif %}';
+            })();
             {% endfor %}
-            {% endif %}
+            /* eslint-enable */
             
             // Converter para CSV
-            let csv = [];
-            for (let i = 0; i < table.rows.length; i++) {
-                let row = [], cols = table.rows[i].cells;
+            var csv = [];
+            for (var i = 0; i < table.rows.length; i++) {
+                var row = [], cols = table.rows[i].cells;
                 
-                for (let j = 0; j < cols.length; j++) {
+                for (var j = 0; j < cols.length; j++) {
                     // Escapar aspas duplas e adicionar aspas ao redor do texto
-                    let data = cols[j].textContent.replace(/"/g, '""');
+                    var data = cols[j].textContent.replace(/"/g, '""');
                     row.push('"' + data + '"');
                 }
                 
                 csv.push(row.join(';'));
             }
             
-            let csvContent = csv.join('\n');
+            var csvContent = csv.join('\n');
             
             // Criar blob e link para download
-            let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            let link = document.createElement('a');
+            var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            var link = document.createElement('a');
             
             // Nome do arquivo
-            let fileName = 'Relatorio_Cliente_{{ cliente.nome_completo|default:"" }}_{{ data_inicio|date:"d-m-Y"|default:"" }}_a_{{ data_fim|date:"d-m-Y"|default:"" }}.csv';
+            var fileName = 'Relatorio_Cliente_{{ cliente.nome_completo|default:"" }}_{{ data_inicio|date:"d-m-Y"|default:"" }}_a_{{ data_fim|date:"d-m-Y"|default:"" }}.csv';
             
             // Criar link de download
             if (navigator.msSaveBlob) { // IE 10+
                 navigator.msSaveBlob(blob, fileName);
             } else {
-                let url = URL.createObjectURL(blob);
+                var url = URL.createObjectURL(blob);
                 link.href = url;
                 link.setAttribute('download', fileName);
                 document.body.appendChild(link);
@@ -368,6 +754,16 @@
                 document.body.removeChild(link);
             }
         });
+        {% endif %}
     });
 </script>
 {% endblock %}
+
+<!-- Rodapé para impressão -->
+<div class="print-footer">
+    <div class="row">
+        <div class="col-4 text-left">TransportadorPRO &copy; {% now "Y" %}</div>
+        <div class="col-4 text-center">P&aacute;gina <span class="page-number"></span></div>
+        <div class="col-4 text-right">Emitido em {% now "d/m/Y H:i" %}</div>
+    </div>
+</div>

@@ -204,27 +204,123 @@ def perfil_motorista(request):
 def alterar_senha(request):
     """Permite ao motorista alterar sua senha"""
     if request.method == 'POST':
-        # Lógica para alterar a senha
         senha_atual = request.POST.get('senha_atual')
-        nova_senha = request.POST.get('nova_senha')
-        confirmar_senha = request.POST.get('confirmar_senha')
+        senha_nova = request.POST.get('senha_nova')
+        senha_confirmacao = request.POST.get('senha_confirmacao')
         
-        if not request.user.check_password(senha_atual):
-            messages.error(request, 'Senha atual incorreta!')
+        # Validação básica
+        if not senha_atual or not senha_nova or not senha_confirmacao:
+            messages.error(request, 'Todos os campos são obrigatórios')
             return redirect('motorista:alterar_senha')
         
-        if nova_senha != confirmar_senha:
-            messages.error(request, 'As senhas não conferem!')
+        if senha_nova != senha_confirmacao:
+            messages.error(request, 'A nova senha e a confirmação não coincidem')
             return redirect('motorista:alterar_senha')
         
-        request.user.set_password(nova_senha)
+        # Verificar senha atual
+        user = authenticate(username=request.user.username, password=senha_atual)
+        if user is None:
+            messages.error(request, 'Senha atual incorreta')
+            return redirect('motorista:alterar_senha')
+        
+        # Alterar senha
+        request.user.set_password(senha_nova)
         request.user.save()
         
-        # Fazer login novamente com a nova senha
-        user = authenticate(username=request.user.username, password=nova_senha)
-        if user:
-            login(request, user)
-            messages.success(request, 'Senha alterada com sucesso!')
-            return redirect('motorista:perfil')
+        # Realizar login novamente com a nova senha
+        login(request, request.user)
+        
+        messages.success(request, 'Senha alterada com sucesso')
+        return redirect('motorista:perfil')
     
     return render(request, 'motorista/alterar_senha.html')
+
+
+@login_required
+@motorista_required
+def contatos_motorista(request):
+    """Lista os contatos associados ao usuário que liberou acesso ao motorista"""
+    motorista = request.user
+    admin_user = None
+    
+    # Identificar o usuário admin que liberou acesso ao motorista
+    # Na falta de um campo explícito que relacione motorista ao admin,
+    # vamos buscar o usuário que criou o motorista
+    if hasattr(motorista, 'perfil') and hasattr(motorista.perfil, 'criado_por') and motorista.perfil.criado_por:
+        admin_user = motorista.perfil.criado_por
+    
+    # Se não encontrou, usar o primeiro superusuário como fallback
+    if not admin_user:
+        admin_user = User.objects.filter(is_superuser=True).first()
+    
+    # Buscar contatos associados ao admin user
+    if admin_user:
+        contatos = Contato.objects.filter(usuario=admin_user).order_by('nome_completo')
+        
+        # Dados para estatísticas
+        total_contatos = contatos.count()
+        total_clientes = contatos.filter(tipo='CLIENTE').count()
+        total_fornecedores = contatos.filter(tipo='FORNECEDOR').count()
+        total_postos = contatos.filter(tipo='POSTO').count()
+    else:
+        contatos = []
+        total_contatos = total_clientes = total_fornecedores = total_postos = 0
+    
+    return render(request, 'motorista/contatos/contatos.html', {
+        'contatos': contatos,
+        'total_contatos': total_contatos,
+        'total_clientes': total_clientes,
+        'total_fornecedores': total_fornecedores,
+        'total_postos': total_postos,
+    })
+
+
+@login_required
+@motorista_required
+def contato_novo_motorista(request):
+    """Permite ao motorista cadastrar um novo contato que será associado ao admin"""
+    motorista = request.user
+    
+    # Identificar o usuário admin que liberou acesso ao motorista
+    if hasattr(motorista, 'perfil') and hasattr(motorista.perfil, 'criado_por') and motorista.perfil.criado_por:
+        admin_user = motorista.perfil.criado_por
+    else:
+        # Usar o primeiro superusuário como fallback
+        admin_user = User.objects.filter(is_superuser=True).first()
+    
+    if not admin_user:
+        messages.error(request, 'Não foi possível identificar o usuário administrador.')
+        return redirect('motorista:dashboard')
+    
+    if request.method == 'POST':
+        # Validar campos obrigatórios
+        campos_obrigatorios = ['nome_completo', 'tipo']
+        for campo in campos_obrigatorios:
+            if not request.POST.get(campo):
+                messages.error(request, f'O campo {campo.replace("_", " ").title()} é obrigatório.')
+                return render(request, 'motorista/contatos/contato_form.html', {'contato': request.POST})
+        
+        try:
+            # Criar novo contato associado ao admin
+            contato = Contato.objects.create(
+                usuario=admin_user,  # Associa o contato ao admin, não ao motorista
+                nome_completo=request.POST['nome_completo'].strip(),
+                tipo=request.POST['tipo'],
+                cpf_cnpj=request.POST.get('cpf_cnpj', '').strip(),
+                email=request.POST.get('email', '').strip(),
+                telefone=request.POST.get('telefone', '').strip(),
+                cep=request.POST.get('cep', '').strip(),
+                logradouro=request.POST.get('logradouro', '').strip(),
+                numero=request.POST.get('numero', '').strip(),
+                complemento=request.POST.get('complemento', '').strip(),
+                bairro=request.POST.get('bairro', '').strip(),
+                cidade=request.POST.get('cidade', '').strip(),
+                estado=request.POST.get('estado', '')
+            )
+            messages.success(request, 'Contato criado com sucesso!')
+            return redirect('motorista:contatos')
+        except Exception as e:
+            messages.error(request, f'Erro ao criar contato: {str(e)}')
+            return render(request, 'motorista/contatos/contato_form.html', {'contato': request.POST})
+    
+    return render(request, 'motorista/contatos/contato_form.html')

@@ -19,4 +19,8 @@ urlpatterns = [
     # Perfil
     path('perfil/', motorista_views.perfil_motorista, name='perfil'),
     path('perfil/alterar-senha/', motorista_views.alterar_senha, name='alterar_senha'),
+    
+    # Contatos
+    path('contatos/', motorista_views.contatos_motorista, name='contatos'),
+    path('contatos/novo/', motorista_views.contato_novo_motorista, name='contato_novo'),
 ]

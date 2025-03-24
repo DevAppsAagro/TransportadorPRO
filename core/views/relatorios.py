@@ -555,6 +555,74 @@ def relatorio_cliente(request):
     return render(request, 'core/relatorios/relatorio_cliente.html', context)
 
 @login_required
+def relatorio_cliente_print(request):
+    """
+    Versão de impressão do relatório de fretes por cliente.
+    """
+    # Obtém os parâmetros da URL
+    cliente_id = request.GET.get('cliente_id') or request.GET.get('cliente')
+    data_inicio = request.GET.get('data_inicio')
+    data_fim = request.GET.get('data_fim')
+    
+    if not all([cliente_id, data_inicio, data_fim]):
+        return redirect('core:relatorios')
+    
+    # Converte as datas para o formato correto
+    try:
+        data_inicio = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+        data_fim = datetime.strptime(data_fim, '%Y-%m-%d').date()
+    except ValueError:
+        return redirect('core:relatorios')
+    
+    # Busca o cliente e verifica se pertence ao usuário
+    cliente = get_object_or_404(Contato, id=cliente_id, usuario=request.user)
+    
+    # Busca os fretes do cliente no período, filtrando pelo usuário logado
+    fretes = Frete.objects.filter(
+        cliente=cliente,
+        data_saida__gte=data_inicio,
+        data_saida__lte=data_fim,
+        caminhao__usuario=request.user
+    ).order_by('-data_saida')
+    
+    # Calcula totais
+    total_fretes = fretes.count()
+    valor_total = fretes.aggregate(total=Coalesce(Sum('valor_total'), Decimal('0')))['total']
+    
+    # Calcula fretes concluídos e em andamento
+    fretes_concluidos = fretes.filter(data_chegada__isnull=False).count()
+    fretes_andamento = fretes.filter(data_chegada__isnull=True).count()
+    
+    # Calcula peso total transportado
+    peso_total = fretes.aggregate(total=Coalesce(Sum('peso_carga'), Decimal('0')))['total']
+    
+    # Calcula médias
+    valor_medio = valor_total / total_fretes if total_fretes > 0 else Decimal('0')
+    peso_medio = peso_total / total_fretes if total_fretes > 0 else Decimal('0')
+    
+    # Busca a empresa do usuário
+    from core.models import Empresa
+    empresa = Empresa.objects.filter(usuario=request.user).first()
+    
+    # Contexto para o template
+    context = {
+        'cliente': cliente,
+        'fretes': fretes,
+        'data_inicio': data_inicio,
+        'data_fim': data_fim,
+        'fretes_count': total_fretes,
+        'valor_total': valor_total,
+        'fretes_concluidos': fretes_concluidos,
+        'fretes_andamento': fretes_andamento,
+        'peso_total': peso_total,
+        'valor_medio': valor_medio,
+        'peso_medio': peso_medio,
+        'empresa': empresa,  # Adicionando a empresa ao contexto
+    }
+    
+    return render(request, 'core/relatorios/relatorio_cliente_print.html', context)
+
+@login_required
 def fluxo_caixa(request):
     """
     Gera um relatório de fluxo de caixa mensal, mostrando receitas, despesas, 

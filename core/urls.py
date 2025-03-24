@@ -15,7 +15,7 @@ from .views.estimativa_pneus import estimativa_pneus_list, estimativa_pneus_crea
 from .views.estimativa_manutencao import estimativa_manutencao_list, estimativa_manutencao_create, estimativa_manutencao_edit, estimativa_manutencao_delete, detalhes_estimativa_manutencao
 from .views.estimativa_custo_fixo import estimativa_custo_fixo_list, estimativa_custo_fixo_create, estimativa_custo_fixo_edit, estimativa_custo_fixo_delete, detalhes_estimativa_custo_fixo, calcular_valor_por_dia
 from .views.despesa import despesa_list, despesa_create, despesa_edit, despesa_delete, despesa_detail, registrar_pagamento, get_subcategorias, get_destinos_por_alocacao
-from .views.relatorios import relatorio_veiculo, relatorio_frete, fluxo_caixa, dre, relatorio_cliente, relatorio_manutencao, relatorio_despesa
+from .views.relatorios import relatorio_veiculo, relatorio_frete, fluxo_caixa, dre, relatorio_cliente, relatorio_manutencao, relatorio_despesa, relatorio_cliente_print
 from .views.configuracoes import configuracoes_empresa
 from .views.landing import landing_page
 from .views.motoristas import listar_motoristas, criar_motorista, editar_motorista, excluir_motorista, detalhe_motorista, resetar_senha_motorista
@@ -53,6 +53,7 @@ urlpatterns = [
     path('relatorios/fluxo-caixa/', fluxo_caixa, name='fluxo_caixa'),
     path('relatorios/dre/', dre, name='dre'),
     path('relatorios/cliente/', relatorio_cliente, name='relatorio_cliente'),
+    path('relatorios/cliente/print/', relatorio_cliente_print, name='relatorio_cliente_print'),
     path('relatorios/manutencao/', relatorio_manutencao, name='relatorio_manutencao'),
     path('relatorios/despesa/', relatorio_despesa, name='relatorio_despesa'),
     

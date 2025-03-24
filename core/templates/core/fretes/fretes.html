@@ -6,41 +6,197 @@
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border: none;
+    }
+    .table-sm-font {
+        font-size: 0.8rem;
+    }
+    .smaller-text {
+        font-size: 0.8rem;
+    }
+    .filter-th {
+        padding: 0.3rem 0.4rem;
+    }
+    /* Inputs e selects */
+    .form-control-sm {
+        height: calc(1.5em + 0.5rem + 2px);
+        padding: 0.15rem 0.4rem;
+        font-size: 0.8rem;
+        line-height: 1.4;
+    }
+    /* Ajuste para a tabela ser compacta */
+    .table-sm td, .table-sm th {
+        padding: 0.3rem 0.6rem;
+    }
+    /* Estilos para os filtros */
+    .table tfoot th input {
+        width: 100%;
+        border: 1px solid #ced4da;
+        border-radius: 0.2rem;
+        padding: 0.15rem 0.4rem;
+        height: calc(1.5em + 0.5rem + 2px);
+    }
+    /* Estilo para o último th (ações) */
+    tfoot th:last-child {
+        width: 80px;
+    }
+    /* Status styles */
+    .status-pago {
+        background-color: #28a7454d; /* verde transparente */
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+    }
+    .status-pendente {
+        background-color: #ffc10754; /* amarelo transparente */
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+    }
+    .status-vencido {
+        background-color: #dc354557; /* vermelho transparente */
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+    }
+    .status-vence-hoje {
+        background-color: #fd7e1454; /* laranja transparente */
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+    }
+    .valor-monetario {
+        white-space: nowrap;
+    }
+    /* Ajuste para a tabela ser compacta */
+    .table-sm td, .table-sm th {
+        padding: 0.3rem 0.6rem;
+    }
+    
+    /* Menu de ações customizado */
+    .actions-menu {
+        position: absolute;
+        min-width: 150px;
+        background-color: #fff;
+        border-radius: 0.25rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        padding: 0.5rem 0;
+        z-index: 9999;
+        list-style: none;
+        margin: 0;
+        display: none;
+        font-size: 0.8rem;
+    }
+    
+    .actions-menu.show {
+        display: block;
+    }
+    
+    .actions-menu-item {
+        padding: 0.25rem 0.75rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+    }
+    
+    .actions-menu-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .actions-menu-item i {
+        margin-right: 0.5rem;
+        width: 1rem;
+        text-align: center;
+    }
+    
+    .actions-menu-divider {
+        height: 1px;
+        background-color: #e9ecef;
+        margin: 0.25rem 0;
+    }
+    
+    .actions-menu-item.text-danger:hover {
+        background-color: #f8d7da;
+    }
+    
+    /* Container para o menu de ações */
+    #actionsMenuContainer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 9999;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="container mt-4">
     <!-- Summary Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
+    <div class="row mb-3">
+        <div class="col-md-3 mb-2">
             <div class="card bg-primary text-white h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Total de Fretes</h5>
-                    <h3 class="card-text">{{ fretes|length }}</h3>
+                <div class="card-body py-2">
+                    <h6 class="card-title smaller-text">Total de Fretes</h6>
+                    <h4 class="card-text">{{ fretes|length }}</h4>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
+        <div class="col-md-3 mb-2">
             <div class="card bg-success text-white h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Fretes Concluídos</h5>
-                    <h3 class="card-text">{{ fretes_concluidos }}</h3>
+                <div class="card-body py-2">
+                    <h6 class="card-title smaller-text">Fretes Concluídos</h6>
+                    <h4 class="card-text">{{ fretes_concluidos }}</h4>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
+        <div class="col-md-3 mb-2">
             <div class="card bg-info text-white h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Em Andamento</h5>
-                    <h3 class="card-text">{{ fretes_em_andamento }}</h3>
+                <div class="card-body py-2">
+                    <h6 class="card-title smaller-text">Em Andamento</h6>
+                    <h4 class="card-text">{{ fretes_em_andamento }}</h4>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
+        <div class="col-md-3 mb-2">
             <div class="card bg-warning text-white h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Valor Total</h5>
-                    <h3 class="card-text">R$ {{ valor_total|floatformat:2 }}</h3>
+                <div class="card-body py-2">
+                    <h6 class="card-title smaller-text">Valor Total</h6>
+                    <h4 class="card-text" data-valor="{{ valor_total|floatformat:2 }}">R$ {{ valor_total|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Cards -->
+    <div class="row mb-3">
+        <div class="col-md-3 mb-2">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body py-2">
+                    <h6 class="card-title smaller-text">Recebido</h6>
+                    <h4 class="card-text" data-valor="{{ valor_recebido|floatformat:2 }}">R$ {{ valor_recebido|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-2">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body py-2">
+                    <h6 class="card-title smaller-text">A Receber</h6>
+                    <h4 class="card-text" data-valor="{{ valor_a_receber|floatformat:2 }}">R$ {{ valor_a_receber|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-2">
+            <div class="card bg-danger text-white h-100">
+                <div class="card-body py-2">
+                    <h6 class="card-title smaller-text">Vencido</h6>
+                    <h4 class="card-text" data-valor="{{ valor_vencido|floatformat:2 }}">R$ {{ valor_vencido|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-2">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body py-2">
+                    <h6 class="card-title smaller-text">Vence Hoje</h6>
+                    <h4 class="card-text" data-valor="{{ valor_vence_hoje|floatformat:2 }}">R$ {{ valor_vence_hoje|floatformat:2 }}</h4>
                 </div>
             </div>
         </div>
@@ -68,16 +224,17 @@
         <div class="card-body">
             {% if fretes %}
                 <div class="table-responsive">
-                    <table id="fretes-table" class="table table-hover">
-                        <thead>
+                    <table class="table table-striped table-sm table-hover table-sm-font" id="fretes-table">
+                        <thead class="table-dark">
                             <tr>
                                 <th>ID</th>
                                 <th>Data Saída</th>
-                                <th>Caminhão</th>
                                 <th>Motorista</th>
                                 <th>Cliente</th>
-                                <th>Origem/Destino</th>
+                                <th>Rota</th>
+                                <th>Caminhão</th>
                                 <th>Valor Total</th>
+                                <th>Km Rodados</th>
                                 <th>Status</th>
                                 <th>Ações</th>
                             </tr>
@@ -87,29 +244,48 @@
                                 <tr>
                                     <td>{{ frete.id }}</td>
                                     <td>{{ frete.data_saida|date:"d/m/Y" }}</td>
-                                    <td>{{ frete.caminhao }}</td>
-                                    <td>{{ frete.motorista }}</td>
+                                    <td>
+                                        {% if frete.motorista_user %}
+                                            {{ frete.motorista_user.first_name }} {{ frete.motorista_user.last_name }}
+                                        {% elif frete.motorista %}
+                                            {{ frete.motorista }}
+                                        {% else %}
+                                            <span class="text-muted">Não definido</span>
+                                        {% endif %}
+                                    </td>
                                     <td>{{ frete.cliente }}</td>
                                     <td>{{ frete.origem }} → {{ frete.destino }}</td>
-                                    <td>R$ {{ frete.valor_total|floatformat:2 }}</td>
+                                    <td>{{ frete.caminhao }}</td>
+                                    <td class="valor-monetario" data-valor="{{ frete.valor_total|floatformat:2 }}">R$ {{ frete.valor_total|floatformat:2 }}</td>
+                                    <td>{{ frete.km_total|default:"--" }}</td>
                                     <td>
-                                        {% if frete.data_chegada %}
-                                            <span class="badge bg-success">Concluído</span>
+                                        {% if frete.status == 'PAGO' %}
+                                            <span class="badge bg-success status-pago">
+                                                <i class="fas fa-check-circle"></i> Pago
+                                            </span>
+                                        {% elif frete.status == 'VENCIDO' %}
+                                            <span class="badge bg-danger status-vencido">
+                                                <i class="fas fa-exclamation-circle"></i> Vencido
+                                            </span>
+                                        {% elif frete.status == 'VENCE_HOJE' %}
+                                            <span class="badge bg-warning status-vence-hoje">
+                                                <i class="fas fa-clock"></i> Vence hoje
+                                            </span>
                                         {% else %}
-                                            <span class="badge bg-warning">Em Andamento</span>
+                                            <span class="badge bg-info status-pendente">
+                                                <i class="fas fa-hourglass-half"></i> Pendente
+                                            </span>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <a href="{% url 'core:frete_detalhes' frete.pk %}" class="btn btn-sm btn-info me-2" title="Visualizar Detalhes">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{% url 'core:frete_editar' frete.pk %}" class="btn btn-sm btn-primary me-2" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="{% url 'core:frete_excluir' frete.pk %}" class="btn btn-sm btn-danger" 
-                                           onclick="return confirm('Tem certeza que deseja excluir este frete?');" title="Excluir">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
+                                        <button class="btn btn-sm btn-outline-secondary btn-actions"
+                                                type="button"
+                                                data-frete-id="{{ frete.id }}"
+                                                data-detail-url="{% url 'core:frete_detalhes' frete.pk %}"
+                                                data-edit-url="{% url 'core:frete_editar' frete.pk %}"
+                                                data-delete-url="{% url 'core:frete_excluir' frete.pk %}">
+                                            <i class="fas fa-cog"></i> Opções
+                                        </button>
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -129,16 +305,116 @@
 <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 <script>
-    $(document).ready(function() {
-        $('#fretes-table').DataTable({
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializa a tabela de fretes com DataTables
+        var table = $('#fretes-table').DataTable({
             "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/pt-BR.json"
+                "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/pt-BR.json",
+                "search": "Pesquisar:",
+                "searchPlaceholder": "Filtrar registros..."
             },
             "pageLength": 10,
-            "order": [[0, "desc"]],
+            "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Todos"]],
             "responsive": true,
-            "dom": '<"top"f>rt<"bottom"lip><"clear">',
-            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "Todos"]]
+            "columnDefs": [
+                { "orderable": false, "targets": 9 } // Coluna de ações não é ordenável
+            ],
+            "dom": '<"row mb-2"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"t><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        });
+
+        // Função para formatar valores monetários no padrão brasileiro (R$ 1.000,00)
+        function formatarMoedaBR(valor) {
+            // Converte o valor para número (caso seja string)
+            valor = parseFloat(valor);
+            
+            if (isNaN(valor)) {
+                return 'R$ 0,00';
+            }
+            
+            // Formata o valor usando toLocaleString com as configurações brasileiras
+            return valor.toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+                minimumFractionDigits: 2
+            });
+        }
+
+        // Formata os valores monetários nos cards e na tabela
+        document.querySelectorAll('[data-valor]').forEach(function(elemento) {
+            try {
+                const valorBruto = elemento.getAttribute('data-valor');
+                elemento.textContent = formatarMoedaBR(valorBruto);
+            } catch (e) {
+                console.error('Erro ao formatar valor:', e);
+            }
+        });
+        
+        // Criar container para menus
+        const actionsMenuContainer = document.createElement('div');
+        actionsMenuContainer.id = 'actionsMenuContainer';
+        document.body.appendChild(actionsMenuContainer);
+        
+        // Gerenciamento do menu de ações customizado
+        document.querySelectorAll('.btn-actions').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                const freteId = this.getAttribute('data-frete-id');
+                const detailUrl = this.getAttribute('data-detail-url');
+                const editUrl = this.getAttribute('data-edit-url');
+                const deleteUrl = this.getAttribute('data-delete-url');
+                
+                // Limpar menus anteriores
+                actionsMenuContainer.innerHTML = '';
+                
+                // Criar menu
+                const menu = document.createElement('ul');
+                menu.className = 'actions-menu';
+                menu.innerHTML = `
+                    <li class="actions-menu-item" onclick="window.location.href='${detailUrl}'">
+                        <i class="fas fa-eye"></i> Visualizar
+                    </li>
+                    <li class="actions-menu-item" onclick="window.location.href='${editUrl}'">
+                        <i class="fas fa-edit"></i> Editar
+                    </li>
+                    <li class="actions-menu-item text-danger" onclick="if(confirm('Tem certeza que deseja excluir este frete?')) { window.location.href='${deleteUrl}' }">
+                        <i class="fas fa-trash"></i> Excluir
+                    </li>
+                `;
+                
+                actionsMenuContainer.appendChild(menu);
+                
+                // Posicionar o menu
+                const rect = this.getBoundingClientRect();
+                menu.style.top = (rect.bottom + 5) + 'px';
+                menu.style.left = rect.left + 'px';
+                
+                // Ajustar se necessário para não sair da tela
+                const menuRect = menu.getBoundingClientRect();
+                const windowWidth = window.innerWidth;
+                
+                if (menuRect.right > windowWidth) {
+                    menu.style.left = (rect.right - menuRect.width) + 'px';
+                }
+                
+                // Mostrar o menu
+                menu.classList.add('show');
+                
+                // Fechar ao clicar fora
+                setTimeout(function() {
+                    document.addEventListener('click', function closeMenu(event) {
+                        if (!menu.contains(event.target) && event.target !== btn) {
+                            menu.classList.remove('show');
+                            setTimeout(() => {
+                                if (actionsMenuContainer.contains(menu)) {
+                                    actionsMenuContainer.removeChild(menu);
+                                }
+                            }, 200);
+                            document.removeEventListener('click', closeMenu);
+                        }
+                    });
+                }, 0);
+            });
         });
     });
 </script>

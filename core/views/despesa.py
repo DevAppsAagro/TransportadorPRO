@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.db.models import Q
 from datetime import date
 import json
+from decimal import Decimal, InvalidOperation
 
 from core.models.despesa import Despesa
 from core.models.categoria import Categoria
@@ -31,9 +32,40 @@ def despesa_list(request):
         Q(empresa__usuario=request.user)
     ).distinct().order_by('-data_vencimento')
     
+    # Preparar contadores e somatórios
+    hoje = date.today()
+    total_pendente = 0
+    total_vence_hoje = 0
+    total_vencido = 0
+    total_pago = 0
+    contador_pendente = 0
+    contador_vence_hoje = 0
+    contador_vencido = 0
+    contador_pago = 0
+    
+    # Calcular totais para cada status
+    todas_despesas = despesas
+    for despesa in todas_despesas:
+        if despesa.data_pagamento is None:
+            if despesa.data_vencimento > hoje:
+                # Pendente
+                total_pendente += despesa.valor
+                contador_pendente += 1
+            elif despesa.data_vencimento == hoje:
+                # Vence hoje
+                total_vence_hoje += despesa.valor
+                contador_vence_hoje += 1
+            else:
+                # Vencida
+                total_vencido += despesa.valor
+                contador_vencido += 1
+        else:
+            # Paga
+            total_pago += despesa.valor
+            contador_pago += 1
+    
     # Aplicar filtros
     if status_filter:
-        hoje = date.today()
         if status_filter == 'PENDENTE':
             despesas = despesas.filter(data_pagamento__isnull=True, data_vencimento__gt=hoje)
         elif status_filter == 'VENCE_HOJE':
@@ -50,20 +82,24 @@ def despesa_list(request):
     
     return render(request, 'core/despesa/lista.html', {
         'despesas': despesas,
-        'status_filter': status_filter
+        'status_filter': status_filter,
+        'total_pendente': total_pendente,
+        'total_vence_hoje': total_vence_hoje,
+        'total_vencido': total_vencido,
+        'total_pago': total_pago,
+        'contador_pendente': contador_pendente,
+        'contador_vence_hoje': contador_vence_hoje,
+        'contador_vencido': contador_vencido,
+        'contador_pago': contador_pago
     })
 
 @login_required
 def despesa_create(request):
     """Cria uma nova despesa"""
-    # Filtrar por usuário
+    # Carregar apenas categorias inicialmente - os outros dados serão carregados sob demanda
     categorias = Categoria.objects.filter(Q(usuario=request.user) | Q(usuario__isnull=True))
-    subcategorias = Subcategoria.objects.filter(categoria__in=categorias)
-    caminhoes = Caminhao.objects.filter(usuario=request.user)
-    carretas = Carreta.objects.filter(usuario=request.user)
-    fretes = Frete.objects.filter(caminhao__usuario=request.user)
-    empresas = Empresa.objects.filter(usuario=request.user)
-    contatos = Contato.objects.filter(usuario=request.user)
+    # Apenas contatos do tipo FORNECEDOR
+    contatos = Contato.objects.filter(usuario=request.user, tipo='FORNECEDOR')
     
     if request.method == 'POST':
         try:
@@ -75,7 +111,7 @@ def despesa_create(request):
             categoria_id = request.POST.get('categoria')
             subcategoria_id = request.POST.get('subcategoria')
             contato_id = request.POST.get('contato') or None
-            observacao = request.POST.get('observacao', '')
+            observacoes = request.POST.get('observacoes', '')
             
             # Obter destino baseado na alocação da categoria
             categoria = Categoria.objects.get(id=categoria_id)
@@ -107,51 +143,40 @@ def despesa_create(request):
                     empresa = get_object_or_404(Empresa, id=request.POST.get('empresa'), usuario=request.user)
                     empresa_id = empresa.id
             
-            # Verificar se o contato pertence ao usuário
-            if contato_id:
-                contato = get_object_or_404(Contato, id=contato_id, usuario=request.user)
-                contato_id = contato.id
-            
-            # Criar a despesa
-            despesa = Despesa(
+            # Criar despesa
+            despesa = Despesa.objects.create(
                 data=data,
                 data_vencimento=data_vencimento,
                 data_pagamento=data_pagamento,
                 valor=valor,
                 categoria_id=categoria_id,
                 subcategoria_id=subcategoria_id,
+                contato_id=contato_id,
                 caminhao_id=caminhao_id,
                 carreta_id=carreta_id,
                 frete_id=frete_id,
                 empresa_id=empresa_id,
-                contato_id=contato_id,
-                observacao=observacao
+                observacao=observacoes
             )
-            despesa.save()
             
             messages.success(request, 'Despesa criada com sucesso!')
             return redirect('core:despesa_list')
-            
         except Exception as e:
             messages.error(request, f'Erro ao criar despesa: {str(e)}')
     
     return render(request, 'core/despesa/form.html', {
         'categorias': categorias,
-        'subcategorias': subcategorias,
-        'caminhoes': caminhoes,
-        'carretas': carretas,
-        'fretes': fretes,
-        'empresas': empresas,
-        'contatos': contatos
+        'contatos': contatos,
+        # Não enviar os dados inicialmente, apenas quando forem necessários
     })
 
 @login_required
-def despesa_edit(request, pk):
+def despesa_edit(request, id):
     """Edita uma despesa existente"""
     # Garantir que a despesa pertence ao usuário
     despesa = get_object_or_404(
-        Despesa, 
-        filter=Q(pk=pk) & (
+        Despesa,
+        Q(pk=id) & (
             Q(caminhao__usuario=request.user) | 
             Q(carreta__usuario=request.user) | 
             Q(frete__caminhao__usuario=request.user) | 
@@ -159,14 +184,24 @@ def despesa_edit(request, pk):
         )
     )
     
-    # Filtrar por usuário
+    # Carregar apenas dados essenciais
     categorias = Categoria.objects.filter(Q(usuario=request.user) | Q(usuario__isnull=True))
-    subcategorias = Subcategoria.objects.filter(categoria__in=categorias)
-    caminhoes = Caminhao.objects.filter(usuario=request.user)
-    carretas = Carreta.objects.filter(usuario=request.user)
-    fretes = Frete.objects.filter(caminhao__usuario=request.user)
-    empresas = Empresa.objects.filter(usuario=request.user)
-    contatos = Contato.objects.filter(usuario=request.user)
+    contatos = Contato.objects.filter(usuario=request.user, tipo='FORNECEDOR')
+    
+    # Carregar dados relacionados apenas à alocação atual
+    caminhoes = []
+    carretas = []
+    fretes = []
+    empresas = []
+    
+    # Carregar dados específicos baseados na alocação
+    if despesa.categoria.alocacao == 'VEICULO':
+        caminhoes = Caminhao.objects.filter(usuario=request.user)
+        carretas = Carreta.objects.filter(usuario=request.user)
+    elif despesa.categoria.alocacao == 'FRETE':
+        fretes = Frete.objects.filter(caminhao__usuario=request.user)
+    elif despesa.categoria.alocacao == 'ADMINISTRATIVO':
+        empresas = Empresa.objects.filter(usuario=request.user)
     
     if request.method == 'POST':
         try:
@@ -177,71 +212,58 @@ def despesa_edit(request, pk):
             despesa.valor = request.POST.get('valor')
             despesa.categoria_id = request.POST.get('categoria')
             despesa.subcategoria_id = request.POST.get('subcategoria')
-            despesa.observacao = request.POST.get('observacao', '')
+            despesa.contato_id = request.POST.get('contato') or None
+            despesa.observacoes = request.POST.get('observacoes', '')
             
             # Obter destino baseado na alocação da categoria
             categoria = Categoria.objects.get(id=despesa.categoria_id)
             alocacao = categoria.alocacao
             
-            # Inicializar campos de destino
-            despesa.caminhao_id = None
-            despesa.carreta_id = None
-            despesa.frete_id = None
-            despesa.empresa_id = None
-            despesa.contato_id = None
-            
-            # Verificar se o contato pertence ao usuário
-            contato_id = request.POST.get('contato')
-            if contato_id:
-                contato = get_object_or_404(Contato, id=contato_id, usuario=request.user)
-                despesa.contato_id = contato.id
+            # Limpar campos de destino anteriores
+            despesa.caminhao = None
+            despesa.carreta = None
+            despesa.frete = None
+            despesa.empresa = None
             
             if alocacao == 'VEICULO':
-                # Verificar se o caminhão pertence ao usuário
                 if request.POST.get('caminhao'):
                     caminhao = get_object_or_404(Caminhao, id=request.POST.get('caminhao'), usuario=request.user)
-                    despesa.caminhao_id = caminhao.id
-                # Verificar se a carreta pertence ao usuário
+                    despesa.caminhao = caminhao
                 if request.POST.get('carreta'):
                     carreta = get_object_or_404(Carreta, id=request.POST.get('carreta'), usuario=request.user)
-                    despesa.carreta_id = carreta.id
+                    despesa.carreta = carreta
             elif alocacao == 'FRETE':
-                # Verificar se o frete pertence ao usuário
                 if request.POST.get('frete'):
                     frete = get_object_or_404(Frete, id=request.POST.get('frete'), caminhao__usuario=request.user)
-                    despesa.frete_id = frete.id
+                    despesa.frete = frete
             elif alocacao == 'ADMINISTRATIVO':
-                # Verificar se a empresa pertence ao usuário
                 if request.POST.get('empresa'):
                     empresa = get_object_or_404(Empresa, id=request.POST.get('empresa'), usuario=request.user)
-                    despesa.empresa_id = empresa.id
+                    despesa.empresa = empresa
             
             despesa.save()
-            
             messages.success(request, 'Despesa atualizada com sucesso!')
             return redirect('core:despesa_list')
-            
         except Exception as e:
             messages.error(request, f'Erro ao atualizar despesa: {str(e)}')
     
     return render(request, 'core/despesa/form.html', {
         'despesa': despesa,
         'categorias': categorias,
-        'subcategorias': subcategorias,
+        'contatos': contatos,
         'caminhoes': caminhoes,
         'carretas': carretas,
         'fretes': fretes,
-        'empresas': empresas,
-        'contatos': contatos
+        'empresas': empresas
     })
 
 @login_required
-def despesa_delete(request, pk):
+def despesa_delete(request, id):
     """Exclui uma despesa"""
     # Garantir que a despesa pertence ao usuário
     despesa = get_object_or_404(
         Despesa, 
-        filter=Q(pk=pk) & (
+        Q(pk=id) & (
             Q(caminhao__usuario=request.user) | 
             Q(carreta__usuario=request.user) | 
             Q(frete__caminhao__usuario=request.user) | 
@@ -263,12 +285,12 @@ def despesa_delete(request, pk):
     })
 
 @login_required
-def despesa_detail(request, pk):
+def despesa_detail(request, id):
     """Exibe os detalhes de uma despesa"""
     # Garantir que a despesa pertence ao usuário
     despesa = get_object_or_404(
-        Despesa, 
-        filter=Q(pk=pk) & (
+        Despesa,
+        Q(pk=id) & (
             Q(caminhao__usuario=request.user) | 
             Q(carreta__usuario=request.user) | 
             Q(frete__caminhao__usuario=request.user) | 
@@ -281,14 +303,14 @@ def despesa_detail(request, pk):
     })
 
 @login_required
-def registrar_pagamento(request, pk):
+def registrar_pagamento(request, id):
     """Registra o pagamento de uma despesa"""
     if request.method == 'POST':
         try:
             # Garantir que a despesa pertence ao usuário
             despesa = get_object_or_404(
-                Despesa, 
-                filter=Q(pk=pk) & (
+                Despesa,
+                Q(pk=id) & (
                     Q(caminhao__usuario=request.user) | 
                     Q(carreta__usuario=request.user) | 
                     Q(frete__caminhao__usuario=request.user) | 
@@ -297,19 +319,28 @@ def registrar_pagamento(request, pk):
             )
             
             data_pagamento = request.POST.get('data_pagamento')
+            novo_valor = request.POST.get('valor')
             
             if data_pagamento:
                 despesa.data_pagamento = data_pagamento
+                
+                # Atualizar o valor se fornecido
+                if novo_valor:
+                    try:
+                        despesa.valor = Decimal(novo_valor)
+                    except (ValueError, InvalidOperation):
+                        messages.warning(request, 'Valor inválido. O valor original foi mantido.')
+                
                 despesa.save()
                 messages.success(request, 'Pagamento registrado com sucesso!')
             else:
                 messages.error(request, 'Data de pagamento é obrigatória.')
             
-            return redirect('core:despesa_detail', pk=pk)
+            return redirect('core:despesa_detail', id=id)
             
         except Exception as e:
             messages.error(request, f'Erro ao registrar pagamento: {str(e)}')
-            return redirect('core:despesa_detail', pk=pk)
+            return redirect('core:despesa_detail', id=id)
     
     return redirect('core:despesa_list')
 
@@ -318,60 +349,75 @@ def get_subcategorias(request):
     """Retorna as subcategorias de uma categoria em formato JSON"""
     categoria_id = request.GET.get('categoria_id')
     
-    # Verificar se a categoria pertence ao usuário ou é padrão (usuário nulo)
-    categoria = get_object_or_404(
-        Categoria, 
-        filter=Q(id=categoria_id) & (
-            Q(usuario=request.user) | Q(usuario__isnull=True)
+    try:
+        # Verificar se a categoria pertence ao usuário ou é padrão (usuário nulo)
+        categoria = Categoria.objects.get(
+            id=categoria_id,
+            usuario__in=[request.user, None]  # Usuário atual ou valor nulo
         )
-    )
-    
-    subcategorias = Subcategoria.objects.filter(categoria_id=categoria_id).values('id', 'nome')
-    return JsonResponse(list(subcategorias), safe=False)
+        
+        subcategorias = Subcategoria.objects.filter(categoria_id=categoria_id).values('id', 'nome')
+        return JsonResponse(list(subcategorias), safe=False)
+    except Categoria.DoesNotExist:
+        return JsonResponse([], safe=False)
 
 @login_required
 def get_destinos_por_alocacao(request):
-    """Retorna os destinos disponíveis baseados na alocação da categoria"""
-    categoria_id = request.GET.get('categoria_id')
+    """Retorna os destinos específicos por tipo de alocação em formato JSON"""
+    tipo = request.GET.get('tipo')
+    response_data = []
     
     try:
-        # Verificar se a categoria pertence ao usuário ou é padrão (usuário nulo)
-        categoria = get_object_or_404(
-            Categoria, 
-            filter=Q(id=categoria_id) & (
-                Q(usuario=request.user) | Q(usuario__isnull=True)
-            )
-        )
-        
-        alocacao = categoria.alocacao
-        
-        if alocacao == 'VEICULO':
-            # Filtrar por usuário
-            caminhoes = list(Caminhao.objects.filter(usuario=request.user).values('id', 'placa', 'marca', 'modelo'))
-            carretas = list(Carreta.objects.filter(usuario=request.user).values('id', 'placa', 'marca', 'modelo'))
-            return JsonResponse({
-                'alocacao': alocacao,
-                'caminhoes': caminhoes,
-                'carretas': carretas
-            })
-        elif alocacao == 'FRETE':
-            # Filtrar por usuário
-            fretes = list(Frete.objects.filter(caminhao__usuario=request.user).values('id', 'cliente__nome_completo', 'origem', 'destino', 'data_saida'))
-            return JsonResponse({
-                'alocacao': alocacao,
-                'fretes': fretes
-            })
-        elif alocacao == 'ADMINISTRATIVO':
-            # Filtrar por usuário
-            empresas = list(Empresa.objects.filter(usuario=request.user).values('id', 'nome_fantasia', 'razao_social', 'cnpj'))
-            return JsonResponse({
-                'alocacao': alocacao,
-                'empresas': empresas
-            })
-        
-        return JsonResponse({'alocacao': alocacao})
-        
-    except Categoria.DoesNotExist:
-        return JsonResponse({'error': 'Categoria não encontrada'}, status=404)
+        if tipo == 'caminhao':
+            # Retornar caminhões do usuário
+            caminhoes = Caminhao.objects.filter(usuario=request.user)
+            response_data = [
+                {
+                    'id': caminhao.id,
+                    'placa': caminhao.placa,
+                    'marca': caminhao.marca,
+                    'modelo': caminhao.modelo
+                }
+                for caminhao in caminhoes
+            ]
+        elif tipo == 'carreta':
+            # Retornar carretas do usuário
+            carretas = Carreta.objects.filter(usuario=request.user)
+            response_data = [
+                {
+                    'id': carreta.id,
+                    'placa': carreta.placa,
+                    'marca': carreta.marca,
+                    'modelo': carreta.modelo
+                }
+                for carreta in carretas
+            ]
+        elif tipo == 'frete':
+            # Retornar fretes do usuário
+            fretes = Frete.objects.filter(caminhao__usuario=request.user)
+            response_data = [
+                {
+                    'id': frete.id,
+                    'cliente': frete.cliente.nome_completo if frete.cliente else 'Sem cliente',
+                    'origem': frete.origem,
+                    'destino': frete.destino
+                }
+                for frete in fretes
+            ]
+        elif tipo == 'empresa':
+            # Retornar empresas do usuário
+            empresas = Empresa.objects.filter(usuario=request.user)
+            response_data = [
+                {
+                    'id': empresa.id,
+                    'nome': empresa.nome,
+                    'razao_social': empresa.razao_social,
+                    'cnpj': empresa.cnpj
+                }
+                for empresa in empresas
+            ]
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        # Registrar o erro, mas retornar um array vazio para evitar erro no cliente
+        print(f"Erro ao carregar destinos do tipo {tipo}: {str(e)}")
+    
+    return JsonResponse(response_data, safe=False)

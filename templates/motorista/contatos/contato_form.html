@@ -1,4 +1,4 @@
-{% extends 'base/base.html' %}
+{% extends 'motorista/base.html' %}
 {% load static %}
 
 {% block title %}{% if contato %}Editar{% else %}Novo{% endif %} Contato{% endblock %}
@@ -8,11 +8,21 @@
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">{% if contato %}Editar{% else %}Novo{% endif %} Contato</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{% url 'motorista:contatos' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-12">
-            <h2 class="mb-4">{% if contato %}Editar{% else %}Novo{% endif %} Contato</h2>
-            <div class="card">
+            <div class="card shadow mb-4">
                 <div class="card-body">
                     <form method="post">
                         {% csrf_token %}
@@ -119,9 +129,13 @@
                             </div>
                         </div>
 
+                        <div class="alert alert-info mb-4">
+                            <i class="bi bi-info-circle me-2"></i> Ao cadastrar um contato, ele será associado ao usuário administrador que gerencia sua conta.
+                        </div>
+
                         <div class="row">
                             <div class="col-12">
-                                <a href="{% url 'core:contatos' %}" class="btn btn-secondary">Cancelar</a>
+                                <a href="{% url 'motorista:contatos' %}" class="btn btn-secondary">Cancelar</a>
                                 <button type="submit" class="btn btn-primary">Salvar</button>
                             </div>
                         </div>
@@ -131,4 +145,28 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Script para autocompletar endereço a partir do CEP usando a API ViaCEP
+    document.getElementById('cep').addEventListener('blur', function() {
+        const cep = this.value.replace(/\D/g, '');
+        if (cep.length !== 8) return;
+
+        fetch(`https://viacep.com.br/ws/${cep}/json/`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.erro) {
+                    document.getElementById('logradouro').value = data.logradouro;
+                    document.getElementById('bairro').value = data.bairro;
+                    document.getElementById('cidade').value = data.localidade;
+                    document.getElementById('estado').value = data.uf;
+                    // Focar no campo número após preencher o endereço
+                    document.getElementById('numero').focus();
+                }
+            })
+            .catch(error => console.error('Erro ao buscar CEP:', error));
+    });
+</script>
 {% endblock %}

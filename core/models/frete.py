@@ -3,13 +3,15 @@ from django.utils import timezone
 from .caminhao import Caminhao
 from .contato import Contato
 from .carga import Carga
+from django.contrib.auth.models import User
 import logging
 
 logger = logging.getLogger(__name__)
 
 class Frete(models.Model):
     caminhao = models.ForeignKey(Caminhao, on_delete=models.PROTECT, verbose_name='Caminhão')
-    motorista = models.ForeignKey(Contato, on_delete=models.PROTECT, verbose_name='Motorista', limit_choices_to={'tipo': 'MOTORISTA'}, related_name='fretes_como_motorista')
+    motorista = models.ForeignKey(Contato, on_delete=models.PROTECT, verbose_name='Motorista', limit_choices_to={'tipo': 'MOTORISTA'}, related_name='fretes_como_motorista', null=True, blank=True)
+    motorista_user = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name='Motorista (Usuário)', null=True, blank=True, related_name='fretes_como_motorista_user')
     data_saida = models.DateField(verbose_name='Data de Saída')
     data_chegada = models.DateField(verbose_name='Data de Chegada', null=True, blank=True)
     peso_carga = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Peso da Carga (kg)')
