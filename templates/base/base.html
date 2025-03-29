@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,47 +12,345 @@
     
     <!-- Custom CSS -->
     <style>
+        :root {
+            --sidebar-width: 250px;
+            --sidebar-collapsed-width: 70px;
+            --transition-speed: 0.3s;
+            --navbar-height: 56px;
+        }
+        
+        body {
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+        }
+        
+        /* Sidebar Styles */
         #sidebar-wrapper {
             min-height: 100vh;
-            margin-left: -15rem;
-            transition: margin 0.25s ease-out;
+            width: var(--sidebar-width);
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            transition: all var(--transition-speed) ease;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
         
         #sidebar-wrapper .sidebar-heading {
-            padding: 0.875rem 1.25rem;
+            height: var(--navbar-height);
+            padding: 0 1.25rem;
             font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
         
-        #sidebar-wrapper .list-group {
-            width: 15rem;
+        .logo-container {
+            height: var(--navbar-height);
+            display: flex;
+            align-items: center;
         }
         
-        #wrapper.toggled #sidebar-wrapper {
-            margin-left: 0;
+        .logo-container img {
+            max-height: 100%;
+            max-width: 100%;
+            margin-right: 8px;
         }
         
-        @media (min-width: 768px) {
-            #sidebar-wrapper {
-                margin-left: 0;
-            }
+        .logo-text {
+            font-weight: bold;
+        }
         
-            #page-content-wrapper {
-                min-width: 0;
-                width: 100%;
-            }
+        #sidebar-wrapper.collapsed {
+            width: var(--sidebar-collapsed-width);
+        }
         
-            #wrapper.toggled #sidebar-wrapper {
-                margin-left: -15rem;
-            }
+        #page-content-wrapper {
+            width: calc(100% - var(--sidebar-width));
+            margin-left: var(--sidebar-width);
+            transition: margin var(--transition-speed) ease;
+        }
+        
+        body.sidebar-collapsed #page-content-wrapper {
+            width: calc(100% - var(--sidebar-collapsed-width));
+            margin-left: var(--sidebar-collapsed-width);
         }
         
         .sidebar-link {
-            color: #333;
-            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            transition: all 0.2s;
+            white-space: nowrap;
         }
         
         .sidebar-link:hover {
-            background-color: #f8f9fa;
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        [data-bs-theme="dark"] .sidebar-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-link .menu-text {
+            margin-left: 0.5rem;
+            transition: opacity var(--transition-speed);
+        }
+        
+        .sidebar-link .menu-icon {
+            min-width: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        #sidebar-wrapper.collapsed .menu-text,
+        #sidebar-wrapper.collapsed .bi-chevron-down,
+        #sidebar-wrapper.collapsed .sidebar-heading-text {
+            display: none;
+        }
+        
+        #sidebar-wrapper.collapsed .list-group-item {
+            padding: 0.5rem;
+            text-align: center;
+            justify-content: center;
+        }
+        
+        #sidebar-wrapper.collapsed .collapse.show {
+            position: absolute;
+            left: var(--sidebar-collapsed-width);
+            top: auto;
+            width: 200px;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            border-radius: 0 0.25rem 0.25rem 0;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            #sidebar-wrapper {
+                margin-left: calc(-1 * var(--sidebar-width));
+            }
+            
+            #sidebar-wrapper.mobile-show {
+                margin-left: 0;
+            }
+            
+            #page-content-wrapper {
+                width: 100%;
+                margin-left: 0;
+            }
+            
+            .overlay {
+                display: none;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+            }
+            
+            .overlay.show {
+                display: block;
+            }
+            
+            .navbar-brand {
+                margin-right: auto;
+            }
+            
+            #sidebar-wrapper .list-group-item {
+                padding: 0.5rem 1rem;
+            }
+            
+            #sidebar-wrapper .list-group-item .menu-icon {
+                min-width: 20px;
+                display: flex;
+                justify-content: center;
+            }
+            
+            #sidebar-wrapper .list-group-item .menu-text {
+                margin-left: 0.5rem;
+            }
+        }
+        
+        /* Dark Mode Styles */
+        [data-bs-theme="dark"] {
+            --bs-body-bg: #212529;
+            --bs-body-color: #f8f9fa;
+        }
+        
+        [data-bs-theme="dark"] .bg-light {
+            background-color: #343a40 !important;
+        }
+        
+        [data-bs-theme="dark"] .list-group-item {
+            background-color: #343a40;
+            color: #f8f9fa;
+            border-color: #495057;
+        }
+        
+        [data-bs-theme="dark"] .border-end {
+            border-color: #495057 !important;
+        }
+        
+        /* Form Controls in Dark Mode */
+        [data-bs-theme="dark"] .form-control,
+        [data-bs-theme="dark"] .form-select {
+            background-color: #2b3035;
+            border-color: #495057;
+            color: #f8f9fa;
+        }
+        
+        /* Tables in Dark Mode */
+        [data-bs-theme="dark"] .table {
+            color: #f8f9fa;
+        }
+        
+        [data-bs-theme="dark"] .table-striped>tbody>tr:nth-of-type(odd)>* {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Dashboard Text in Dark Mode */
+        [data-bs-theme="dark"] .card-title,
+        [data-bs-theme="dark"] .card-text,
+        [data-bs-theme="dark"] .display-4,
+        [data-bs-theme="dark"] .lead,
+        [data-bs-theme="dark"] h1, 
+        [data-bs-theme="dark"] h2, 
+        [data-bs-theme="dark"] h3, 
+        [data-bs-theme="dark"] h4, 
+        [data-bs-theme="dark"] h5, 
+        [data-bs-theme="dark"] h6,
+        [data-bs-theme="dark"] p,
+        [data-bs-theme="dark"] .text-dark,
+        [data-bs-theme="dark"] span:not(.badge) {
+            color: #f8f9fa !important;
+        }
+        
+        [data-bs-theme="dark"] .text-muted {
+            color: #adb5bd !important;
+        }
+        
+        [data-bs-theme="dark"] .card {
+            background-color: #343a40;
+            border-color: #495057;
+        }
+        
+        /* Dark Mode Toggle Button */
+        .theme-toggle {
+            cursor: pointer;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.25rem;
+            transition: background-color 0.2s;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background-color: rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+        }
+        
+        .theme-toggle:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-bs-theme="dark"] .theme-toggle {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-bs-theme="dark"] .theme-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .theme-toggle-text {
+            margin-left: 0.5rem;
+            font-size: 0.8rem;
+        }
+        
+        /* Ajustes para o botão de tema no modo celular */
+        @media (max-width: 768px) {
+            .theme-toggle {
+                position: relative;
+                z-index: 1030;
+                padding: 0.3rem 0.5rem;
+            }
+            
+            .theme-toggle-text {
+                display: none;
+            }
+            
+            .ms-auto.d-flex {
+                flex-wrap: nowrap;
+            }
+        }
+        
+        /* Compact Form Styles from Memory */
+        .form-control-sm, .form-select-sm {
+            height: calc(1.5em + 0.5rem + 2px);
+            padding: 0.15rem 0.4rem;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+        
+        .form-label-xs {
+            font-size: 0.8rem;
+            margin-bottom: 0.2rem;
+        }
+        
+        .smaller-text {
+            font-size: 0.8rem;
+        }
+        
+        textarea.form-control-sm {
+            min-height: calc(1.5em + 0.5rem + 2px);
+        }
+        
+        .btn-sm {
+            padding: 0.2rem 0.6rem;
+            font-size: 0.8rem;
+        }
+        
+        /* Navbar Light/Dark Mode */
+        .navbar {
+            height: var(--navbar-height);
+        }
+        
+        .navbar-light {
+            background-color: #f8f9fa !important;
+        }
+        
+        .navbar-dark {
+            background-color: #343a40 !important;
+        }
+        
+        /* Top Navigation Styles */
+        [data-bs-theme="light"] .navbar-dark {
+            background-color: #f8f9fa !important;
+        }
+        
+        [data-bs-theme="light"] .navbar-dark .navbar-brand,
+        [data-bs-theme="light"] .navbar-dark .nav-link,
+        [data-bs-theme="light"] .navbar-dark .btn-dark {
+            color: #212529 !important;
+        }
+        
+        [data-bs-theme="light"] .navbar-dark .btn-light {
+            background-color: #e9ecef;
+            border-color: #dee2e6;
+            color: #212529;
+        }
+        
+        [data-bs-theme="light"] #sidebarToggle,
+        [data-bs-theme="light"] #mobileMenuToggle {
+            background-color: #e9ecef;
+            border-color: #dee2e6;
+            color: #212529;
+        }
+        
+        [data-bs-theme="light"] .navbar-dark .dropdown-toggle {
+            background-color: #e9ecef;
+            border-color: #dee2e6;
+            color: #212529;
         }
     </style>
     {% block custom_css %}{% endblock %}
@@ -61,94 +359,128 @@
     <link href="{% static 'css/fretes.css' %}" rel="stylesheet">
 </head>
 <body>
+    <div class="overlay"></div>
     <div class="d-flex" id="wrapper">
         <!-- Sidebar -->
         <div class="bg-light border-end" id="sidebar-wrapper">
-            <div class="sidebar-heading border-bottom bg-dark text-white">TransportadorPRO</div>
+            <div class="sidebar-heading border-bottom bg-dark text-white">
+                <div class="logo-container">
+                    <!-- Espaço para logo -->
+                    <img src="{% static 'img/logo.png' %}" alt="Logo" onerror="this.style.display='none'">
+                    <span class="sidebar-heading-text logo-text">TransportadorPRO</span>
+                </div>
+                <button class="btn btn-sm btn-dark d-md-none" id="close-sidebar">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
             <div class="list-group list-group-flush">
                 <a href="{% url 'core:dashboard' %}" class="list-group-item list-group-item-action sidebar-link">
-                    <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                    <span class="menu-icon"><i class="bi bi-speedometer2"></i></span>
+                    <span class="menu-text">Dashboard</span>
                 </a>
                 <div class="nav-item">
                     <a href="#financeiroSubmenu" data-bs-toggle="collapse" class="list-group-item list-group-item-action sidebar-link">
-                        <i class="bi bi-cash-coin me-2"></i> Financeiro <i class="bi bi-chevron-down ms-2"></i>
+                        <span class="menu-icon"><i class="bi bi-cash-coin"></i></span>
+                        <span class="menu-text">Financeiro</span>
+                        <i class="bi bi-chevron-down ms-auto"></i>
                     </a>
                     <div class="collapse" id="financeiroSubmenu">
                         <div class="list-group">
-                            <a href="{% url 'core:despesa_list' %}" class="list-group-item list-group-item-action ps-4">
-                                <i class="bi bi-receipt me-2"></i> Despesas
+                            <a href="{% url 'core:despesa_list' %}" class="list-group-item list-group-item-action ps-4 sidebar-link">
+                                <span class="menu-icon"><i class="bi bi-receipt"></i></span>
+                                <span class="menu-text">Despesas</span>
                             </a>
-                            <a href="{% url 'core:fretes' %}" class="list-group-item list-group-item-action ps-4">
-                                <i class="bi bi-truck me-2"></i> Fretes
+                            <a href="{% url 'core:fretes' %}" class="list-group-item list-group-item-action ps-4 sidebar-link">
+                                <span class="menu-icon"><i class="bi bi-truck"></i></span>
+                                <span class="menu-text">Fretes</span>
                             </a>
-                            <a href="{% url 'core:abastecimentos' %}" class="list-group-item list-group-item-action ps-4">
-                                <i class="bi bi-fuel-pump me-2"></i> Abastecimentos
+                            <a href="{% url 'core:abastecimentos' %}" class="list-group-item list-group-item-action ps-4 sidebar-link">
+                                <span class="menu-icon"><i class="bi bi-fuel-pump"></i></span>
+                                <span class="menu-text">Abastecimentos</span>
                             </a>
-                            <a href="{% url 'core:cargas' %}" class="list-group-item list-group-item-action ps-4">
-                                <i class="bi bi-box-seam me-2"></i> Cargas
+                            <a href="{% url 'core:cargas' %}" class="list-group-item list-group-item-action ps-4 sidebar-link">
+                                <span class="menu-icon"><i class="bi bi-box-seam"></i></span>
+                                <span class="menu-text">Cargas</span>
                             </a>
-                            <a href="{% url 'core:categorias' %}" class="list-group-item list-group-item-action ps-4">
-                                <i class="bi bi-diagram-2 me-2"></i> Categorias
+                            <a href="{% url 'core:categorias' %}" class="list-group-item list-group-item-action ps-4 sidebar-link">
+                                <span class="menu-icon"><i class="bi bi-diagram-2"></i></span>
+                                <span class="menu-text">Categorias</span>
                             </a>
                         </div>
                     </div>
                 </div>
                 <div class="nav-item">
                     <a href="#veiculosSubmenu" data-bs-toggle="collapse" class="list-group-item list-group-item-action sidebar-link">
-                        <i class="bi bi-truck me-2"></i> Veículos <i class="bi bi-chevron-down ms-2"></i>
+                        <span class="menu-icon"><i class="bi bi-truck"></i></span>
+                        <span class="menu-text">Veículos</span>
+                        <i class="bi bi-chevron-down ms-auto"></i>
                     </a>
                     <div class="collapse" id="veiculosSubmenu">
                         <div class="list-group">
-                            <a href="{% url 'core:caminhoes' %}" class="list-group-item list-group-item-action ps-4">
-                                <i class="bi bi-truck-flatbed me-2"></i> Caminhões
+                            <a href="{% url 'core:caminhoes' %}" class="list-group-item list-group-item-action ps-4 sidebar-link">
+                                <span class="menu-icon"><i class="bi bi-truck-flatbed"></i></span>
+                                <span class="menu-text">Caminhões</span>
                             </a>
-                            <a href="{% url 'core:carretas' %}" class="list-group-item list-group-item-action ps-4">
-                                <i class="bi bi-truck-flatbed me-2"></i> Carretas
+                            <a href="{% url 'core:carretas' %}" class="list-group-item list-group-item-action ps-4 sidebar-link">
+                                <span class="menu-icon"><i class="bi bi-truck-flatbed"></i></span>
+                                <span class="menu-text">Carretas</span>
                             </a>
-                            <a href="{% url 'core:conjuntos' %}" class="list-group-item list-group-item-action ps-4">
-                                <i class="bi bi-truck-flatbed me-2"></i> Conjuntos
+                            <a href="{% url 'core:conjuntos' %}" class="list-group-item list-group-item-action ps-4 sidebar-link">
+                                <span class="menu-icon"><i class="bi bi-truck-flatbed"></i></span>
+                                <span class="menu-text">Conjuntos</span>
                             </a>
-                            <a href="{% url 'core:estimativa_pneus_list' %}" class="list-group-item list-group-item-action ps-4">
-                                <i class="bi bi-calculator me-2"></i> Estimativas de Pneus
+                            <a href="{% url 'core:estimativa_pneus_list' %}" class="list-group-item list-group-item-action ps-4 sidebar-link">
+                                <span class="menu-icon"><i class="bi bi-calculator"></i></span>
+                                <span class="menu-text">Estimativas de Pneus</span>
                             </a>
-                            <a href="{% url 'core:estimativa_manutencao_list' %}" class="list-group-item list-group-item-action ps-4">
-                                <i class="bi bi-wrench-adjustable me-2"></i> Estimativas de Manutenção
+                            <a href="{% url 'core:estimativa_manutencao_list' %}" class="list-group-item list-group-item-action ps-4 sidebar-link">
+                                <span class="menu-icon"><i class="bi bi-wrench-adjustable"></i></span>
+                                <span class="menu-text">Estimativas de Manutenção</span>
                             </a>
-                            <a href="{% url 'core:estimativa_custo_fixo_list' %}" class="list-group-item list-group-item-action ps-4">
-                                <i class="bi bi-calendar-check me-2"></i> Estimativas de Custo Fixo
+                            <a href="{% url 'core:estimativa_custo_fixo_list' %}" class="list-group-item list-group-item-action ps-4 sidebar-link">
+                                <span class="menu-icon"><i class="bi bi-calendar-check"></i></span>
+                                <span class="menu-text">Estimativas de Custo Fixo</span>
                             </a>
                         </div>
                     </div>
                 </div>
                 <a href="{% url 'core:contatos' %}" class="list-group-item list-group-item-action sidebar-link">
-                    <i class="bi bi-people me-2"></i> Contatos
+                    <span class="menu-icon"><i class="bi bi-people"></i></span>
+                    <span class="menu-text">Contatos</span>
                 </a>
                 
-                <!-- Novo item para Motoristas -->
+                <!-- Motoristas -->
                 <div class="nav-item">
                     <a href="#motoristasSubmenu" data-bs-toggle="collapse" class="list-group-item list-group-item-action sidebar-link">
-                        <i class="bi bi-person-badge me-2"></i> Motoristas <i class="bi bi-chevron-down ms-2"></i>
+                        <span class="menu-icon"><i class="bi bi-person-badge"></i></span>
+                        <span class="menu-text">Motoristas</span>
+                        <i class="bi bi-chevron-down ms-auto"></i>
                     </a>
                     <div class="collapse" id="motoristasSubmenu">
                         <div class="list-group">
-                            <a href="{% url 'core:listar_motoristas' %}" class="list-group-item list-group-item-action ps-4">
-                                <i class="bi bi-people me-2"></i> Gerenciar Motoristas
+                            <a href="{% url 'core:listar_motoristas' %}" class="list-group-item list-group-item-action ps-4 sidebar-link">
+                                <span class="menu-icon"><i class="bi bi-people"></i></span>
+                                <span class="menu-text">Gerenciar Motoristas</span>
                             </a>
-                            <a href="{% url 'motorista:login' %}" class="list-group-item list-group-item-action ps-4" target="_blank">
-                                <i class="bi bi-box-arrow-in-right me-2"></i> Área do Motorista
+                            <a href="{% url 'motorista:login' %}" class="list-group-item list-group-item-action ps-4 sidebar-link" target="_blank">
+                                <span class="menu-icon"><i class="bi bi-box-arrow-in-right"></i></span>
+                                <span class="menu-text">Área do Motorista</span>
                             </a>
-                            <a href="{% url 'core:listar_abastecimentos_pendentes' %}" class="list-group-item list-group-item-action ps-4">
-                                <i class="bi bi-fuel-pump me-2"></i> Abastecimentos Pendentes
+                            <a href="{% url 'core:listar_abastecimentos_pendentes' %}" class="list-group-item list-group-item-action ps-4 sidebar-link">
+                                <span class="menu-icon"><i class="bi bi-fuel-pump"></i></span>
+                                <span class="menu-text">Abastecimentos Pendentes</span>
                             </a>
                         </div>
                     </div>
                 </div>
                 
                 <a href="{% url 'core:relatorios' %}" class="list-group-item list-group-item-action sidebar-link">
-                    <i class="bi bi-file-earmark-text me-2"></i> Relatórios
+                    <span class="menu-icon"><i class="bi bi-file-earmark-text"></i></span>
+                    <span class="menu-text">Relatórios</span>
                 </a>
                 <a href="{% url 'core:configuracoes_empresa' %}" class="list-group-item list-group-item-action sidebar-link">
-                    <i class="bi bi-building me-2"></i> Configurações da Empresa
+                    <span class="menu-icon"><i class="bi bi-building"></i></span>
+                    <span class="menu-text">Configurações da Empresa</span>
                 </a>
             </div>
         </div>
@@ -156,14 +488,30 @@
         <!-- Page Content -->
         <div id="page-content-wrapper">
             <!-- Top Navigation -->
-            <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom">
+            <nav class="navbar navbar-expand-lg navbar-dark">
                 <div class="container-fluid">
-                    <button class="btn btn-light" id="sidebarToggle">
+                    <button class="btn btn-light d-md-none me-2" id="mobileMenuToggle">
                         <i class="bi bi-list"></i>
                     </button>
+                    
+                    <a class="navbar-brand d-md-none" href="#">
+                        <span class="d-inline-block">TransportadorPRO</span>
+                    </a>
+                    
+                    <button class="btn btn-light d-none d-md-block" id="sidebarToggle">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    
                     <div class="ms-auto d-flex align-items-center">
+                        <!-- Dark Mode Toggle -->
+                        <div class="theme-toggle me-3" id="themeToggle">
+                            <i class="bi bi-sun-fill" id="lightIcon"></i>
+                            <i class="bi bi-moon-fill d-none" id="darkIcon"></i>
+                            <span class="theme-toggle-text" id="themeText">Modo Claro</span>
+                        </div>
+                        
                         <div class="dropdown">
-                            <button class="btn btn-dark dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                            <button class="btn dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
                                 <i class="bi bi-person-circle me-2"></i>
                                 Usuário
                             </button>
@@ -188,8 +536,8 @@
                         </div>
                     {% endfor %}
                 {% endif %}
-                {% block content %}
-                {% endblock %}
+                
+                {% block content %}{% endblock %}
             </div>
         </div>
     </div>
@@ -204,11 +552,132 @@
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Sidebar Toggle Script -->
+    <!-- Custom Scripts -->
     <script>
-        document.getElementById('sidebarToggle').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('wrapper').classList.toggle('toggled');
+        // Sidebar Toggle Script
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sidebar Toggle
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar-wrapper');
+            const body = document.body;
+            
+            sidebarToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                sidebar.classList.toggle('collapsed');
+                body.classList.toggle('sidebar-collapsed');
+            });
+            
+            // Mobile Menu Toggle
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const overlay = document.querySelector('.overlay');
+            
+            mobileMenuToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                sidebar.classList.add('mobile-show');
+                overlay.classList.add('show');
+            });
+            
+            // Close Sidebar on Mobile
+            const closeSidebar = document.getElementById('close-sidebar');
+            
+            closeSidebar.addEventListener('click', function(e) {
+                e.preventDefault();
+                sidebar.classList.remove('mobile-show');
+                overlay.classList.remove('show');
+            });
+            
+            // Close Sidebar when clicking overlay
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('mobile-show');
+                overlay.classList.remove('show');
+            });
+            
+            // Theme Toggle (Dark/Light Mode)
+            const themeToggle = document.getElementById('themeToggle');
+            const lightIcon = document.getElementById('lightIcon');
+            const darkIcon = document.getElementById('darkIcon');
+            const themeText = document.getElementById('themeText');
+            const htmlElement = document.documentElement;
+            const navbar = document.querySelector('.navbar');
+            
+            // Check for saved theme preference or use user's system preference
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                htmlElement.setAttribute('data-bs-theme', savedTheme);
+                updateThemeIcons(savedTheme);
+                updateNavbarStyle(savedTheme);
+            } else {
+                // Check if user prefers dark mode
+                const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (prefersDarkMode) {
+                    htmlElement.setAttribute('data-bs-theme', 'dark');
+                    updateThemeIcons('dark');
+                    updateNavbarStyle('dark');
+                } else {
+                    updateNavbarStyle('light');
+                }
+            }
+            
+            // Toggle theme
+            themeToggle.addEventListener('click', function() {
+                const currentTheme = htmlElement.getAttribute('data-bs-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                htmlElement.setAttribute('data-bs-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                
+                updateThemeIcons(newTheme);
+                updateNavbarStyle(newTheme);
+            });
+            
+            function updateThemeIcons(theme) {
+                if (theme === 'dark') {
+                    lightIcon.classList.add('d-none');
+                    darkIcon.classList.remove('d-none');
+                    themeText.textContent = 'Modo Escuro';
+                } else {
+                    lightIcon.classList.remove('d-none');
+                    darkIcon.classList.add('d-none');
+                    themeText.textContent = 'Modo Claro';
+                }
+            }
+            
+            function updateNavbarStyle(theme) {
+                if (theme === 'dark') {
+                    navbar.classList.remove('navbar-light');
+                    navbar.classList.add('navbar-dark');
+                } else {
+                    navbar.classList.remove('navbar-dark');
+                    navbar.classList.add('navbar-light');
+                }
+            }
+            
+            // Handle submenu behavior in collapsed mode
+            const submenuToggles = document.querySelectorAll('[data-bs-toggle="collapse"]');
+            
+            submenuToggles.forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    if (sidebar.classList.contains('collapsed') && window.innerWidth > 768) {
+                        const submenuId = this.getAttribute('href');
+                        const submenu = document.querySelector(submenuId);
+                        
+                        // Close all other submenus
+                        document.querySelectorAll('.collapse.show').forEach(menu => {
+                            if (menu.id !== submenuId.substring(1)) {
+                                bootstrap.Collapse.getInstance(menu)?.hide();
+                            }
+                        });
+                    }
+                });
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    sidebar.classList.remove('mobile-show');
+                    overlay.classList.remove('show');
+                }
+            });
         });
     </script>
 

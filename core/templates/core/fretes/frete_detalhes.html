@@ -12,93 +12,202 @@
         margin-bottom: 20px;
         overflow: hidden;
     }
+    
     .detail-card .card-header {
-        background-color: #4e73df;
-        color: white;
         font-weight: bold;
         padding: 15px 20px;
     }
+    
     .detail-card .card-body {
         padding: 20px;
     }
+    
     .status-badge {
         font-size: 14px;
         padding: 5px 10px;
         border-radius: 30px;
     }
+    
     .status-concluido {
         background-color: #1cc88a;
         color: white;
     }
+    
     .status-andamento {
         background-color: #f6c23e;
         color: white;
     }
+    
+    .status-pago {
+        background-color: #28a7454d;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+    }
+    
+    .status-pendente {
+        background-color: #ffc10754;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+    }
+    
+    .status-vencido {
+        background-color: #dc354557;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+    }
+    
+    .status-vence-hoje {
+        background-color: #fd7e1454;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+    }
+    
     .info-box {
-        background-color: #f8f9fc;
-        border-left: 4px solid #4e73df;
         padding: 15px;
         margin-bottom: 15px;
         border-radius: 4px;
     }
+    
+    [data-bs-theme="light"] .info-box {
+        background-color: #f8f9fc;
+        border-left: 4px solid #4e73df;
+    }
+    
+    [data-bs-theme="dark"] .info-box {
+        background-color: #2d3748;
+        border-left: 4px solid #4e73df;
+    }
+    
     .info-box h6 {
         margin-bottom: 10px;
         color: #4e73df;
         font-weight: bold;
     }
+    
     .info-label {
         font-weight: bold;
+    }
+    
+    [data-bs-theme="light"] .info-label {
         color: #5a5c69;
     }
+    
+    [data-bs-theme="dark"] .info-label {
+        color: #d1d5db;
+    }
+    
     .value-card {
-        background-color: #fff;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         padding: 15px;
         text-align: center;
         height: 100%;
+    }
+    
+    [data-bs-theme="light"] .value-card {
+        background-color: #fff;
         border-left: 4px solid #4e73df;
     }
+    
+    [data-bs-theme="dark"] .value-card {
+        background-color: #1a202c;
+        border-left: 4px solid #4e73df;
+    }
+    
     .value-card .value-title {
         font-size: 14px;
         font-weight: bold;
-        color: #5a5c69;
         margin-bottom: 10px;
     }
+    
+    [data-bs-theme="light"] .value-card .value-title {
+        color: #5a5c69;
+    }
+    
+    [data-bs-theme="dark"] .value-card .value-title {
+        color: #d1d5db;
+    }
+    
     .value-card .value-amount {
         font-size: 24px;
         font-weight: bold;
-        color: #4e73df;
     }
+    
     .value-card.primary {
         border-left-color: #4e73df;
     }
+    
     .value-card.primary .value-amount {
         color: #4e73df;
     }
+    
     .value-card.success {
         border-left-color: #1cc88a;
     }
+    
     .value-card.success .value-amount {
         color: #1cc88a;
     }
+    
     .value-card.warning {
         border-left-color: #f6c23e;
     }
+    
     .value-card.warning .value-amount {
         color: #f6c23e;
     }
+    
     .value-card.info {
         border-left-color: #36b9cc;
     }
+    
     .value-card.info .value-amount {
         color: #36b9cc;
     }
+    
     .action-buttons {
         margin-bottom: 20px;
     }
+    
     .action-buttons .btn {
         margin-right: 10px;
+    }
+    
+    /* Estilos para o modo escuro */
+    [data-bs-theme="dark"] .detail-card {
+        background-color: #1a202c;
+    }
+    
+    [data-bs-theme="dark"] .detail-card .card-header {
+        background-color: #2d3748;
+        color: #f7fafc;
+    }
+    
+    [data-bs-theme="light"] .detail-card .card-header {
+        background-color: #4e73df;
+        color: white;
+    }
+    
+    [data-bs-theme="dark"] .table {
+        color: #f7fafc;
+    }
+    
+    [data-bs-theme="dark"] .table-bordered {
+        border-color: #4a5568;
+    }
+    
+    [data-bs-theme="dark"] .table-bordered th,
+    [data-bs-theme="dark"] .table-bordered td {
+        border-color: #4a5568;
+    }
+    
+    [data-bs-theme="dark"] .table-hover tbody tr:hover {
+        background-color: #2d3748;
+    }
+    
+    /* Botão de impressão */
+    .print-button {
+        margin-left: 10px;
     }
 </style>
 {% endblock %}
@@ -106,7 +215,7 @@
 {% block content %}
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">
+        <h1 class="h3 mb-0">
             Detalhes do Frete #{{ frete.id }}
             {% if frete.data_chegada %}
                 <span class="status-badge status-concluido">Concluído</span>
@@ -114,15 +223,15 @@
                 <span class="status-badge status-andamento">Em Andamento</span>
             {% endif %}
         </h1>
-        <div class="action-buttons">
-            <a href="{% url 'core:frete_editar' frete.pk %}" class="btn btn-primary">
-                <i class="fas fa-edit fa-sm text-white-50 mr-1"></i> Editar
+        <div>
+            <a href="{% url 'core:frete_print' id=frete.id %}" class="btn btn-sm btn-primary" target="_blank">
+                <i class="fas fa-print"></i> Imprimir
             </a>
-            <a href="{% url 'core:relatorio_frete_detalhe' frete.pk %}" class="btn btn-info">
-                <i class="fas fa-chart-bar fa-sm text-white-50 mr-1"></i> Relatório
+            <a href="{% url 'core:frete_editar' id=frete.id %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-edit"></i> Editar
             </a>
-            <a href="{% url 'core:fretes' %}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left fa-sm text-white-50 mr-1"></i> Voltar
+            <a href="{% url 'core:fretes' %}" class="btn btn-sm btn-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar
             </a>
         </div>
     </div>
@@ -232,10 +341,14 @@
                     <div class="row">
                         <div class="col-md-4 info-label">Status Pagamento:</div>
                         <div class="col-md-8">
-                            {% if frete.data_recebimento %}
-                                <span class="badge bg-success">Recebido</span>
+                            {% if frete.status == 'PAGO' %}
+                                <span class="status-pago">Pago</span>
+                            {% elif frete.status == 'VENCIDO' %}
+                                <span class="status-vencido">Vencido</span>
+                            {% elif frete.status == 'VENCE_HOJE' %}
+                                <span class="status-vence-hoje">Vence Hoje</span>
                             {% else %}
-                                <span class="badge bg-warning">Pendente</span>
+                                <span class="status-pendente">Pendente</span>
                             {% endif %}
                         </div>
                     </div>
@@ -324,7 +437,7 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
+                        <table class="table table-bordered table-hover table-sm">
                             <thead>
                                 <tr>
                                     <th>Categoria</th>
@@ -341,9 +454,13 @@
                                     <td>R$ {{ despesa.valor|floatformat:2|intcomma }}</td>
                                     <td>
                                         {% if despesa.status == 'PAGA' %}
-                                            <span class="badge bg-success">Paga</span>
+                                            <span class="status-pago">Paga</span>
+                                        {% elif despesa.status == 'VENCIDA' %}
+                                            <span class="status-vencido">Vencida</span>
+                                        {% elif despesa.status == 'VENCE_HOJE' %}
+                                            <span class="status-vence-hoje">Vence Hoje</span>
                                         {% else %}
-                                            <span class="badge bg-warning">Pendente</span>
+                                            <span class="status-pendente">Pendente</span>
                                         {% endif %}
                                     </td>
                                 </tr>

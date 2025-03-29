@@ -2,11 +2,9 @@
 {% load static %}
 
 {% block extra_css %}
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
-<link href="{% static 'css/frete_form.css' %}" rel="stylesheet">
 <style>
-    /* Tamanho intermediário para inputs e selects */
+    /* Estilos para design compacto */
     .form-control-sm, .form-select-sm {
         height: calc(1.5em + 0.5rem + 2px);
         padding: 0.15rem 0.4rem;
@@ -14,31 +12,77 @@
         line-height: 1.4;
     }
     
-    /* Label um pouco maior */
     .form-label-xs {
         font-size: 0.8rem;
         margin-bottom: 0.2rem;
     }
     
-    /* Textos secundários */
     .smaller-text {
         font-size: 0.8rem;
     }
     
-    /* Reduzir altura do textarea */
     textarea.form-control-sm {
         min-height: calc(1.5em + 0.5rem + 2px);
     }
     
-    /* Botões um pouco maiores */
     .btn-sm {
         padding: 0.2rem 0.6rem;
         font-size: 0.8rem;
     }
     
-    /* Espaçamento um pouco maior */
     .mb-2 {
         margin-bottom: 0.5rem !important;
+    }
+    
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border: none;
+    }
+    
+    .card-header {
+        background-color: rgba(0, 0, 0, 0.03);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+        padding: 0.5rem 1rem;
+    }
+    
+    .form-section {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .form-section-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Estilos para modo escuro */
+    [data-bs-theme="dark"] .form-label-xs,
+    [data-bs-theme="dark"] .form-section-title {
+        color: rgba(255, 255, 255, 0.85) !important;
+    }
+    
+    [data-bs-theme="dark"] .form-section {
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    [data-bs-theme="dark"] .card {
+        background-color: #2c3034;
+    }
+    
+    /* Destacar campos obrigatórios */
+    .required-field::after {
+        content: "*";
+        color: #dc3545;
+        margin-left: 2px;
+    }
+    
+    .valor-monetario {
+        background-color: #f8f9fa;
+        border-radius: 0.2rem;
+        padding: 0.2rem 0.4rem;
+        font-weight: 500;
     }
 </style>
 {% endblock %}
@@ -46,179 +90,212 @@
 {% block title %}{{ titulo }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid my-3">
+<div class="container-fluid py-2">
+    <div class="d-sm-flex align-items-center justify-content-between mb-2">
+        <h1 class="h3 mb-0">{{ titulo }}</h1>
+        <a href="{% url 'core:fretes' %}" class="btn btn-sm btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
     <div class="card shadow-sm">
-        <div class="card-header bg-light py-2">
-            <h6 class="mb-0" style="font-size: 1rem;">{{ titulo }}</h6>
-        </div>
-        <div class="card-body py-3">
+        <div class="card-body p-3">
             <form method="post" class="needs-validation" novalidate>
                 {% csrf_token %}
                 
-                <div class="row mb-2">
-                    <div class="col-md-4">
-                        <label class="form-label-xs">Caminhão</label>
-                        <select name="caminhao" class="form-select form-select-sm" required>
-                            <option value="">Selecione um caminhão</option>
-                            {% for caminhao in caminhoes %}
-                            <option value="{{ caminhao.id }}" {% if frete and frete.caminhao.id == caminhao.id %}selected{% endif %}>
-                                {{ caminhao.placa }} - {{ caminhao.marca }} {{ caminhao.modelo }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label-xs">Motorista (Usuário)</label>
-                        <select name="motorista_user" id="motorista_user" class="form-select form-select-sm" onchange="checkMotoristaSelection()">
-                            <option value="">Selecione um motorista usuário</option>
-                            {% for motorista in motoristas_users %}
-                            <option value="{{ motorista.id }}" {% if frete and frete.motorista_user.id == motorista.id %}selected{% endif %}>
-                                {{ motorista.first_name }} {{ motorista.last_name }} ({{ motorista.username }})
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <small class="form-text text-muted smaller-text">Preferencialmente</small>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label-xs">Motorista (Contato)</label>
-                        <select name="motorista" id="motorista" class="form-select form-select-sm" onchange="checkMotoristaSelection()">
-                            <option value="">Selecione um motorista</option>
-                            {% for motorista in motoristas %}
-                            <option value="{{ motorista.id }}" {% if frete and frete.motorista and frete.motorista.id == motorista.id and not frete.motorista_user %}selected{% endif %}>
-                                {{ motorista.nome_completo }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <div id="motorista-validation-error" class="invalid-feedback smaller-text">
-                            É necessário selecionar pelo menos um tipo de motorista.
+                <!-- Informações Básicas -->
+                <div class="form-section">
+                    <div class="form-section-title">Informações Básicas</div>
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="form-label-xs">Caminhão</label>
+                            <select name="caminhao" class="form-select form-select-sm" required>
+                                <option value="">Selecione um caminhão</option>
+                                {% for caminhao in caminhoes %}
+                                <option value="{{ caminhao.id }}" {% if frete and frete.caminhao.id == caminhao.id %}selected{% endif %}>
+                                    {{ caminhao.placa }} - {{ caminhao.marca }} {{ caminhao.modelo }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label-xs">Motorista (Usuário)</label>
+                            <select name="motorista_user" id="motorista_user" class="form-select form-select-sm" onchange="checkMotoristaSelection()">
+                                <option value="">Selecione um motorista usuário</option>
+                                {% for motorista in motoristas_users %}
+                                <option value="{{ motorista.id }}" {% if frete and frete.motorista_user.id == motorista.id %}selected{% endif %}>
+                                    {{ motorista.first_name }} {{ motorista.last_name }} ({{ motorista.username }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-text text-muted smaller-text">Preferencialmente</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label-xs">Motorista (Contato)</label>
+                            <select name="motorista" id="motorista" class="form-select form-select-sm" onchange="checkMotoristaSelection()">
+                                <option value="">Selecione um motorista</option>
+                                {% for motorista in motoristas %}
+                                <option value="{{ motorista.id }}" {% if frete and frete.motorista and frete.motorista.id == motorista.id and not frete.motorista_user %}selected{% endif %}>
+                                    {{ motorista.nome_completo }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div id="motorista-validation-error" class="invalid-feedback smaller-text">
+                                É necessário selecionar pelo menos um tipo de motorista.
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="row mb-2">
-                    <div class="col-md-4">
-                        <label class="form-label-xs">Tipo de Carga</label>
-                        <select name="carga" class="form-select form-select-sm" required>
-                            <option value="">Selecione o tipo de carga</option>
-                            {% for carga in cargas %}
-                            <option value="{{ carga.id }}" data-fator-multiplicacao="{{ carga.fator_multiplicacao }}" {% if frete and frete.carga.id == carga.id %}selected{% endif %}>
-                                {{ carga.nome }} ({{ carga.unidade_medida }}) - Fator: {{ carga.fator_multiplicacao }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label-xs">Cliente</label>
-                        <select name="cliente" class="form-select form-select-sm" required>
-                            <option value="">Selecione um cliente</option>
-                            {% for cliente in clientes %}
-                            {% if cliente.tipo == 'CLIENTE' %}
-                            <option value="{{ cliente.id }}" {% if frete and frete.cliente.id == cliente.id %}selected{% endif %}>
-                                {{ cliente.nome_completo }}
-                            </option>
-                            {% endif %}
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label-xs">Peso da Carga (kg)</label>
-                        <input type="number" step="0.01" name="peso_carga" class="form-control form-control-sm" required
-                            value="{% if frete %}{{ frete.peso_carga }}{% endif %}" id="peso_carga">
-                    </div>
-                </div>
-
-                <div class="row mb-2">
-                    <div class="col-md-4">
-                        <label class="form-label-xs">Valor Unitário (R$)</label>
-                        <input type="number" step="0.01" name="valor_unitario" class="form-control form-control-sm" required
-                            value="{% if frete %}{{ frete.valor_unitario }}{% endif %}" id="valor_unitario">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label-xs">Valor Total (R$)</label>
-                        <input type="number" step="0.01" name="valor_total" class="form-control form-control-sm bg-light" readonly
-                            value="{% if frete %}{{ frete.valor_total }}{% endif %}" id="valor_total">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label-xs">Comissão do Motorista (%)</label>
-                        <div class="d-flex">
-                            <input type="number" step="0.01" name="comissao_motorista" class="form-control form-control-sm" required
-                                value="{% if frete %}{{ frete.comissao_motorista }}{% endif %}" id="comissao_motorista">
-                            <span class="ms-2 align-self-center smaller-text" id="valor_comissao">R$ 0,00</span>
+                
+                <!-- Informações da Carga -->
+                <div class="form-section">
+                    <div class="form-section-title">Informações da Carga</div>
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <label class="form-label-xs">Tipo de Carga</label>
+                            <select name="carga" class="form-select form-select-sm" required>
+                                <option value="">Selecione o tipo de carga</option>
+                                {% for carga in cargas %}
+                                <option value="{{ carga.id }}" data-fator-multiplicacao="{{ carga.fator_multiplicacao }}" {% if frete and frete.carga.id == carga.id %}selected{% endif %}>
+                                    {{ carga.nome }} ({{ carga.unidade_medida }}) - Fator: {{ carga.fator_multiplicacao }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-xs">Cliente</label>
+                            <select name="cliente" class="form-select form-select-sm" required>
+                                <option value="">Selecione um cliente</option>
+                                {% for cliente in clientes %}
+                                {% if cliente.tipo == 'CLIENTE' %}
+                                <option value="{{ cliente.id }}" {% if frete and frete.cliente.id == cliente.id %}selected{% endif %}>
+                                    {{ cliente.nome_completo }}
+                                </option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-xs">Peso da Carga (kg)</label>
+                            <input type="number" step="0.01" name="peso_carga" class="form-control form-control-sm" required
+                                value="{% if frete %}{{ frete.peso_carga }}{% endif %}" id="peso_carga">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-xs">Nota Fiscal</label>
+                            <input type="text" name="nota_fiscal" class="form-control form-control-sm" required
+                                value="{% if frete %}{{ frete.nota_fiscal }}{% endif %}">
                         </div>
                     </div>
                 </div>
-
-                <div class="row mb-2">
-                    <div class="col-md-6">
-                        <label class="form-label-xs">Origem</label>
-                        <input type="text" name="origem" class="form-control form-control-sm" required
-                            value="{% if frete %}{{ frete.origem }}{% endif %}">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label-xs">Destino</label>
-                        <input type="text" name="destino" class="form-control form-control-sm" required
-                            value="{% if frete %}{{ frete.destino }}{% endif %}">
-                    </div>
-                </div>
-
-                <div class="row mb-2">
-                    <div class="col-md-3">
-                        <label class="form-label-xs">Nota Fiscal</label>
-                        <input type="text" name="nota_fiscal" class="form-control form-control-sm" required
-                            value="{% if frete %}{{ frete.nota_fiscal }}{% endif %}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label-xs">Ticket</label>
-                        <input type="text" name="ticket" class="form-control form-control-sm" required
-                            value="{% if frete %}{{ frete.ticket }}{% endif %}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label-xs">Conta Bancária</label>
-                        <input type="text" name="conta_bancaria" class="form-control form-control-sm"
-                            value="{% if frete %}{{ frete.conta_bancaria }}{% endif %}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label-xs">Km de Saída</label>
-                        <input type="number" name="km_saida" class="form-control form-control-sm" required
-                            value="{% if frete %}{{ frete.km_saida }}{% endif %}" id="km_saida">
+                
+                <!-- Informações de Valores -->
+                <div class="form-section">
+                    <div class="form-section-title">Valores</div>
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <label class="form-label-xs">Valor Unitário (R$)</label>
+                            <input type="number" step="0.01" name="valor_unitario" class="form-control form-control-sm" required
+                                value="{% if frete %}{{ frete.valor_unitario }}{% endif %}" id="valor_unitario">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-xs">Valor Total (R$)</label>
+                            <div class="d-flex align-items-center">
+                                <input type="number" step="0.01" name="valor_total" class="form-control form-control-sm bg-light" readonly
+                                    value="{% if frete %}{{ frete.valor_total }}{% endif %}" id="valor_total">
+                                <span class="ms-2 valor-monetario" id="valor_total_formatado">R$ 0,00</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-xs">Comissão do Motorista (%)</label>
+                            <div class="d-flex align-items-center">
+                                <input type="number" step="0.01" name="comissao_motorista" class="form-control form-control-sm" required
+                                    value="{% if frete %}{{ frete.comissao_motorista }}{% endif %}" id="comissao_motorista">
+                                <span class="ms-2 valor-monetario" id="valor_comissao">R$ 0,00</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-xs">Ticket</label>
+                            <input type="text" name="ticket" class="form-control form-control-sm" required
+                                value="{% if frete %}{{ frete.ticket }}{% endif %}">
+                        </div>
                     </div>
                 </div>
-
-                <div class="row mb-2">
-                    <div class="col-md-4">
-                        <label class="form-label-xs">Km de Chegada</label>
-                        <input type="number" name="km_chegada" class="form-control form-control-sm"
-                            value="{% if frete %}{{ frete.km_chegada }}{% endif %}" id="km_chegada">
-                        <small class="text-muted smaller-text" id="km_total">Total: 0 km</small>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label-xs">Data de Saída</label>
-                        <input type="date" name="data_saida" class="form-control form-control-sm" required
-                            value="{% if frete %}{{ frete.data_saida|date:'Y-m-d' }}{% endif %}">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label-xs">Data de Chegada</label>
-                        <input type="date" name="data_chegada" class="form-control form-control-sm"
-                            value="{% if frete %}{{ frete.data_chegada|date:'Y-m-d' }}{% endif %}">
+                
+                <!-- Informações de Rota -->
+                <div class="form-section">
+                    <div class="form-section-title">Rota e Quilometragem</div>
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <label class="form-label-xs">Origem</label>
+                            <input type="text" name="origem" class="form-control form-control-sm" required
+                                value="{% if frete %}{{ frete.origem }}{% endif %}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-xs">Destino</label>
+                            <input type="text" name="destino" class="form-control form-control-sm" required
+                                value="{% if frete %}{{ frete.destino }}{% endif %}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label-xs">Km de Saída</label>
+                            <input type="number" name="km_saida" class="form-control form-control-sm" required
+                                value="{% if frete %}{{ frete.km_saida }}{% endif %}" id="km_saida">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label-xs">Km de Chegada</label>
+                            <input type="number" name="km_chegada" class="form-control form-control-sm"
+                                value="{% if frete %}{{ frete.km_chegada }}{% endif %}" id="km_chegada">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label-xs">Km Total</label>
+                            <input type="number" name="km_total" class="form-control form-control-sm bg-light" readonly
+                                value="{% if frete %}{{ frete.km_total }}{% endif %}" id="km_total">
+                        </div>
                     </div>
                 </div>
-
-                <div class="row mb-2">
-                    <div class="col-md-4">
-                        <label class="form-label-xs">Data de Recebimento</label>
-                        <input type="date" name="data_recebimento" class="form-control form-control-sm"
-                            value="{% if frete %}{{ frete.data_recebimento|date:'Y-m-d' }}{% endif %}">
-                    </div>
-                    <div class="col-md-8">
-                        <label class="form-label-xs">Observações</label>
-                        <textarea name="observacoes" class="form-control form-control-sm" rows="2">{% if frete %}{{ frete.observacoes }}{% endif %}</textarea>
+                
+                <!-- Informações de Datas -->
+                <div class="form-section">
+                    <div class="form-section-title">Datas</div>
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <label class="form-label-xs">Data de Saída</label>
+                            <input type="date" name="data_saida" class="form-control form-control-sm" required
+                                value="{% if frete %}{{ frete.data_saida|date:'Y-m-d' }}{% endif %}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-xs">Data de Chegada</label>
+                            <input type="date" name="data_chegada" class="form-control form-control-sm"
+                                value="{% if frete %}{{ frete.data_chegada|date:'Y-m-d' }}{% endif %}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-xs">Data de Recebimento</label>
+                            <input type="date" name="data_recebimento" class="form-control form-control-sm"
+                                value="{% if frete %}{{ frete.data_recebimento|date:'Y-m-d' }}{% endif %}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-xs">Conta Bancária</label>
+                            <input type="text" name="conta_bancaria" class="form-control form-control-sm"
+                                value="{% if frete %}{{ frete.conta_bancaria }}{% endif %}">
+                        </div>
                     </div>
                 </div>
-
-                <div class="row">
-                    <div class="col-12">
-                        <button type="submit" class="btn btn-primary btn-sm">Salvar</button>
-                        <a href="{% url 'core:fretes' %}" class="btn btn-outline-secondary btn-sm ms-2">Voltar</a>
+                
+                <!-- Observações -->
+                <div class="form-section">
+                    <div class="form-section-title">Observações</div>
+                    <div class="row g-2">
+                        <div class="col-md-12">
+                            <label class="form-label-xs">Observações</label>
+                            <textarea name="observacoes" class="form-control form-control-sm" rows="2">{% if frete %}{{ frete.observacoes }}{% endif %}</textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botões de Ação -->
+                <div class="form-actions">
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'core:fretes' %}" class="btn btn-sm btn-outline-secondary me-2">Cancelar</a>
+                        <button type="submit" class="btn btn-sm btn-primary">Salvar</button>
                     </div>
                 </div>
             </form>
@@ -229,99 +306,100 @@
 
 {% block page_scripts %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-function calcularKmTotal() {
-    const kmSaida = parseFloat(document.getElementById('km_saida').value) || 0;
-    const kmChegada = parseFloat(document.getElementById('km_chegada').value) || 0;
-    
-    // Calcular a diferença
-    let kmTotal = 0;
-    if (kmChegada >= kmSaida) {
-        kmTotal = kmChegada - kmSaida;
-    }
-    
-    // Exibir o resultado
-    document.getElementById('km_total').textContent = `Total: ${kmTotal.toLocaleString()} km`;
-}
-
-function calcularValores() {
-    const pesoCarga = parseFloat(document.getElementById('peso_carga').value) || 0;
-    const valorUnitario = parseFloat(document.getElementById('valor_unitario').value) || 0;
-    const comissao = parseFloat(document.getElementById('comissao_motorista').value) || 0;
-    
-    // Obter o fator de multiplicação da carga selecionada
-    const cargaSelect = document.querySelector('select[name="carga"]');
-    const fatorMultiplicacao = cargaSelect.selectedIndex > 0 ? 
-        parseFloat(cargaSelect.options[cargaSelect.selectedIndex].getAttribute('data-fator-multiplicacao')) || 1 : 1;
-    
-    // Dividir o peso pelo fator de multiplicação e depois multiplicar pelo valor unitário
-    const quantidadeUnidades = pesoCarga / fatorMultiplicacao;
-    const valorTotal = quantidadeUnidades * valorUnitario;
-    
-    document.getElementById('valor_total').value = valorTotal.toFixed(2);
-    
-    // Calcular a comissão do motorista
-    const valorComissao = (valorTotal * comissao) / 100;
-    document.getElementById('valor_comissao').textContent = `R$ ${valorComissao.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-}
-
-// Adicionar event listeners quando o documento estiver carregado
-document.addEventListener('DOMContentLoaded', function() {
-    // Event listeners para km
-    document.getElementById('km_saida').addEventListener('input', calcularKmTotal);
-    document.getElementById('km_chegada').addEventListener('input', calcularKmTotal);
-    
-    // Event listeners para cálculo de valores
-    document.getElementById('peso_carga').addEventListener('input', calcularValores);
-    document.getElementById('valor_unitario').addEventListener('input', calcularValores);
-    document.getElementById('comissao_motorista').addEventListener('input', calcularValores);
-    
-    // Event listeners para campos de seleção
-    document.querySelectorAll('select[name="carga"]').forEach(function(select) {
-        select.addEventListener('change', calcularValores);
-    });
-    
-    // Validação de formulário
-    document.querySelector('form').addEventListener('submit', function(event) {
-        if (!validarFormulario()) {
-            event.preventDefault();
+    function calcularKmTotal() {
+        const kmSaida = parseFloat(document.getElementById('km_saida').value) || 0;
+        const kmChegada = parseFloat(document.getElementById('km_chegada').value) || 0;
+        
+        let kmTotal = 0;
+        if (kmChegada > 0 && kmSaida > 0) {
+            kmTotal = kmChegada - kmSaida;
         }
+        
+        document.getElementById('km_total').value = kmTotal > 0 ? kmTotal : 0;
+    }
+    
+    function formatarMoedaBR(valor) {
+        valor = parseFloat(valor);
+        
+        if (isNaN(valor)) {
+            return 'R$ 0,00';
+        }
+        
+        return valor.toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+            minimumFractionDigits: 2
+        });
+    }
+    
+    function calcularValores() {
+        const pesoCarga = parseFloat(document.getElementById('peso_carga').value) || 0;
+        const valorUnitario = parseFloat(document.getElementById('valor_unitario').value) || 0;
+        const comissaoMotorista = parseFloat(document.getElementById('comissao_motorista').value) || 0;
+        
+        // Obter o fator de multiplicação da carga selecionada
+        const cargaSelect = document.querySelector('select[name="carga"]');
+        const cargaOption = cargaSelect.options[cargaSelect.selectedIndex];
+        const fatorMultiplicacao = cargaOption ? parseFloat(cargaOption.getAttribute('data-fator-multiplicacao')) || 1 : 1;
+        
+        // Calcular valor total
+        const valorTotal = pesoCarga * valorUnitario * fatorMultiplicacao;
+        document.getElementById('valor_total').value = valorTotal.toFixed(2);
+        document.getElementById('valor_total_formatado').textContent = formatarMoedaBR(valorTotal);
+        
+        // Calcular valor da comissão
+        const valorComissao = valorTotal * (comissaoMotorista / 100);
+        document.getElementById('valor_comissao').textContent = formatarMoedaBR(valorComissao);
+    }
+    
+    // Adicionar event listeners quando o documento estiver carregado
+    document.addEventListener('DOMContentLoaded', function() {
+        // Event listeners para km
+        document.getElementById('km_saida').addEventListener('input', calcularKmTotal);
+        document.getElementById('km_chegada').addEventListener('input', calcularKmTotal);
+        
+        // Event listeners para valores
+        document.getElementById('peso_carga').addEventListener('input', calcularValores);
+        document.getElementById('valor_unitario').addEventListener('input', calcularValores);
+        document.getElementById('comissao_motorista').addEventListener('input', calcularValores);
+        
+        // Event listener para mudança na carga
+        document.querySelector('select[name="carga"]').addEventListener('change', calcularValores);
+        
+        // Calcular valores iniciais
+        calcularKmTotal();
+        calcularValores();
+        
+        // Validação do formulário
+        const form = document.querySelector('.needs-validation');
+        form.addEventListener('submit', validarFormulario);
     });
     
-    // Inicializar cálculos
-    calcularKmTotal();
-    calcularValores();
-    
-    // Verificar seleção de motorista
-    checkMotoristaSelection();
-});
-
-// Função para validar o formulário
-function validarFormulario() {
-    return checkMotoristaSelection();
-}
-
-// Função para verificar se pelo menos um tipo de motorista foi selecionado
-function checkMotoristaSelection() {
-    var motoristaUser = document.getElementById('motorista_user').value;
-    var motorista = document.getElementById('motorista').value;
-    var errorElement = document.getElementById('motorista-validation-error');
-    
-    // É necessário selecionar pelo menos um tipo de motorista
-    if (motoristaUser === '' && motorista === '') {
-        document.getElementById('motorista_user').classList.add('is-invalid');
-        document.getElementById('motorista').classList.add('is-invalid');
-        errorElement.style.display = 'block';
-        errorElement.textContent = 'É necessário selecionar pelo menos um tipo de motorista.';
-        return false;
-    } else {
-        document.getElementById('motorista').classList.remove('is-invalid');
-        document.getElementById('motorista_user').classList.remove('is-invalid');
-        errorElement.style.display = 'none';
-        return true;
+    function validarFormulario(event) {
+        if (!checkMotoristaSelection()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
     }
-}
+    
+    function checkMotoristaSelection() {
+        const motoristaUser = document.getElementById('motorista_user').value;
+        const motorista = document.getElementById('motorista').value;
+        const error = document.getElementById('motorista-validation-error');
+        
+        if (!motoristaUser && !motorista) {
+            error.style.display = 'block';
+            document.getElementById('motorista').classList.add('is-invalid');
+            document.getElementById('motorista_user').classList.add('is-invalid');
+            return false;
+        } else {
+            error.style.display = 'none';
+            document.getElementById('motorista').classList.remove('is-invalid');
+            document.getElementById('motorista_user').classList.remove('is-invalid');
+            return true;
+        }
+    }
 </script>
 {% endblock %}

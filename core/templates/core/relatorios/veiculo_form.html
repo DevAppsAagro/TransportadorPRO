@@ -3,6 +3,89 @@
 
 {% block title %}Relatório de Veículo{% endblock %}
 
+{% block custom_css %}
+<style>
+    /* Estilos para modo claro */
+    :root:not([data-bs-theme="dark"]) .card, 
+    body:not(.dark-mode) .card {
+        background-color: #fff;
+        border-color: #e3e6f0;
+    }
+    
+    :root:not([data-bs-theme="dark"]) .card-header, 
+    body:not(.dark-mode) .card-header {
+        background-color: #f8f9fc;
+        border-color: #e3e6f0;
+    }
+    
+    :root:not([data-bs-theme="dark"]) label, 
+    body:not(.dark-mode) label {
+        color: #333;
+    }
+    
+    /* Estilos para modo escuro */
+    [data-bs-theme="dark"] .card, 
+    body.dark-mode .card {
+        background-color: #2d3748;
+        border-color: #4a5568;
+    }
+    
+    [data-bs-theme="dark"] .card-header, 
+    body.dark-mode .card-header {
+        background-color: #2c5282;
+        border-color: #4a5568;
+    }
+    
+    [data-bs-theme="dark"] .card-header h6, 
+    body.dark-mode .card-header h6 {
+        color: #e2e8f0;
+    }
+    
+    [data-bs-theme="dark"] .card-body, 
+    body.dark-mode .card-body {
+        background-color: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    [data-bs-theme="dark"] label, 
+    body.dark-mode label {
+        color: #e2e8f0;
+    }
+    
+    [data-bs-theme="dark"] .form-control, 
+    body.dark-mode .form-control {
+        background-color: #1a202c;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    [data-bs-theme="dark"] .form-control:focus, 
+    body.dark-mode .form-control:focus {
+        background-color: #2d3748;
+        border-color: #4e83fd;
+        color: #e2e8f0;
+    }
+    
+    [data-bs-theme="dark"] select.form-control option, 
+    body.dark-mode select.form-control option {
+        background-color: #1a202c;
+        color: #e2e8f0;
+    }
+    
+    [data-bs-theme="dark"] .btn-primary, 
+    body.dark-mode .btn-primary {
+        background-color: #4e83fd;
+        border-color: #3c6edf;
+    }
+    
+    [data-bs-theme="dark"] .btn-primary:hover, 
+    body.dark-mode .btn-primary:hover {
+        background-color: #3c6edf;
+        border-color: #2c5edf;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <div class="card shadow mb-4">

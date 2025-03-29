@@ -203,6 +203,130 @@
             bottom: 0 !important;
         }
     }
+    
+    /* Estilos para modo escuro */
+    @media screen {
+        [data-bs-theme="dark"] body, 
+        body.dark-mode {
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+        
+        [data-bs-theme="dark"] .report-header, 
+        body.dark-mode .report-header {
+            background-color: #2d3748;
+            border-color: #4a5568;
+        }
+        
+        [data-bs-theme="dark"] .report-header h2, 
+        body.dark-mode .report-header h2 {
+            color: #e2e8f0;
+        }
+        
+        [data-bs-theme="dark"] .report-header .company-info, 
+        body.dark-mode .report-header .company-info {
+            color: #a0aec0;
+        }
+        
+        [data-bs-theme="dark"] .report-header .report-title, 
+        body.dark-mode .report-header .report-title {
+            color: #4e83fd;
+        }
+        
+        [data-bs-theme="dark"] .report-section, 
+        body.dark-mode .report-section {
+            background-color: #2d3748;
+            border-color: #4a5568;
+        }
+        
+        [data-bs-theme="dark"] .report-section h3, 
+        body.dark-mode .report-section h3 {
+            color: #e2e8f0;
+            border-bottom-color: #4a5568;
+        }
+        
+        [data-bs-theme="dark"] .info-label, 
+        body.dark-mode .info-label {
+            color: #a0aec0;
+        }
+        
+        [data-bs-theme="dark"] .info-value, 
+        body.dark-mode .info-value {
+            color: #e2e8f0;
+        }
+        
+        [data-bs-theme="dark"] .table, 
+        body.dark-mode .table {
+            color: #e2e8f0;
+            border-color: #4a5568;
+        }
+        
+        [data-bs-theme="dark"] .table thead th, 
+        body.dark-mode .table thead th {
+            background-color: #2c5282;
+            color: #e2e8f0;
+            border-color: #4a5568;
+        }
+        
+        [data-bs-theme="dark"] .table tbody td, 
+        body.dark-mode .table tbody td {
+            border-color: #4a5568;
+        }
+        
+        [data-bs-theme="dark"] .table-striped tbody tr:nth-of-type(odd), 
+        body.dark-mode .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(74, 85, 104, 0.2);
+        }
+        
+        [data-bs-theme="dark"] .summary-section, 
+        body.dark-mode .summary-section {
+            background-color: #2d3748;
+            border-color: #4a5568;
+        }
+        
+        [data-bs-theme="dark"] .summary-section h3, 
+        body.dark-mode .summary-section h3 {
+            color: #e2e8f0;
+            border-bottom-color: #4a5568;
+        }
+        
+        [data-bs-theme="dark"] .summary-item, 
+        body.dark-mode .summary-item {
+            border-bottom-color: #4a5568;
+        }
+        
+        [data-bs-theme="dark"] .summary-label, 
+        body.dark-mode .summary-label {
+            color: #a0aec0;
+        }
+        
+        [data-bs-theme="dark"] .summary-value, 
+        body.dark-mode .summary-value {
+            color: #e2e8f0;
+        }
+        
+        [data-bs-theme="dark"] .status-badge, 
+        body.dark-mode .status-badge {
+            color: #e2e8f0;
+        }
+        
+        [data-bs-theme="dark"] .status-concluido, 
+        body.dark-mode .status-concluido {
+            background-color: #38b2ac;
+        }
+        
+        [data-bs-theme="dark"] .status-andamento, 
+        body.dark-mode .status-andamento {
+            background-color: #ecc94b;
+            color: #1a202c;
+        }
+        
+        [data-bs-theme="dark"] .print-footer, 
+        body.dark-mode .print-footer {
+            color: #a0aec0;
+            border-top-color: #4a5568;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -213,10 +337,13 @@
 <div class="print-header">
     <div class="company-info">
         <div class="logo-area">
+            {% if empresa.logo %}
+            <img src="{{ empresa.logo }}" alt="Logo da {{ empresa.nome_fantasia|default:empresa.razao_social }}">
+            {% else %}
             <img src="{% static 'img/logo.png' %}" alt="Logo da Empresa">
+            {% endif %}
         </div>
-        {% if empresa %}
-        <div class="company-name">{{ empresa.nome_fantasia }}</div>
+        <div class="company-name">{{ empresa.nome_fantasia|default:empresa.razao_social }}</div>
         <div class="company-razao">{{ empresa.razao_social }}</div>
         <div class="company-address">{{ empresa.logradouro }}, {{ empresa.numero }}{% if empresa.complemento %}, {{ empresa.complemento }}{% endif %}</div>
         <div class="company-address">{{ empresa.bairro }}, {{ empresa.cidade }}/{{ empresa.estado }} - CEP: {{ empresa.cep }}</div>
@@ -225,9 +352,6 @@
         <div class="company-contact">CNPJ: {{ empresa.cnpj }}</div>
         {% if empresa.inscricao_estadual %}
         <div class="company-contact">Insc. Estadual: {{ empresa.inscricao_estadual }}</div>
-        {% endif %}
-        {% else %}
-        <div class="company-name">Empresa Não Cadastrada</div>
         {% endif %}
     </div>
     <div class="report-info">

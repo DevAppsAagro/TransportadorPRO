@@ -71,7 +71,7 @@ class Despesa(models.Model):
         elif self.carreta:
             return f"Carreta: {self.carreta.placa}"
         elif self.frete:
-            return f"Frete: {self.frete.codigo}"
+            return f"Frete: {self.frete.id} - {self.frete.cliente}"
         elif self.empresa:
             return f"Empresa: {self.empresa.razao_social}"
         return "Não definido"

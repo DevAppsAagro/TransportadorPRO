@@ -9,13 +9,13 @@ from .views.cargas import cargas, carga_nova, carga_editar, carga_excluir
 from .views.caminhoes import caminhoes, caminhao_novo, caminhao_editar, caminhao_excluir, caminhao_detalhes
 from .views.carretas import lista_carretas, criar_carreta, editar_carreta, excluir_carreta
 from .views.conjuntos import conjuntos, conjunto_novo, conjunto_editar, conjunto_excluir
-from .views.fretes import fretes, frete_novo, frete_editar, frete_excluir, frete_detalhes
+from .views.fretes import fretes, frete_novo, frete_editar, frete_excluir, frete_detalhes, frete_print
 from .views.abastecimentos import abastecimentos, abastecimento_novo, abastecimento_editar, abastecimento_excluir
 from .views.estimativa_pneus import estimativa_pneus_list, estimativa_pneus_create, estimativa_pneus_edit, estimativa_pneus_delete, detalhes_estimativa
 from .views.estimativa_manutencao import estimativa_manutencao_list, estimativa_manutencao_create, estimativa_manutencao_edit, estimativa_manutencao_delete, detalhes_estimativa_manutencao
 from .views.estimativa_custo_fixo import estimativa_custo_fixo_list, estimativa_custo_fixo_create, estimativa_custo_fixo_edit, estimativa_custo_fixo_delete, detalhes_estimativa_custo_fixo, calcular_valor_por_dia
 from .views.despesa import despesa_list, despesa_create, despesa_edit, despesa_delete, despesa_detail, registrar_pagamento, get_subcategorias, get_destinos_por_alocacao
-from .views.relatorios import relatorio_veiculo, relatorio_frete, fluxo_caixa, dre, relatorio_cliente, relatorio_manutencao, relatorio_despesa, relatorio_cliente_print
+from .views.relatorios import relatorio_veiculo, relatorio_frete, fluxo_caixa, dre, relatorio_cliente, relatorio_manutencao, relatorio_despesa, relatorio_cliente_print, relatorio_veiculo_print
 from .views.configuracoes import configuracoes_empresa
 from .views.landing import landing_page
 from .views.motoristas import listar_motoristas, criar_motorista, editar_motorista, excluir_motorista, detalhe_motorista, resetar_senha_motorista
@@ -48,6 +48,7 @@ urlpatterns = [
     path('contatos/<int:pk>/excluir/', contato_excluir, name='contato_excluir'),
     path('relatorios/', relatorios, name='relatorios'),
     path('relatorios/veiculo/', relatorio_veiculo, name='relatorio_veiculo'),
+    path('relatorios/veiculo/print/', relatorio_veiculo_print, name='relatorio_veiculo_print'),
     path('relatorios/frete/', relatorio_frete, name='relatorio_frete'),
     path('relatorios/frete/<int:pk>/', relatorio_frete, name='relatorio_frete_detalhe'),
     path('relatorios/fluxo-caixa/', fluxo_caixa, name='fluxo_caixa'),
@@ -107,6 +108,7 @@ urlpatterns = [
     path('fretes/<int:id>/editar/', frete_editar, name='frete_editar'),
     path('fretes/<int:id>/excluir/', frete_excluir, name='frete_excluir'),
     path('fretes/<int:id>/detalhes/', frete_detalhes, name='frete_detalhes'),
+    path('fretes/<int:id>/print/', frete_print, name='frete_print'),
     
     # Rotas de abastecimentos
     path('abastecimentos/', abastecimentos, name='abastecimentos'),

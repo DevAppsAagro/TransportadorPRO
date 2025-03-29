@@ -1,0 +1,561 @@
+{% extends "core/base_print.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Detalhes do Frete #{{ frete.id }}{% endblock %}
+
+{% block head_extras %}
+<style>
+    /* Estilos específicos para impressão */
+    @page {
+        size: A4;
+        margin: 1cm;
+        margin-bottom: 1.5cm; /* Margem inferior reduzida */
+    }
+    
+    body {
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        line-height: 1.3;
+        position: relative;
+        min-height: 100vh;
+        padding-bottom: 30px; /* Espaço reduzido para o rodapé */
+    }
+    
+    .print-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 20px;
+    }
+    
+    .company-info {
+        width: 40%;
+    }
+    
+    .report-info {
+        width: 55%;
+        text-align: right;
+    }
+    
+    .logo-area {
+        max-width: 200px;
+        max-height: 60px;
+        margin-bottom: 8px;
+    }
+    
+    .logo-area img {
+        max-width: 100%;
+        max-height: 100%;
+    }
+    
+    .company-name {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .company-razao {
+        font-size: 12px;
+        margin-bottom: 5px;
+    }
+    
+    .company-address {
+        font-size: 11px;
+        margin-bottom: 3px;
+    }
+    
+    .company-contact {
+        font-size: 11px;
+        margin-bottom: 3px;
+    }
+    
+    .report-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    
+    .frete-info {
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+    
+    .summary-cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .card {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+        width: calc(25% - 10px);
+        box-sizing: border-box;
+    }
+    
+    .card-title {
+        font-size: 12px;
+        color: #555;
+        margin-bottom: 5px;
+    }
+    
+    .card-value {
+        font-size: 16px;
+        font-weight: bold;
+    }
+    
+    .info-section {
+        margin-bottom: 20px;
+    }
+    
+    .info-section-title {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .info-row {
+        display: flex;
+        margin-bottom: 8px;
+    }
+    
+    .info-label {
+        font-weight: bold;
+        width: 30%;
+        padding-right: 10px;
+    }
+    
+    .info-value {
+        width: 70%;
+    }
+    
+    .route-info {
+        display: flex;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+    }
+    
+    .route-origin, .route-destination {
+        width: 50%;
+        padding: 0 10px;
+    }
+    
+    .route-title {
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #555;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px; /* Espaço reduzido para o rodapé */
+        font-size: 10px;
+    }
+    
+    th, td {
+        border: 1px solid #ddd;
+        padding: 5px;
+        text-align: left;
+    }
+    
+    th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+    
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    
+    .valor-monetario {
+        white-space: nowrap;
+        text-align: right;
+    }
+    
+    .valor-peso {
+        white-space: nowrap;
+        text-align: right;
+    }
+    
+    /* Sobrescrevendo os estilos do rodapé no template base */
+    .print-footer {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        text-align: center !important;
+        font-size: 10px !important;
+        border-top: 1px solid #ddd !important;
+        padding-top: 5px !important;
+        padding-bottom: 5px !important;
+        line-height: 1.2 !important;
+        background-color: white !important;
+        height: 20px !important; /* Altura reduzida para o rodapé */
+        z-index: 1000 !important; /* Garantir que o rodapé fique acima de outros elementos */
+    }
+    
+    .status-concluido {
+        background-color: #28a7454d;
+        padding: 3px 6px;
+        border-radius: 3px;
+    }
+    
+    .status-andamento {
+        background-color: #ffc10754;
+        padding: 3px 6px;
+        border-radius: 3px;
+    }
+    
+    .status-pago {
+        background-color: #28a7454d;
+        padding: 3px 6px;
+        border-radius: 3px;
+    }
+    
+    .status-pendente {
+        background-color: #ffc10754;
+        padding: 3px 6px;
+        border-radius: 3px;
+    }
+    
+    .status-vencido {
+        background-color: #dc354557;
+        padding: 3px 6px;
+        border-radius: 3px;
+    }
+    
+    .status-vence-hoje {
+        background-color: #fd7e1454;
+        padding: 3px 6px;
+        border-radius: 3px;
+    }
+    
+    .print-button {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        z-index: 9999;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 15px;
+        font-size: 14px;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .print-button:hover {
+        background-color: #0069d9;
+    }
+    
+    @media print {
+        .print-button {
+            display: none;
+        }
+        
+        body {
+            padding-bottom: 0;
+        }
+        
+        .print-footer {
+            position: fixed !important;
+            bottom: 0 !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Botão de impressão -->
+<button class="print-button" onclick="window.print()">Imprimir Frete</button>
+
+<div class="print-header">
+    <div class="company-info">
+        <div class="logo-area">
+            <img src="{% static 'img/logo.png' %}" alt="Logo da Empresa">
+        </div>
+        {% if empresa %}
+        <div class="company-name">{{ empresa.nome_fantasia }}</div>
+        <div class="company-razao">{{ empresa.razao_social }}</div>
+        <div class="company-address">{{ empresa.logradouro }}, {{ empresa.numero }}{% if empresa.complemento %}, {{ empresa.complemento }}{% endif %}</div>
+        <div class="company-address">{{ empresa.bairro }}, {{ empresa.cidade }}/{{ empresa.estado }} - CEP: {{ empresa.cep }}</div>
+        <div class="company-contact">Tel: {{ empresa.telefone }}{% if empresa.celular %} / {{ empresa.celular }}{% endif %}</div>
+        <div class="company-contact">E-mail: {{ empresa.email }}</div>
+        <div class="company-contact">CNPJ: {{ empresa.cnpj }}</div>
+        {% if empresa.inscricao_estadual %}
+        <div class="company-contact">Insc. Estadual: {{ empresa.inscricao_estadual }}</div>
+        {% endif %}
+        {% else %}
+        <div class="company-name">Empresa Não Cadastrada</div>
+        {% endif %}
+    </div>
+    <div class="report-info">
+        <div class="report-title">Detalhes do Frete #{{ frete.id }}</div>
+        <div class="frete-info">
+            {% if frete.data_chegada %}
+                <span class="status-concluido">Concluído</span>
+            {% else %}
+                <span class="status-andamento">Em Andamento</span>
+            {% endif %}
+        </div>
+        <div>Cliente: {{ frete.cliente.nome_completo }}</div>
+        <div>Data de Saída: {{ frete.data_saida|date:"d/m/Y" }}</div>
+        <div>Data de Emissão: {% now "d/m/Y" %}</div>
+    </div>
+</div>
+
+<!-- Resumo Financeiro -->
+<div class="summary-cards">
+    <!-- Card - Valor Total -->
+    <div class="card">
+        <div class="card-title">Valor Total</div>
+        <div class="card-value valor-monetario" data-valor="{{ frete.valor_total|floatformat:2 }}">R$ {{ frete.valor_total|floatformat:2|intcomma }}</div>
+    </div>
+    
+    <!-- Card - Comissão -->
+    <div class="card">
+        <div class="card-title">Comissão do Motorista</div>
+        <div class="card-value valor-monetario" data-valor="{{ frete.valor_comissao_motorista|floatformat:2 }}">R$ {{ frete.valor_comissao_motorista|floatformat:2|intcomma }}</div>
+    </div>
+    
+    <!-- Card - Quilometragem -->
+    <div class="card">
+        <div class="card-title">Quilometragem Total</div>
+        <div class="card-value">{{ frete.km_total|default:0|intcomma }} km</div>
+    </div>
+    
+    <!-- Card - Valor por KM -->
+    <div class="card">
+        <div class="card-title">Valor por KM</div>
+        <div class="card-value valor-monetario" data-valor="{{ frete.valor_por_km|floatformat:2 }}">
+            {% if frete.km_total and frete.km_total > 0 %}
+                R$ {{ frete.valor_por_km|floatformat:2|intcomma }}
+            {% else %}
+                -
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Detalhes da Viagem -->
+<div class="route-info">
+    <div class="route-origin">
+        <div class="route-title"><i class="fas fa-map-marker-alt"></i> Origem</div>
+        <div>{{ frete.origem }}</div>
+    </div>
+    <div class="route-destination">
+        <div class="route-title"><i class="fas fa-flag-checkered"></i> Destino</div>
+        <div>{{ frete.destino }}</div>
+    </div>
+</div>
+
+<!-- Informações do Transporte -->
+<div class="info-section">
+    <div class="info-section-title"><i class="fas fa-truck"></i> Informações do Transporte</div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="info-row">
+                <div class="info-label">Caminhão:</div>
+                <div class="info-value">{{ frete.caminhao }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Motorista:</div>
+                <div class="info-value">{{ frete.motorista }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Cliente:</div>
+                <div class="info-value">{{ frete.cliente }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Tipo de Carga:</div>
+                <div class="info-value">{{ frete.carga }}</div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="info-row">
+                <div class="info-label">Peso da Carga:</div>
+                <div class="info-value">{{ frete.peso_carga|intcomma }} kg</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Nota Fiscal:</div>
+                <div class="info-value">{{ frete.nota_fiscal|default:"-" }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Ticket:</div>
+                <div class="info-value">{{ frete.ticket|default:"-" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Informações Financeiras -->
+<div class="info-section">
+    <div class="info-section-title"><i class="fas fa-dollar-sign"></i> Informações Financeiras</div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="info-row">
+                <div class="info-label">Valor Unitário:</div>
+                <div class="info-value valor-monetario" data-valor="{{ frete.valor_unitario|floatformat:2 }}">R$ {{ frete.valor_unitario|floatformat:2|intcomma }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Comissão (%):</div>
+                <div class="info-value">{{ frete.comissao_motorista }}%</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Valor Comissão:</div>
+                <div class="info-value valor-monetario" data-valor="{{ frete.valor_comissao_motorista|floatformat:2 }}">R$ {{ frete.valor_comissao_motorista|floatformat:2|intcomma }}</div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="info-row">
+                <div class="info-label">Conta Bancária:</div>
+                <div class="info-value">{{ frete.conta_bancaria|default:"-" }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Data Recebimento:</div>
+                <div class="info-value">{{ frete.data_recebimento|date:"d/m/Y"|default:"Não recebido" }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Status Pagamento:</div>
+                <div class="info-value">
+                    {% if frete.status == 'PAGO' %}
+                        <span class="status-pago">Pago</span>
+                    {% elif frete.status == 'VENCIDO' %}
+                        <span class="status-vencido">Vencido</span>
+                    {% elif frete.status == 'VENCE_HOJE' %}
+                        <span class="status-vence-hoje">Vence Hoje</span>
+                    {% else %}
+                        <span class="status-pendente">Pendente</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detalhes da Viagem -->
+<div class="info-section">
+    <div class="info-section-title"><i class="fas fa-route"></i> Detalhes da Viagem</div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="info-row">
+                <div class="info-label">Data Saída:</div>
+                <div class="info-value">{{ frete.data_saida|date:"d/m/Y" }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">KM Saída:</div>
+                <div class="info-value">{{ frete.km_saida|intcomma }}</div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="info-row">
+                <div class="info-label">Data Chegada:</div>
+                <div class="info-value">{{ frete.data_chegada|date:"d/m/Y"|default:"Em andamento" }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">KM Chegada:</div>
+                <div class="info-value">{{ frete.km_chegada|default:"-"|intcomma }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Observações -->
+{% if frete.observacoes %}
+<div class="info-section">
+    <div class="info-section-title"><i class="fas fa-sticky-note"></i> Observações</div>
+    <div>{{ frete.observacoes|linebreaks }}</div>
+</div>
+{% endif %}
+
+<!-- Despesas Relacionadas -->
+{% if despesas %}
+<div class="info-section">
+    <div class="info-section-title"><i class="fas fa-receipt"></i> Despesas Relacionadas</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Categoria</th>
+                <th>Data</th>
+                <th>Valor</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for despesa in despesas %}
+            <tr>
+                <td>{{ despesa.categoria.nome }}</td>
+                <td>{{ despesa.data_vencimento|date:"d/m/Y" }}</td>
+                <td class="valor-monetario" data-valor="{{ despesa.valor|floatformat:2 }}">R$ {{ despesa.valor|floatformat:2|intcomma }}</td>
+                <td>
+                    {% if despesa.status == 'PAGA' %}
+                        <span class="status-pago">Paga</span>
+                    {% elif despesa.status == 'VENCIDA' %}
+                        <span class="status-vencido">Vencida</span>
+                    {% elif despesa.status == 'VENCE_HOJE' %}
+                        <span class="status-vence-hoje">Vence Hoje</span>
+                    {% else %}
+                        <span class="status-pendente">Pendente</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block footer %}
+<span>TransportadorPRO.com - (64) 9 9611-5182 | {% if empresa %}{{ empresa.nome_fantasia }}{% else %}Sua Empresa{% endif %} | Página <span class="page-number"></span> | Gerado em {% now "d/m/Y H:i" %}</span>
+{% endblock %}
+
+{% block js_extras %}
+<script>
+    // Formatação de valores monetários para o padrão brasileiro
+    function formatarMoedaBR(valor) {
+        if (isNaN(valor)) return "R$ 0,00";
+        
+        // Formata para ter duas casas decimais
+        valor = parseFloat(valor).toFixed(2);
+        
+        // Divide em parte inteira e decimal
+        let partes = valor.split('.');
+        let parteInteira = partes[0];
+        let parteDecimal = partes[1];
+        
+        // Adiciona separadores de milhar
+        parteInteira = parteInteira.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        
+        // Retorna no formato R$ 1.234,56
+        return "R$ " + parteInteira + "," + parteDecimal;
+    }
+    
+    // Executa quando a página carrega
+    window.onload = function() {
+        // Numeração automática de páginas
+        document.querySelectorAll('.page-number').forEach(function(el) {
+            el.textContent = "1";
+        });
+        
+        // Formata valores monetários
+        document.querySelectorAll('.valor-monetario').forEach(function(el) {
+            const valorBruto = el.getAttribute('data-valor');
+            if (valorBruto) {
+                el.textContent = formatarMoedaBR(valorBruto);
+            }
+        });
+    };
+</script>
+{% endblock %}

@@ -6,20 +6,18 @@
 
 {% block custom_css %}
 <style>
+    /* Estilos comuns para modo claro e escuro */
     .report-header {
-        background-color: #f8f9fc;
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 20px;
         box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
     }
     .report-header h4 {
-        color: #4e73df;
         margin-bottom: 15px;
     }
     .report-form label {
         font-weight: 600;
-        color: #5a5c69;
     }
     .report-results {
         margin-top: 30px;
@@ -31,17 +29,17 @@
         overflow: hidden;
     }
     .summary-card .card-header {
-        background-color: #4e73df;
-        color: white;
         font-weight: bold;
         padding: 15px 20px;
+    }
+    .summary-card .card-header h6 {
+        color: #333;
     }
     .summary-card .card-body {
         padding: 20px;
     }
     .summary-item {
         margin-bottom: 10px;
-        border-bottom: 1px solid #e3e6f0;
         padding-bottom: 10px;
     }
     .summary-item:last-child {
@@ -51,7 +49,6 @@
     }
     .summary-label {
         font-weight: 600;
-        color: #5a5c69;
     }
     .summary-value {
         font-weight: 700;
@@ -64,14 +61,6 @@
         font-size: 12px;
         padding: 5px 10px;
         border-radius: 30px;
-    }
-    .status-concluido {
-        background-color: #1cc88a;
-        color: white;
-    }
-    .status-andamento {
-        background-color: #f6c23e;
-        color: white;
     }
     .print-header {
         display: none;
@@ -118,29 +107,15 @@
         position: relative;
         overflow: hidden;
     }
-    .stats-card.primary {
-        border-left-color: #4e73df;
-    }
-    .stats-card.success {
-        border-left-color: #1cc88a;
-    }
-    .stats-card.warning {
-        border-left-color: #f6c23e;
-    }
-    .stats-card.danger {
-        border-left-color: #e74a3b;
-    }
     .stats-card .stats-title {
         font-size: 0.8rem;
         font-weight: 600;
-        color: #5a5c69;
         text-transform: uppercase;
         margin-bottom: 0.25rem;
     }
     .stats-card .stats-value {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #333;
         margin-bottom: 0;
     }
     .stats-card .stats-icon {
@@ -150,6 +125,354 @@
         transform: translateY(-50%);
         font-size: 2rem;
         opacity: 0.2;
+    }
+    
+    /* Estilos para modo claro */
+    :root:not([data-bs-theme="dark"]) .report-header, 
+    body:not(.dark-mode) .report-header {
+        background-color: #f8f9fc;
+    }
+    :root:not([data-bs-theme="dark"]) .report-header h4, 
+    body:not(.dark-mode) .report-header h4 {
+        color: #4e73df;
+    }
+    :root:not([data-bs-theme="dark"]) .report-form label, 
+    body:not(.dark-mode) .report-form label {
+        color: #5a5c69;
+    }
+    :root:not([data-bs-theme="dark"]) .summary-card .card-header, 
+    body:not(.dark-mode) .summary-card .card-header {
+        background-color: #4e73df;
+        color: white;
+    }
+    :root:not([data-bs-theme="dark"]) .summary-item, 
+    body:not(.dark-mode) .summary-item {
+        border-bottom: 1px solid #e3e6f0;
+    }
+    :root:not([data-bs-theme="dark"]) .summary-label, 
+    body:not(.dark-mode) .summary-label {
+        color: #5a5c69;
+    }
+    :root:not([data-bs-theme="dark"]) .stats-card.primary, 
+    body:not(.dark-mode) .stats-card.primary {
+        border-left-color: #4e73df;
+    }
+    :root:not([data-bs-theme="dark"]) .stats-card.success, 
+    body:not(.dark-mode) .stats-card.success {
+        border-left-color: #1cc88a;
+    }
+    :root:not([data-bs-theme="dark"]) .stats-card.warning, 
+    body:not(.dark-mode) .stats-card.warning {
+        border-left-color: #f6c23e;
+    }
+    :root:not([data-bs-theme="dark"]) .stats-card.danger, 
+    body:not(.dark-mode) .stats-card.danger {
+        border-left-color: #e74a3b;
+    }
+    :root:not([data-bs-theme="dark"]) .stats-card .stats-title, 
+    body:not(.dark-mode) .stats-card .stats-title {
+        color: #5a5c69;
+    }
+    :root:not([data-bs-theme="dark"]) .stats-card .stats-value, 
+    body:not(.dark-mode) .stats-card .stats-value {
+        color: #333;
+    }
+    :root:not([data-bs-theme="dark"]) .status-concluido, 
+    body:not(.dark-mode) .status-concluido {
+        background-color: #1cc88a;
+        color: white;
+    }
+    :root:not([data-bs-theme="dark"]) .status-andamento, 
+    body:not(.dark-mode) .status-andamento {
+        background-color: #f6c23e;
+        color: white;
+    }
+    
+    /* Estilos para modo escuro */
+    [data-bs-theme="dark"] .report-header, 
+    body.dark-mode .report-header {
+        background-color: #2d3748;
+    }
+    [data-bs-theme="dark"] .report-header h4, 
+    body.dark-mode .report-header h4 {
+        color: #4e83fd;
+    }
+    [data-bs-theme="dark"] .report-form label, 
+    body.dark-mode .report-form label {
+        color: #e2e8f0;
+    }
+    [data-bs-theme="dark"] .summary-card .card-header, 
+    body.dark-mode .summary-card .card-header {
+        background-color: #2c5282;
+        color: #e2e8f0;
+        border-bottom: 1px solid #4a5568;
+    }
+    [data-bs-theme="dark"] .summary-item, 
+    body.dark-mode .summary-item {
+        border-bottom: 1px solid #4a5568;
+    }
+    [data-bs-theme="dark"] .summary-label, 
+    body.dark-mode .summary-label {
+        color: #cbd5e0;
+    }
+    [data-bs-theme="dark"] .summary-value, 
+    body.dark-mode .summary-value {
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    [data-bs-theme="dark"] .stats-card, 
+    body.dark-mode .stats-card {
+        background-color: #2d3748;
+        border: 1px solid #4a5568;
+    }
+    [data-bs-theme="dark"] .stats-card.primary, 
+    body.dark-mode .stats-card.primary {
+        border-left-color: #4e83fd;
+    }
+    [data-bs-theme="dark"] .stats-card.success, 
+    body.dark-mode .stats-card.success {
+        border-left-color: #38b2ac;
+    }
+    [data-bs-theme="dark"] .stats-card.warning, 
+    body.dark-mode .stats-card.warning {
+        border-left-color: #ecc94b;
+    }
+    [data-bs-theme="dark"] .stats-card.danger, 
+    body.dark-mode .stats-card.danger {
+        border-left-color: #f56565;
+    }
+    [data-bs-theme="dark"] .stats-card .stats-title, 
+    body.dark-mode .stats-card .stats-title {
+        color: #cbd5e0;
+    }
+    [data-bs-theme="dark"] .stats-card .stats-value, 
+    body.dark-mode .stats-card .stats-value {
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 1.5rem;
+    }
+    [data-bs-theme="dark"] .stats-card .stats-icon, 
+    body.dark-mode .stats-card .stats-icon {
+        color: rgba(255, 255, 255, 0.3);
+    }
+    [data-bs-theme="dark"] .stats-card.primary .stats-value,
+    body.dark-mode .stats-card.primary .stats-value {
+        color: #63b3ed;
+    }
+    
+    [data-bs-theme="dark"] .stats-card.success .stats-value,
+    body.dark-mode .stats-card.success .stats-value {
+        color: #68d391;
+    }
+    
+    [data-bs-theme="dark"] .stats-card.warning .stats-value,
+    body.dark-mode .stats-card.warning .stats-value {
+        color: #faf089;
+    }
+    
+    [data-bs-theme="dark"] .stats-card.danger .stats-value,
+    body.dark-mode .stats-card.danger .stats-value {
+        color: #fc8181;
+    }
+    
+    [data-bs-theme="dark"] .status-concluido, 
+    body.dark-mode .status-concluido {
+        background-color: #38b2ac;
+        color: #e2e8f0;
+    }
+    [data-bs-theme="dark"] .status-andamento, 
+    body.dark-mode .status-andamento {
+        background-color: #ecc94b;
+        color: #1a202c;
+    }
+    [data-bs-theme="dark"] .card, 
+    body.dark-mode .card {
+        background-color: #2d3748;
+        border-color: #4a5568;
+    }
+    [data-bs-theme="dark"] .card-header, 
+    body.dark-mode .card-header {
+        border-color: #4a5568;
+    }
+    [data-bs-theme="dark"] .card-header h6, 
+    body.dark-mode .card-header h6 {
+        color: #e2e8f0;
+    }
+    [data-bs-theme="dark"] .table, 
+    body.dark-mode .table {
+        color: #e2e8f0;
+    }
+    [data-bs-theme="dark"] .table-bordered, 
+    body.dark-mode .table-bordered {
+        border-color: #4a5568;
+    }
+    [data-bs-theme="dark"] .table-bordered th, 
+    [data-bs-theme="dark"] .table-bordered td, 
+    body.dark-mode .table-bordered th, 
+    body.dark-mode .table-bordered td {
+        border-color: #4a5568;
+    }
+    [data-bs-theme="dark"] .table-dark, 
+    body.dark-mode .table-dark {
+        background-color: #1a202c;
+    }
+    /* Correções para o card de filtros no modo escuro */
+    [data-bs-theme="dark"] .card-title, 
+    body.dark-mode .card-title {
+        color: #e2e8f0;
+    }
+    [data-bs-theme="dark"] .text-muted, 
+    body.dark-mode .text-muted {
+        color: #a0aec0 !important;
+    }
+    [data-bs-theme="dark"] .form-control, 
+    body.dark-mode .form-control {
+        background-color: #1a202c;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    [data-bs-theme="dark"] .form-control::placeholder, 
+    body.dark-mode .form-control::placeholder {
+        color: #a0aec0;
+    }
+    [data-bs-theme="dark"] .form-control:focus, 
+    body.dark-mode .form-control:focus {
+        background-color: #2d3748;
+        border-color: #4e83fd;
+        color: #e2e8f0;
+    }
+    [data-bs-theme="dark"] .text-primary, 
+    body.dark-mode .text-primary {
+        color: #4e83fd !important;
+    }
+    [data-bs-theme="dark"] .alert-info, 
+    body.dark-mode .alert-info {
+        background-color: #2c5282;
+        color: #e2e8f0;
+        border-color: #2b6cb0;
+    }
+    [data-bs-theme="dark"] .btn-outline-secondary, 
+    body.dark-mode .btn-outline-secondary {
+        color: #a0aec0;
+        border-color: #4a5568;
+    }
+    [data-bs-theme="dark"] .btn-outline-secondary:hover, 
+    body.dark-mode .btn-outline-secondary:hover {
+        background-color: #4a5568;
+        color: #e2e8f0;
+    }
+    [data-bs-theme="dark"] .btn-info, 
+    body.dark-mode .btn-info {
+        background-color: #2b6cb0;
+        border-color: #2c5282;
+        color: #e2e8f0;
+    }
+    [data-bs-theme="dark"] .btn-info:hover, 
+    body.dark-mode .btn-info:hover {
+        background-color: #2c5282;
+        border-color: #2a4365;
+    }
+    [data-bs-theme="dark"] .smaller-text, 
+    body.dark-mode .smaller-text {
+        color: #e2e8f0;
+    }
+    [data-bs-theme="dark"] .dataTables_wrapper .dataTables_length, 
+    [data-bs-theme="dark"] .dataTables_wrapper .dataTables_filter, 
+    [data-bs-theme="dark"] .dataTables_wrapper .dataTables_info, 
+    [data-bs-theme="dark"] .dataTables_wrapper .dataTables_processing, 
+    [data-bs-theme="dark"] .dataTables_wrapper .dataTables_paginate, 
+    body.dark-mode .dataTables_wrapper .dataTables_length, 
+    body.dark-mode .dataTables_wrapper .dataTables_filter, 
+    body.dark-mode .dataTables_wrapper .dataTables_info, 
+    body.dark-mode .dataTables_wrapper .dataTables_processing, 
+    body.dark-mode .dataTables_wrapper .dataTables_paginate {
+        color: #e2e8f0;
+    }
+    [data-bs-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button, 
+    body.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button {
+        color: #e2e8f0 !important;
+    }
+    [data-bs-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.current, 
+    [data-bs-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover, 
+    body.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button.current, 
+    body.dark-mode .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+        background: #4e83fd;
+        color: #e2e8f0 !important;
+        border-color: #4a5568;
+    }
+    /* Correção específica para o fundo do formulário de filtros */
+    [data-bs-theme="dark"] .report-header, 
+    body.dark-mode .report-header {
+        background-color: #2d3748 !important;
+    }
+    /* Correção para valores monetários e outros valores importantes */
+    [data-bs-theme="dark"] .valor-monetario, 
+    body.dark-mode .valor-monetario {
+        color: #e2e8f0 !important;
+    }
+    [data-bs-theme="dark"] .info-value, 
+    body.dark-mode .info-value {
+        color: #e2e8f0 !important;
+    }
+    [data-bs-theme="dark"] .card-body, 
+    body.dark-mode .card-body {
+        background-color: #3a4a63;
+        color: #e2e8f0;
+    }
+    
+    /* Correção para os cards de estatísticas e resumo no modo escuro */
+    [data-bs-theme="dark"] .stats-card,
+    body.dark-mode .stats-card {
+        background-color: #3a4a63;
+        border: 1px solid #4a5568;
+    }
+    
+    [data-bs-theme="dark"] .stats-card .stats-title,
+    body.dark-mode .stats-card .stats-title {
+        color: #e2e8f0;
+    }
+    
+    [data-bs-theme="dark"] .stats-card .stats-value,
+    body.dark-mode .stats-card .stats-value {
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 1.5rem;
+    }
+    
+    [data-bs-theme="dark"] .stats-card .stats-icon,
+    body.dark-mode .stats-card .stats-icon {
+        color: rgba(255, 255, 255, 0.3);
+    }
+    
+    [data-bs-theme="dark"] .summary-card,
+    body.dark-mode .summary-card {
+        background-color: #2d3748;
+        border: 1px solid #4a5568;
+    }
+    
+    [data-bs-theme="dark"] .summary-card .card-header,
+    body.dark-mode .summary-card .card-header {
+        background-color: #2c5282;
+        color: #e2e8f0;
+        border-bottom: 1px solid #4a5568;
+    }
+    
+    [data-bs-theme="dark"] .summary-card .card-body,
+    body.dark-mode .summary-card .card-body {
+        background-color: #2d3748;
+    }
+    
+    [data-bs-theme="dark"] .summary-item .summary-label,
+    body.dark-mode .summary-item .summary-label {
+        color: #cbd5e0;
+    }
+    
+    [data-bs-theme="dark"] .summary-item .summary-value,
+    body.dark-mode .summary-item .summary-value {
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 1.2rem;
     }
     
     /* Estilos para impressão */
@@ -208,6 +531,7 @@
         .dataTables_wrapper .dataTables_length, 
         .dataTables_wrapper .dataTables_filter, 
         .dataTables_wrapper .dataTables_info, 
+        .dataTables_wrapper .dataTables_processing, 
         .dataTables_wrapper .dataTables_paginate {
             display: none !important;
         }
@@ -584,12 +908,11 @@
 
 {% block custom_js %}
 <script>
+    /* eslint-disable no-undef, no-unused-vars, no-template-curly-in-string */
     document.addEventListener('DOMContentLoaded', function() {
         // Inicializar datatable se o relatório foi gerado
-        /* eslint-disable */
         {% if relatorio_gerado %}
         var dataTable = $('#dataTable').DataTable({
-        /* eslint-enable */
             "language": {
                 "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
             },
@@ -646,7 +969,6 @@
         document.getElementById('data_fim').value = '{{ data_fim|date:"Y-m-d" }}';
         
         // Calcular quantidade convertida para cada frete
-        /* eslint-disable */
         {% for frete in fretes %}
         (function() {
             try {
@@ -665,7 +987,6 @@
             }
         })();
         {% endfor %}
-        /* eslint-enable */
         
         // Exportar para Excel
         document.getElementById('exportExcel').addEventListener('click', function(e) {
@@ -676,13 +997,12 @@
             
             // Cabeçalho do Excel
             var headerRow = table.insertRow();
-            ['Data', 'Origem → Destino', 'Placa', 'Motorista', 'Valor Unitário', 'Valor Total', 'Peso (kg)', 'Carga Convertida', 'Status'].forEach(function(text) {
+            ['Data', 'Origem → Destino', 'Placa', 'Motorista', 'Valor Unitário', 'Valor Total', 'Peso', 'Carga Convertida', 'Status'].forEach(function(text) {
                 var cell = headerRow.insertCell();
                 cell.textContent = text;
             });
             
             // Dados
-            /* eslint-disable */
             {% for frete in fretes %}
             (function() {
                 var row = table.insertRow();
@@ -717,7 +1037,6 @@
                 statusCell.textContent = '{% if frete.data_chegada %}Concluído{% else %}Em Andamento{% endif %}';
             })();
             {% endfor %}
-            /* eslint-enable */
             
             // Converter para CSV
             var csv = [];
@@ -756,6 +1075,7 @@
         });
         {% endif %}
     });
+    /* eslint-enable no-undef, no-unused-vars, no-template-curly-in-string */
 </script>
 {% endblock %}
 

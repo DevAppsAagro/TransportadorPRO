@@ -1,76 +1,137 @@
-from supabase import create_client, Client
-from django.conf import settings
+import os
+import uuid
 import logging
-import mimetypes
+from django.conf import settings
+from supabase import create_client, Client
 
 logger = logging.getLogger(__name__)
 
-def get_supabase_client(auth_token: str = None) -> Client:
+def get_supabase_client(use_service_role=True) -> Client:
+    """
+    Cria e retorna um cliente Supabase
+    
+    Args:
+        use_service_role: Se True, usa a chave de serviço (service_role) que tem mais permissões
+    """
     url = settings.SUPABASE_URL
-    key = settings.SUPABASE_KEY
+    
+    # Usar chave de serviço se disponível
+    if use_service_role and hasattr(settings, 'SUPABASE_SERVICE_KEY'):
+        key = settings.SUPABASE_SERVICE_KEY
+        logger.info("Usando chave de serviço (service_role) do Supabase")
+    else:
+        key = settings.SUPABASE_KEY
+        logger.info("Usando chave normal do Supabase")
     
     if not url or not key:
         logger.error("Supabase URL or Key not configured")
         raise ValueError("Supabase configuration missing")
     
     client = create_client(url, key)
-    
-    if auth_token:
-        client.auth.set_session(auth_token)
-        # Enable RLS for authenticated users
-        client.postgrest.auth(auth_token)
-    
     return client
 
-def upload_file(file_data: bytes, file_name: str, auth_token: str = None, content_type: str = None) -> str:
+def upload_file(file_data, file_name, auth_token=None, content_type=None):
+    """
+    Faz upload de um arquivo para o Supabase Storage e retorna a URL pública.
+    
+    Args:
+        file_data: Dados binários do arquivo ou objeto UploadedFile do Django
+        file_name: Nome do arquivo no bucket
+        auth_token: Token de autenticação (não usado, mantido para compatibilidade)
+        content_type: Tipo de conteúdo do arquivo
+        
+    Returns:
+        URL pública do arquivo ou None em caso de erro
+    """
     try:
-        supabase = get_supabase_client(auth_token)
-        logger.info(f"Iniciando upload do arquivo {file_name}")
+        # Obter nome do bucket das configurações
+        bucket_name = getattr(settings, 'SUPABASE_STORAGE_BUCKET', 'logos')
         
-        # Detect content type if not provided
-        if not content_type:
-            content_type = mimetypes.guess_type(file_name)[0] or 'application/octet-stream'
+        # Criar nome único para o arquivo
+        file_ext = os.path.splitext(file_name)[1]
         
-        # Ensure the bucket exists
-        bucket_name = settings.SUPABASE_STORAGE_BUCKET
+        # Determinar o prefixo para o bucket logos
+        prefix = "company_logos"
         
-        try:
-            # Verifica se o bucket existe
-            buckets = supabase.storage.list_buckets()
-            bucket_exists = any(bucket.name == bucket_name for bucket in buckets)
+        # Criar caminho do arquivo com prefixo
+        unique_file_name = f"{prefix}/{uuid.uuid4()}{file_ext}"
+        
+        logger.info(f"Iniciando upload do arquivo para o bucket {bucket_name} com caminho {unique_file_name}")
+        
+        # Inicializar cliente Supabase com chave de serviço
+        supabase = get_supabase_client(use_service_role=True)
+        
+        # Verificar se file_data é um objeto UploadedFile do Django ou dados binários
+        if hasattr(file_data, 'read') and callable(file_data.read):
+            # É um objeto de arquivo, usar .read() para obter os dados
+            file_content = file_data.read()
             
-            if not bucket_exists:
-                logger.info(f"Criando bucket {bucket_name}")
-                supabase.storage.create_bucket(bucket_name)
-        except Exception as e:
-            logger.warning(f"Erro ao verificar/criar bucket: {str(e)}")
+            # Usar o content_type do arquivo se não for fornecido
+            if not content_type and hasattr(file_data, 'content_type'):
+                content_type = file_data.content_type
+        else:
+            # Já são dados binários
+            file_content = file_data
         
-        # Upload the file with proper content type
-        response = supabase.storage.from_(bucket_name).upload(
-            path=file_name,
-            file=file_data,
-            file_options={
-                "content-type": content_type,
-                "upsert": True,
-                "cache-control": "3600",
-                "x-upsert": "true"
-            }
+        # Upload do arquivo
+        result = supabase.storage.from_(bucket_name).upload(
+            path=unique_file_name,
+            file=file_content,
+            file_options={"contentType": content_type}
         )
         
-        logger.debug(f"Resposta do upload: {response}")
-        
-        if response:
-            # Generate the public URL for the file
-            try:
-                file_url = supabase.storage.from_(bucket_name).get_public_url(file_name)
-                logger.info(f"Upload concluído com sucesso. URL: {file_url}")
-                return file_url
-            except Exception as e:
-                logger.error(f"Erro ao gerar URL pública: {str(e)}")
-                return None
-        
-        logger.error(f"Falha no upload. Resposta inesperada: {response}")
-        return None
+        if result:
+            # Gerar URL pública
+            public_url = supabase.storage.from_(bucket_name).get_public_url(unique_file_name)
+            logger.info(f"Upload concluído com sucesso. URL: {public_url}")
+            return public_url
+        else:
+            logger.error("Falha no upload: resposta inválida")
+            return None
+            
     except Exception as e:
-        logger.error(f"Erro no upload: {str(e)}")
+        logger.error(f"Erro ao fazer upload para o Supabase: {str(e)}")
         return None
+
+def remove_file(url):
+    """
+    Remove um arquivo do Supabase Storage.
+    
+    Args:
+        url: URL pública do arquivo a ser removido
+        
+    Returns:
+        True se o arquivo foi removido com sucesso, False caso contrário
+    """
+    try:
+        if not url:
+            return True
+            
+        # Obter nome do bucket das configurações
+        bucket_name = getattr(settings, 'SUPABASE_STORAGE_BUCKET', 'logos')
+        
+        # Extrair caminho do arquivo da URL
+        # A URL será algo como: https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos/company_logos/uuid.png
+        # Precisamos extrair: company_logos/uuid.png
+        
+        # Primeiro, extrair a parte após o bucket_name
+        parts = url.split(f"{bucket_name}/")
+        if len(parts) < 2:
+            logger.error(f"Não foi possível extrair o caminho do arquivo da URL: {url}")
+            return False
+            
+        file_path = parts[1]
+        
+        logger.info(f"Removendo arquivo {file_path} do bucket {bucket_name}")
+        
+        # Inicializar cliente Supabase com chave de serviço
+        supabase = get_supabase_client(use_service_role=True)
+        
+        # Remover arquivo
+        supabase.storage.from_(bucket_name).remove([file_path])
+        logger.info(f"Arquivo removido com sucesso: {file_path}")
+        
+        return True
+    except Exception as e:
+        logger.error(f"Erro ao remover arquivo do Supabase: {str(e)}")
+        return False

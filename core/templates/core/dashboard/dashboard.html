@@ -95,6 +95,17 @@
     .stat-value.negative {
         color: #e74a3b;
     }
+    
+    /* Estilos para modo escuro */
+    [data-bs-theme="dark"] .stat-label {
+        color: #e9ecef;
+    }
+    [data-bs-theme="dark"] .card-header {
+        border-bottom: 1px solid #495057;
+    }
+    [data-bs-theme="dark"] .stat-item {
+        border-bottom: 1px solid #495057;
+    }
 </style>
 {% endblock %}
 
@@ -364,6 +375,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const categoriasLabels = {{ categorias_labels|safe }};
     const categoriasValores = {{ categorias_valores|safe }};
     
+    // Verifica se o tema é escuro
+    const isDarkMode = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    
+    // Cores para o modo claro e escuro
+    const colors = {
+        light: {
+            receitas: {
+                background: 'rgba(28, 200, 138, 0.4)',
+                border: 'rgba(28, 200, 138, 1)'
+            },
+            despesas: {
+                background: 'rgba(231, 74, 59, 0.4)',
+                border: 'rgba(231, 74, 59, 1)'
+            }
+        },
+        dark: {
+            receitas: {
+                background: 'rgba(28, 200, 138, 0.6)',
+                border: 'rgba(28, 200, 138, 1)'
+            },
+            despesas: {
+                background: 'rgba(231, 74, 59, 0.6)',
+                border: 'rgba(231, 74, 59, 1)'
+            }
+        }
+    };
+    
+    // Seleciona as cores com base no tema
+    const themeColors = isDarkMode ? colors.dark : colors.light;
+    
     // Gera cores aleatórias para o gráfico de categorias
     function generateColors(count) {
         const colors = [];
@@ -372,9 +413,19 @@ document.addEventListener('DOMContentLoaded', function() {
         for (let i = 0; i < count; i++) {
             // Gera uma cor HSL com saturação e luminosidade fixas para garantir cores visíveis
             const hue = Math.floor(360 * i / count);
-            const color = `hsl(${hue}, 70%, 50%)`;
+            let color, bgColor;
+            
+            // Cores mais claras para o modo escuro
+            if (isDarkMode) {
+                color = `hsl(${hue}, 80%, 60%)`;
+                bgColor = `hsl(${hue}, 80%, 75%)`;
+            } else {
+                color = `hsl(${hue}, 70%, 50%)`;
+                bgColor = `hsl(${hue}, 70%, 80%)`;
+            }
+            
             colors.push(color);
-            backgroundColors.push(`hsl(${hue}, 70%, 70%)`);
+            backgroundColors.push(bgColor);
         }
         
         return {
@@ -383,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
     
-    const colors = generateColors(categoriasLabels.length);
+    const categoryColors = generateColors(categoriasLabels.length);
     
     // Configuração do gráfico de Receitas e Despesas
     const ctxReceitas = document.getElementById('receitasDespesasChart');
@@ -396,15 +447,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     {
                         label: 'Receitas',
                         data: dadosReceitas,
-                        backgroundColor: 'rgba(78, 115, 223, 0.2)',
-                        borderColor: 'rgba(78, 115, 223, 1)',
+                        backgroundColor: themeColors.receitas.background,
+                        borderColor: themeColors.receitas.border,
                         borderWidth: 1
                     },
                     {
                         label: 'Despesas',
                         data: dadosDespesas,
-                        backgroundColor: 'rgba(231, 74, 59, 0.2)',
-                        borderColor: 'rgba(231, 74, 59, 1)',
+                        backgroundColor: themeColors.despesas.background,
+                        borderColor: themeColors.despesas.border,
                         borderWidth: 1
                     }
                 ]
@@ -413,9 +464,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
+                    x: {
+                        grid: {
+                            color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            color: isDarkMode ? '#f8f9fa' : '#666'
+                        }
+                    },
                     y: {
                         beginAtZero: true,
+                        grid: {
+                            color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                        },
                         ticks: {
+                            color: isDarkMode ? '#f8f9fa' : '#666',
                             callback: function(value) {
                                 return 'R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                             }
@@ -423,6 +486,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 },
                 plugins: {
+                    legend: {
+                        labels: {
+                            color: isDarkMode ? '#f8f9fa' : '#666'
+                        }
+                    },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
@@ -444,8 +512,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 labels: categoriasLabels,
                 datasets: [{
                     data: categoriasValores,
-                    backgroundColor: colors.backgroundColors,
-                    borderColor: colors.borderColors,
+                    backgroundColor: categoryColors.backgroundColors,
+                    borderColor: categoryColors.borderColors,
                     borderWidth: 1
                 }]
             },
@@ -460,7 +528,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             padding: 10,
                             font: {
                                 size: 11
-                            }
+                            },
+                            color: isDarkMode ? '#f8f9fa' : '#666'
                         }
                     },
                     tooltip: {
@@ -478,6 +547,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    // Atualizar cores quando o tema mudar
+    document.getElementById('themeToggle')?.addEventListener('click', function() {
+        setTimeout(function() {
+            window.location.reload();
+        }, 300);
+    });
 });
 </script>
 {% endblock %}

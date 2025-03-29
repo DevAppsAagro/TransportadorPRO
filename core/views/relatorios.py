@@ -247,6 +247,238 @@ def relatorio_veiculo(request):
     return render(request, 'core/relatorios/veiculo_form.html', {'caminhoes': caminhoes})
 
 @login_required
+def relatorio_veiculo_print(request):
+    """
+    Versão de impressão do relatório de veículo.
+    """
+    if request.method == 'GET':
+        caminhao_id = request.GET.get('caminhao_id')
+        data_inicio = request.GET.get('data_inicio')
+        data_fim = request.GET.get('data_fim')
+        
+        if caminhao_id and data_inicio and data_fim:
+            # Converte as datas para o formato correto
+            data_inicio = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+            data_fim = datetime.strptime(data_fim, '%Y-%m-%d').date()
+            
+            # Busca o caminhão e verifica se pertence ao usuário
+            caminhao = get_object_or_404(Caminhao, id=caminhao_id, usuario=request.user)
+            
+            # Busca o conjunto ativo do caminhão
+            conjunto = Conjunto.objects.filter(caminhao=caminhao, status='ATIVO').first()
+            
+            # Calcula o número de dias no período
+            dias_periodo = (data_fim - data_inicio).days + 1
+            
+            # Busca os fretes do caminhão no período
+            fretes = Frete.objects.filter(
+                caminhao=caminhao,
+                data_saida__gte=data_inicio,
+                data_saida__lte=data_fim
+            )
+            
+            # Calcula a quilometragem total no período
+            km_total = sum(frete.km_total for frete in fretes)
+            
+            # Calcula a receita total (valor total dos fretes)
+            receita_total = fretes.aggregate(
+                total=Coalesce(Sum('valor_total'), Decimal('0'))
+            )['total']
+            
+            # Calcula a comissão total do motorista
+            comissao_total = fretes.aggregate(
+                total=Coalesce(Sum('valor_comissao_motorista'), Decimal('0'))
+            )['total']
+            
+            # Busca os abastecimentos do caminhão no período
+            abastecimentos = Abastecimento.objects.filter(
+                caminhao=caminhao,
+                data__gte=data_inicio,
+                data__lte=data_fim
+            )
+            
+            # Calcula o total de diesel e o valor médio do litro
+            total_diesel = abastecimentos.aggregate(
+                total=Coalesce(Sum('litros'), Decimal('0'))
+            )['total']
+            
+            valor_medio_diesel = Decimal('0')
+            if total_diesel > 0:
+                valor_medio_diesel = abastecimentos.aggregate(
+                    total=Coalesce(Sum('total_valor'), Decimal('0'))
+                )['total'] / total_diesel
+            
+            # Calcula a média de km/l
+            media_km_l = Decimal('0')
+            if total_diesel > 0:
+                media_km_l = Decimal(km_total) / total_diesel
+            
+            # Busca as estimativas ativas
+            estimativa_pneus = None
+            estimativa_manutencao = None
+            estimativa_custo_fixo = None
+            
+            if conjunto:
+                # Estimativa de pneus
+                estimativa_pneus = EstimativaPneus.objects.filter(
+                    conjunto=conjunto
+                ).order_by('-data_estimativa').first()
+                
+                # Estimativa de manutenção
+                estimativa_manutencao = EstimativaManutencao.objects.filter(
+                    conjunto=conjunto
+                ).order_by('-data_estimativa').first()
+                
+                # Estimativa de custo fixo
+                estimativa_custo_fixo = EstimativaCustoFixo.objects.filter(
+                    conjunto=conjunto
+                ).order_by('-data_estimativa').first()
+            
+            # Calcula os custos fixos estimados
+            custos_fixos_estimados = {}
+            
+            # Depreciação do caminhão
+            depreciacao_anual_caminhao = caminhao.calcular_depreciacao_anual()
+            depreciacao_diaria_caminhao = Decimal(depreciacao_anual_caminhao) / Decimal('365')
+            custos_fixos_estimados['depreciacao_caminhao'] = depreciacao_diaria_caminhao * Decimal(dias_periodo)
+            
+            # Depreciação da carreta
+            depreciacao_anual_carreta = Decimal('0')
+            if conjunto and conjunto.carreta1:
+                carreta = conjunto.carreta1
+                if carreta.vida_util > 0:
+                    valor_depreciavel = carreta.valor_compra - carreta.valor_residual
+                    depreciacao_anual_carreta = Decimal(valor_depreciavel / carreta.vida_util)
+            
+            depreciacao_diaria_carreta = Decimal(depreciacao_anual_carreta) / Decimal('365')
+            custos_fixos_estimados['depreciacao_carreta'] = depreciacao_diaria_carreta * Decimal(dias_periodo)
+            
+            # Seguro e outros custos fixos
+            custo_fixo_diario = Decimal('0')
+            if estimativa_custo_fixo:
+                custo_fixo_diario = estimativa_custo_fixo.custo_total_dia
+            
+            custos_fixos_estimados['seguro'] = custo_fixo_diario * Decimal(dias_periodo)
+            
+            # Manutenção e reparos planejados
+            custo_manutencao_km = Decimal('0')
+            if estimativa_manutencao:
+                custo_manutencao_km = estimativa_manutencao.custo_total_km
+            
+            custos_fixos_estimados['manutencao'] = custo_manutencao_km * Decimal(km_total)
+            
+            # Pneus planejados
+            custo_pneus_km = Decimal('0')
+            if estimativa_pneus:
+                custo_pneus_km = estimativa_pneus.custo_total_km
+            
+            custos_fixos_estimados['pneus'] = custo_pneus_km * Decimal(km_total)
+            
+            # Busca as despesas administrativas no período
+            despesas_administrativas = Despesa.objects.filter(
+                data__gte=data_inicio,
+                data__lte=data_fim,
+                categoria__alocacao='ADMINISTRATIVO'
+            )
+            
+            total_despesas_admin = despesas_administrativas.aggregate(
+                total=Coalesce(Sum('valor'), Decimal('0'))
+            )['total']
+            
+            # Contagem de caminhões ativos para rateio
+            total_caminhoes_ativos = Caminhao.objects.filter(status='ATIVO').count()
+            if total_caminhoes_ativos > 0:
+                custos_fixos_estimados['administrativo'] = total_despesas_admin / Decimal(total_caminhoes_ativos)
+            else:
+                custos_fixos_estimados['administrativo'] = Decimal('0')
+            
+            # Total de custos fixos estimados
+            total_custos_fixos_estimados = Decimal(sum(custos_fixos_estimados.values()))
+            
+            # Busca as despesas variáveis realizadas no período
+            despesas_variaveis = Despesa.objects.filter(
+                data__gte=data_inicio,
+                data__lte=data_fim,
+                categoria__tipo='CUSTO_VARIAVEL',
+                caminhao=caminhao
+            )
+            
+            # Agrupa as despesas variáveis por categoria e subcategoria
+            despesas_por_categoria = {}
+            for despesa in despesas_variaveis:
+                categoria_nome = despesa.categoria.nome
+                subcategoria_nome = despesa.subcategoria.nome
+                
+                if categoria_nome not in despesas_por_categoria:
+                    despesas_por_categoria[categoria_nome] = {}
+                
+                if subcategoria_nome not in despesas_por_categoria[categoria_nome]:
+                    despesas_por_categoria[categoria_nome][subcategoria_nome] = Decimal('0')
+                
+                despesas_por_categoria[categoria_nome][subcategoria_nome] += despesa.valor
+            
+            # Total de custos variáveis realizados
+            total_custos_variaveis = despesas_variaveis.aggregate(
+                total=Coalesce(Sum('valor'), Decimal('0'))
+            )['total']
+            
+            # Calcula os totais e métricas finais
+            total_custos = total_custos_fixos_estimados + total_custos_variaveis
+            
+            # Lucro bruto (receita - custos)
+            lucro_bruto = receita_total - total_custos
+            
+            # Margem de lucro (lucro / receita)
+            margem_lucro = Decimal('0')
+            if receita_total > 0:
+                margem_lucro = (lucro_bruto / receita_total) * 100
+            
+            # Custo por km
+            custo_por_km = Decimal('0')
+            if km_total > 0:
+                custo_por_km = total_custos / Decimal(km_total)
+            
+            # Receita por km
+            receita_por_km = Decimal('0')
+            if km_total > 0:
+                receita_por_km = receita_total / Decimal(km_total)
+            
+            # Lucro por km
+            lucro_por_km = Decimal('0')
+            if km_total > 0:
+                lucro_por_km = lucro_bruto / Decimal(km_total)
+            
+            # Prepara o contexto para o template
+            context = {
+                'caminhao': caminhao,
+                'data_inicio': data_inicio,
+                'data_fim': data_fim,
+                'dias_periodo': dias_periodo,
+                'fretes': fretes,
+                'km_total': km_total,
+                'receita_total': receita_total,
+                'comissao_total': comissao_total,
+                'total_diesel': total_diesel,
+                'valor_medio_diesel': valor_medio_diesel,
+                'media_km_l': media_km_l,
+                'custos_fixos_estimados': custos_fixos_estimados,
+                'total_custos_fixos_estimados': total_custos_fixos_estimados,
+                'despesas_por_categoria': despesas_por_categoria,
+                'total_custos_variaveis': total_custos_variaveis,
+                'total_custos': total_custos,
+                'lucro_bruto': lucro_bruto,
+                'margem_lucro': margem_lucro,
+                'custo_por_km': custo_por_km,
+                'receita_por_km': receita_por_km,
+                'lucro_por_km': lucro_por_km,
+                'relatorio_gerado': True
+            }
+            
+            return render(request, 'core/relatorios/veiculo_resultado_print.html', context)
+    
+    return render(request, 'core/relatorios/veiculo_resultado_print.html', {'relatorio_gerado': False})
+
+@login_required
 def relatorio_frete(request, pk=None):
     if pk:
         # Buscar o frete específico, garantindo que pertença ao usuário logado

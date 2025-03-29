@@ -17,10 +17,20 @@ logger = logging.getLogger(__name__)
 
 @login_required
 def fretes(request):
+    # Verificar se há um filtro de status na URL
+    status_filter = request.GET.get('status', None)
+    
     # Filtrar fretes pelo usuário logado através do caminhão e pré-carregar relações
-    fretes_list = Frete.objects.filter(caminhao__usuario=request.user).select_related(
+    fretes_query = Frete.objects.filter(caminhao__usuario=request.user).select_related(
         'caminhao', 'motorista', 'motorista_user', 'cliente', 'carga'
-    ).order_by('-data_saida')
+    )
+    
+    # Aplicar filtro de status se existir
+    if status_filter:
+        fretes_query = fretes_query.filter(status=status_filter)
+    
+    # Ordenar por data de saída (mais recentes primeiro)
+    fretes_list = fretes_query.order_by('-data_saida')
     
     # Calculate metrics using more efficient methods
     from django.db.models import Sum, Count, Q, DecimalField, Case, When, Value
@@ -47,6 +57,14 @@ def fretes(request):
         )['total']
     }
     
+    # Adicionar contadores por status para os novos cards
+    status_counts = {
+        'contador_pendente': Frete.objects.filter(caminhao__usuario=request.user, status='PENDENTE').count(),
+        'contador_vence_hoje': Frete.objects.filter(caminhao__usuario=request.user, status='VENCE_HOJE').count(),
+        'contador_vencido': Frete.objects.filter(caminhao__usuario=request.user, status='VENCIDO').count(),
+        'contador_pago': Frete.objects.filter(caminhao__usuario=request.user, status='PAGO').count(),
+    }
+    
     context = {
         'fretes': fretes_list,
         'fretes_concluidos': metrics['fretes_concluidos'],
@@ -55,7 +73,19 @@ def fretes(request):
         'valor_recebido': metrics['valor_recebido'],
         'valor_a_receber': metrics['valor_a_receber'],
         'valor_vencido': metrics['valor_vencido'],
-        'valor_vence_hoje': metrics['valor_vence_hoje']
+        'valor_vence_hoje': metrics['valor_vence_hoje'],
+        # Adicionar totais para os novos cards
+        'total_pendente': metrics['valor_a_receber'],
+        'total_vence_hoje': metrics['valor_vence_hoje'],
+        'total_vencido': metrics['valor_vencido'],
+        'total_pago': metrics['valor_recebido'],
+        # Adicionar contadores para os novos cards
+        'contador_pendente': status_counts['contador_pendente'],
+        'contador_vence_hoje': status_counts['contador_vence_hoje'],
+        'contador_vencido': status_counts['contador_vencido'],
+        'contador_pago': status_counts['contador_pago'],
+        # Adicionar o status de filtro atual para destacar o botão correto
+        'status_filter': status_filter
     }
     
     return render(request, 'core/fretes/fretes.html', context)
@@ -235,6 +265,7 @@ def frete_editar(request, id):
             logger.info(f'Dados do POST: {request.POST}')
             
             # Buscar objetos relacionados
+            logger.info('\nBUSCANDO OBJETOS RELACIONADOS:')
             caminhao = Caminhao.objects.get(id=request.POST.get('caminhao'))
             
             # Se o motorista_user foi selecionado, usá-lo; caso contrário, usar o motorista (contato)
@@ -376,3 +407,27 @@ def frete_receber(request, id):
             logger.error(f'Erro ao registrar recebimento: {str(e)}')
             messages.error(request, f'Erro ao registrar recebimento: {str(e)}')
     return redirect('core:frete_detalhes', id=id)
+
+@login_required
+def frete_print(request, id):
+    """
+    Versão de impressão dos detalhes do frete.
+    """
+    # Garantir que o usuário só possa ver seus próprios fretes
+    frete = get_object_or_404(Frete, pk=id, caminhao__usuario=request.user)
+    
+    # Buscar despesas relacionadas a este frete
+    from ..models.despesa import Despesa
+    despesas = Despesa.objects.filter(frete=frete).order_by('data_vencimento')
+    
+    # Busca a empresa do usuário
+    from ..models.empresa import Empresa
+    empresa = Empresa.objects.filter(usuario=request.user).first()
+    
+    context = {
+        'frete': frete,
+        'despesas': despesas,
+        'empresa': empresa,
+    }
+    
+    return render(request, 'core/fretes/frete_print.html', context)
