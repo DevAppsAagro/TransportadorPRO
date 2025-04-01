@@ -100,6 +100,22 @@
         display: none;
     }
     
+    /* Estilos para textos informativos */
+    .info-text {
+        font-size: 0.8rem;
+        color: #666;
+        background-color: #f9f9f9;
+        padding: 0.2rem 0.5rem;
+        border-left: 3px solid #4e83fd;
+    }
+    
+    [data-bs-theme="dark"] .info-text, 
+    body.dark-mode .info-text {
+        color: #a0aec0;
+        background-color: #2d3748;
+        border-left-color: #4e83fd;
+    }
+    
     /* Estilos para modo claro */
     :root:not([data-bs-theme="dark"]) .report-header, 
     body:not(.dark-mode) .report-header {
@@ -180,19 +196,19 @@
     [data-bs-theme="dark"] .metric-card, 
     body.dark-mode .metric-card {
         background-color: #2d3748;
-        border-left-color: #4e83fd;
+        border-left: 4px solid #4e83fd;
     }
     [data-bs-theme="dark"] .metric-card.positive, 
     body.dark-mode .metric-card.positive {
-        border-left-color: #38b2ac;
+        border-left: 4px solid #38b2ac;
     }
     [data-bs-theme="dark"] .metric-card.negative, 
     body.dark-mode .metric-card.negative {
-        border-left-color: #f56565;
+        border-left: 4px solid #f56565;
     }
     [data-bs-theme="dark"] .metric-card.warning, 
     body.dark-mode .metric-card.warning {
-        border-left-color: #ecc94b;
+        border-left: 4px solid #ecc94b;
     }
     [data-bs-theme="dark"] .metric-card .metric-title, 
     body.dark-mode .metric-card .metric-title {
@@ -451,6 +467,17 @@
                             </tr>
                         </thead>
                         <tbody>
+                            <tr class="category">
+                                <td>Custos Fixos</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="info-text">
+                                    <small><i>Custos estimados: calculados com base nas estimativas de depreciação, licenciamento e seguros.</i></small>
+                                </td>
+                            </tr>
                             {% for custo in custos_fixos %}
                             <tr>
                                 <td class="{% if custo.is_category %}category{% else %}subcategory{% endif %}">{{ custo.nome }}</td>
@@ -484,6 +511,17 @@
                             </tr>
                         </thead>
                         <tbody>
+                            <tr class="category">
+                                <td>Custos Variáveis</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="info-text">
+                                    <small><i>Custos reais: calculados com base nas despesas registradas nas categorias e subcategorias.</i></small>
+                                </td>
+                            </tr>
                             {% for custo in custos_variaveis %}
                             <tr>
                                 <td class="{% if custo.is_category %}category{% else %}subcategory{% endif %}">{{ custo.nome }}</td>
@@ -516,29 +554,35 @@
                                 <th>Destino</th>
                                 <th>Km</th>
                                 <th>Valor (R$)</th>
+                                <th>Comissão (R$)</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for frete in fretes %}
                             <tr>
-                                <td>{{ frete.data_inicio|date:"d/m/Y" }}</td>
+                                <td>{{ frete.data_saida|date:"d/m/Y" }}</td>
                                 <td>{{ frete.cliente.nome_completo }}</td>
-                                <td>{{ frete.cidade_origem }}/{{ frete.estado_origem }}</td>
-                                <td>{{ frete.cidade_destino }}/{{ frete.estado_destino }}</td>
+                                <td>{{ frete.origem }}</td>
+                                <td>{{ frete.destino }}</td>
                                 <td class="valor-monetario">{{ frete.km_total|intcomma }}</td>
                                 <td class="valor-monetario">{{ frete.valor_total|floatformat:2|intcomma }}</td>
+                                <td class="valor-monetario">{{ frete.valor_comissao_motorista|floatformat:2|intcomma }}</td>
                                 <td>
-                                    {% if frete.status == 'concluido' %}
-                                    <span class="status-concluido">Concluído</span>
+                                    {% if frete.status == 'PAGO' %}
+                                    <span class="status-concluido">Pago</span>
+                                    {% elif frete.status == 'VENCIDO' %}
+                                    <span class="status-atrasado">Vencido</span>
+                                    {% elif frete.status == 'VENCE_HOJE' %}
+                                    <span class="status-alerta">Vence Hoje</span>
                                     {% else %}
-                                    <span class="status-andamento">Em andamento</span>
+                                    <span class="status-andamento">Pendente</span>
                                     {% endif %}
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="7" class="text-center">Nenhum frete registrado para este veículo.</td>
+                                <td colspan="8" class="text-center">Nenhum frete registrado para este veículo.</td>
                             </tr>
                             {% endfor %}
                             {% if fretes %}
@@ -546,6 +590,7 @@
                                 <td colspan="4"><strong>Total</strong></td>
                                 <td class="valor-monetario"><strong>{{ km_total|intcomma }}</strong></td>
                                 <td class="valor-monetario"><strong>{{ receita_total|floatformat:2|intcomma }}</strong></td>
+                                <td class="valor-monetario"><strong>{{ comissao_total|floatformat:2|intcomma }}</strong></td>
                                 <td></td>
                             </tr>
                             {% endif %}

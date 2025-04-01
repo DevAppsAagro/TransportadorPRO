@@ -1,554 +1,747 @@
-{% extends "core/base_print.html" %}
-{% load static %}
 {% load humanize %}
+{% load static %}
 
-{% block title %}Relatório de Veículo - {{ caminhao.placa }}{% endblock %}
-
-{% block head_extras %}
-<style>
-    /* Estilos específicos para impressão */
-    @page {
-        size: A4;
-        margin: 1cm;
-        margin-bottom: 1.5cm; /* Margem inferior reduzida */
-    }
-    
-    body {
-        font-family: Arial, sans-serif;
-        font-size: 12px;
-        line-height: 1.3;
-        position: relative;
-        min-height: 100vh;
-        padding-bottom: 30px; /* Espaço reduzido para o rodapé */
-    }
-    
-    .print-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        padding-bottom: 15px;
-        border-bottom: 1px solid #ddd;
-        margin-bottom: 20px;
-    }
-    
-    .company-info {
-        width: 40%;
-    }
-    
-    .report-info {
-        width: 55%;
-        text-align: right;
-    }
-    
-    .logo-area {
-        max-width: 200px;
-        max-height: 60px;
-        margin-bottom: 8px;
-    }
-    
-    .logo-area img {
-        max-width: 100%;
-        max-height: 100%;
-    }
-    
-    .company-name {
-        font-size: 16px;
-        font-weight: bold;
-        margin-bottom: 5px;
-    }
-    
-    .company-razao {
-        font-size: 12px;
-        margin-bottom: 5px;
-    }
-    
-    .company-address {
-        font-size: 11px;
-        margin-bottom: 3px;
-    }
-    
-    .company-contact {
-        font-size: 11px;
-        margin-bottom: 3px;
-    }
-    
-    .report-title {
-        font-size: 18px;
-        font-weight: bold;
-        margin-bottom: 8px;
-    }
-    
-    .vehicle-info {
-        font-size: 14px;
-        margin-bottom: 5px;
-    }
-    
-    .summary-cards {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 15px;
-    }
-    
-    .metric-card {
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        padding: 10px;
-        width: calc(25% - 10px);
-        box-sizing: border-box;
-        margin-bottom: 10px;
-    }
-    
-    .metric-card.positive {
-        border-left: 4px solid #1cc88a;
-    }
-    
-    .metric-card.negative {
-        border-left: 4px solid #e74a3b;
-    }
-    
-    .metric-card.warning {
-        border-left: 4px solid #f6c23e;
-    }
-    
-    .metric-card .metric-title {
-        font-size: 12px;
-        color: #555;
-        margin-bottom: 5px;
-    }
-    
-    .metric-card .metric-value {
-        font-size: 16px;
-        font-weight: bold;
-    }
-    
-    .card-title {
-        font-size: 12px;
-        color: #555;
-        margin-bottom: 5px;
-    }
-    
-    .card-value {
-        font-size: 16px;
-        font-weight: bold;
-    }
-    
-    .report-section {
-        margin-bottom: 20px;
-        page-break-inside: avoid;
-    }
-    
-    .report-section h5 {
-        border-bottom: 1px solid #ddd;
-        padding-bottom: 10px;
-        margin-bottom: 15px;
-        font-weight: bold;
-    }
-    
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 30px; /* Espaço reduzido para o rodapé */
-        font-size: 10px;
-    }
-    
-    th, td {
-        border: 1px solid #ddd;
-        padding: 5px;
-        text-align: left;
-    }
-    
-    th {
-        background-color: #f2f2f2;
-        font-weight: bold;
-    }
-    
-    tr:nth-child(even) {
-        background-color: #f9f9f9;
-    }
-    
-    .table-costs .category {
-        font-weight: bold;
-    }
-    
-    .table-costs .subcategory {
-        padding-left: 20px;
-    }
-    
-    .table-costs .total-row {
-        font-weight: bold;
-        background-color: #f2f2f2;
-    }
-    
-    .valor-monetario {
-        white-space: nowrap;
-        text-align: right;
-    }
-    
-    .valor-peso {
-        white-space: nowrap;
-        text-align: right;
-    }
-    
-    /* Sobrescrevendo os estilos do rodapé no template base */
-    .print-footer {
-        position: fixed !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        text-align: center !important;
-        font-size: 10px !important;
-        border-top: 1px solid #ddd !important;
-        padding-top: 5px !important;
-        padding-bottom: 5px !important;
-        line-height: 1.2 !important;
-        background-color: white !important;
-        height: 20px !important; /* Altura reduzida para o rodapé */
-        z-index: 1000 !important; /* Garantir que o rodapé fique acima de outros elementos */
-    }
-    
-    .text-success {
-        color: #1cc88a !important;
-    }
-    
-    .text-danger {
-        color: #e74a3b !important;
-    }
-    
-    .print-button {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        z-index: 9999;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        padding: 8px 15px;
-        font-size: 14px;
-        cursor: pointer;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    
-    .print-button:hover {
-        background-color: #0069d9;
-    }
-    
-    @media print {
-        .print-button {
-            display: none;
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Veículo - {{ caminhao.placa }}</title>
+    <style>
+        /* Estilos específicos para impressão */
+        @page {
+            size: A4;
+            margin: 1cm;
+            margin-bottom: 1.5cm; /* Margem inferior reduzida */
         }
         
         body {
-            padding-bottom: 0;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.3;
+            position: relative;
+            min-height: 100vh;
+            padding-bottom: 30px; /* Espaço reduzido para o rodapé */
         }
         
+        .print-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .company-info {
+            width: 40%;
+        }
+        
+        .report-info {
+            width: 55%;
+            text-align: right;
+        }
+        
+        .logo-area {
+            max-width: 200px;
+            max-height: 60px;
+            margin-bottom: 8px;
+        }
+        
+        .logo-area img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        .company-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .company-razao {
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .company-address {
+            font-size: 11px;
+            margin-bottom: 3px;
+        }
+        
+        .company-contact {
+            font-size: 11px;
+            margin-bottom: 3px;
+        }
+        
+        .report-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .vehicle-info {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .summary-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .metric-card {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            width: calc(25% - 10px);
+            box-sizing: border-box;
+        }
+        
+        .metric-title {
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        
+        .metric-value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .positive .metric-value {
+            color: #28a745;
+        }
+        
+        .negative .metric-value {
+            color: #dc3545;
+        }
+        
+        .report-section {
+            margin-bottom: 20px;
+        }
+        
+        .report-section h5 {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px; /* Espaço reduzido para o rodapé */
+            font-size: 10px;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 5px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .category {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+        
+        .subcategory {
+            background-color: #f8f9fa;
+        }
+        
+        .total-row {
+            font-weight: bold;
+            background-color: #f2f2f2;
+        }
+        
+        .valor-monetario {
+            white-space: nowrap;
+            text-align: right;
+        }
+        
+        .valor-peso {
+            white-space: nowrap;
+            text-align: right;
+        }
+        
+        /* Sobrescrevendo os estilos do rodapé no template base */
         .print-footer {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            text-align: center !important;
+            font-size: 10px !important;
+            border-top: 1px solid #ddd !important;
+            padding-top: 5px !important;
+            padding-bottom: 5px !important;
+            line-height: 1.2 !important;
+            background-color: white !important;
+            height: 20px !important; /* Altura reduzida para o rodapé */
+            z-index: 1000 !important; /* Garantir que o rodapé fique acima de outros elementos */
+        }
+        
+        .status-concluido {
+            background-color: #28a7454d;
+            padding: 3px 6px;
+            border-radius: 3px;
+        }
+        
+        .status-andamento {
+            background-color: #ffc10754;
+            padding: 3px 6px;
+            border-radius: 3px;
+        }
+        
+        .status-atrasado {
+            background-color: #dc35454d;
+            padding: 3px 6px;
+            border-radius: 3px;
+        }
+        
+        .status-alerta {
+            background-color: #fd7e144d;
+            padding: 3px 6px;
+            border-radius: 3px;
+        }
+        
+        .print-button {
             position: fixed;
-            bottom: 0;
+            top: 10px;
+            right: 10px;
+            z-index: 9999;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         
-        .page-number:after {
-            content: counter(page);
-        }
-    }
-    
-    @media screen {
-        [data-bs-theme="dark"] body, 
-        body.dark-mode {
-            background-color: #1a202c;
-            color: #e2e8f0;
+        .print-button:hover {
+            background-color: #0069d9;
         }
         
-        [data-bs-theme="dark"] .metric-card, 
-        body.dark-mode .metric-card {
-            background-color: #2d3748;
-            border-color: #4a5568;
+        @media print {
+            .print-button {
+                display: none;
+            }
+            
+            body {
+                padding-bottom: 0;
+            }
+            
+            .print-footer {
+                position: fixed !important;
+                bottom: 0 !important;
+            }
         }
         
-        [data-bs-theme="dark"] .metric-card.positive, 
-        body.dark-mode .metric-card.positive {
-            border-left-color: #38b2ac;
+        /* Estilos para modo escuro */
+        @media screen {
+            [data-bs-theme="dark"] body, 
+            body.dark-mode {
+                background-color: #1a202c;
+                color: #e2e8f0;
+            }
+            
+            [data-bs-theme="dark"] .report-header, 
+            body.dark-mode .report-header {
+                background-color: #2d3748;
+                border-color: #4a5568;
+            }
+            
+            [data-bs-theme="dark"] .report-header h2, 
+            body.dark-mode .report-header h2 {
+                color: #e2e8f0;
+            }
+            
+            [data-bs-theme="dark"] .report-header .company-info, 
+            body.dark-mode .report-header .company-info {
+                color: #a0aec0;
+            }
+            
+            [data-bs-theme="dark"] .report-header .report-title, 
+            body.dark-mode .report-header .report-title {
+                color: #4e83fd;
+            }
+            
+            [data-bs-theme="dark"] .report-section, 
+            body.dark-mode .report-section {
+                background-color: #2d3748;
+                border-color: #4a5568;
+            }
+            
+            [data-bs-theme="dark"] .report-section h5, 
+            body.dark-mode .report-section h5 {
+                color: #e2e8f0;
+                border-bottom-color: #4a5568;
+            }
+            
+            [data-bs-theme="dark"] .metric-card, 
+            body.dark-mode .metric-card {
+                background-color: #2d3748;
+                border-color: #4a5568;
+            }
+            
+            [data-bs-theme="dark"] .metric-title, 
+            body.dark-mode .metric-title {
+                color: #a0aec0;
+            }
+            
+            [data-bs-theme="dark"] .metric-value, 
+            body.dark-mode .metric-value {
+                color: #e2e8f0;
+            }
+            
+            [data-bs-theme="dark"] .positive .metric-value, 
+            body.dark-mode .positive .metric-value {
+                color: #38b2ac;
+            }
+            
+            [data-bs-theme="dark"] .negative .metric-value, 
+            body.dark-mode .negative .metric-value {
+                color: #f56565;
+            }
+            
+            [data-bs-theme="dark"] table, 
+            body.dark-mode table {
+                color: #e2e8f0;
+                border-color: #4a5568;
+            }
+            
+            [data-bs-theme="dark"] th, 
+            body.dark-mode th {
+                background-color: #2c5282;
+                color: #e2e8f0;
+                border-color: #4a5568;
+            }
+            
+            [data-bs-theme="dark"] td, 
+            body.dark-mode td {
+                border-color: #4a5568;
+            }
+            
+            [data-bs-theme="dark"] tr:nth-child(even), 
+            body.dark-mode tr:nth-child(even) {
+                background-color: rgba(74, 85, 104, 0.2);
+            }
+            
+            [data-bs-theme="dark"] .category, 
+            body.dark-mode .category {
+                background-color: #2c5282;
+            }
+            
+            [data-bs-theme="dark"] .subcategory, 
+            body.dark-mode .subcategory {
+                background-color: rgba(74, 85, 104, 0.3);
+            }
+            
+            [data-bs-theme="dark"] .total-row, 
+            body.dark-mode .total-row {
+                background-color: #2c5282;
+            }
+            
+            [data-bs-theme="dark"] .status-concluido, 
+            body.dark-mode .status-concluido {
+                background-color: #38b2ac;
+                color: #1a202c;
+            }
+            
+            [data-bs-theme="dark"] .status-andamento, 
+            body.dark-mode .status-andamento {
+                background-color: #ecc94b;
+                color: #1a202c;
+            }
+            
+            [data-bs-theme="dark"] .status-atrasado, 
+            body.dark-mode .status-atrasado {
+                background-color: #f56565;
+                color: #1a202c;
+            }
+            
+            [data-bs-theme="dark"] .status-alerta, 
+            body.dark-mode .status-alerta {
+                background-color: #ed8936;
+                color: #1a202c;
+            }
+            
+            [data-bs-theme="dark"] .print-footer, 
+            body.dark-mode .print-footer {
+                color: #a0aec0;
+                border-top-color: #4a5568;
+                background-color: #1a202c !important;
+            }
         }
         
-        [data-bs-theme="dark"] .metric-card.negative, 
-        body.dark-mode .metric-card.negative {
-            border-left-color: #f56565;
+        /* Estilos para textos informativos */
+        .info-text {
+            font-size: 0.8rem;
+            color: #666;
+            background-color: #f9f9f9;
+            padding: 0.2rem 0.5rem;
+            border-left: 3px solid #4e83fd;
         }
         
-        [data-bs-theme="dark"] .metric-card.warning, 
-        body.dark-mode .metric-card.warning {
-            border-left-color: #ecc94b;
-        }
-        
-        [data-bs-theme="dark"] .metric-card .metric-title, 
-        body.dark-mode .metric-card .metric-title {
+        [data-bs-theme="dark"] .info-text, 
+        body.dark-mode .info-text {
             color: #a0aec0;
+            background-color: #2d3748;
+            border-left-color: #4e83fd;
         }
-        
-        [data-bs-theme="dark"] .metric-card .metric-value, 
-        body.dark-mode .metric-card .metric-value {
-            color: #e2e8f0;
-        }
-        
-        [data-bs-theme="dark"] .metric-card.positive .metric-value, 
-        body.dark-mode .metric-card.positive .metric-value {
-            color: #68d391;
-        }
-        
-        [data-bs-theme="dark"] .metric-card.negative .metric-value, 
-        body.dark-mode .metric-card.negative .metric-value {
-            color: #fc8181;
-        }
-        
-        [data-bs-theme="dark"] .metric-card.warning .metric-value, 
-        body.dark-mode .metric-card.warning .metric-value {
-            color: #faf089;
-        }
-        
-        [data-bs-theme="dark"] .text-success, 
-        body.dark-mode .text-success {
-            color: #38b2ac !important;
-        }
-        
-        [data-bs-theme="dark"] .text-danger, 
-        body.dark-mode .text-danger {
-            color: #f56565 !important;
-        }
-        
-        [data-bs-theme="dark"] .report-section h5, 
-        body.dark-mode .report-section h5 {
-            color: #e2e8f0;
-            border-bottom-color: #4a5568;
-        }
-        
-        [data-bs-theme="dark"] .print-button, 
-        body.dark-mode .print-button {
-            background-color: #4e83fd;
-        }
-        
-        [data-bs-theme="dark"] .print-button:hover, 
-        body.dark-mode .print-button:hover {
-            background-color: #3a70e0;
-        }
-    }
-</style>
-{% endblock %}
+    </style>
+</head>
+<body>
+    <!-- Botão de impressão -->
+    <button class="print-button" onclick="window.print()">Imprimir Relatório</button>
 
-{% block content %}
-<!-- Botão de impressão -->
-<button class="print-button" onclick="window.print()">Imprimir Relatório</button>
-
-<!-- Conteúdo do relatório -->
-<div class="print-content">
-    <!-- Informações do Veículo -->
-    <div class="report-section">
-        <h5>Informações do Veículo</h5>
-        <div class="row">
-            <div class="col-md-6">
-                <p><strong>Placa:</strong> {{ caminhao.placa }}</p>
-                <p><strong>Marca/Modelo:</strong> {{ caminhao.marca }} {{ caminhao.modelo }}</p>
-                <p><strong>Ano:</strong> {{ caminhao.ano }}</p>
-                <p><strong>Tipo:</strong> {{ caminhao.get_tipo_display }}</p>
+    <div class="print-header">
+        <div class="company-info">
+            <div class="logo-area">
+                {% if empresa.logo %}
+                <img src="{{ empresa.logo }}" alt="Logo da {{ empresa.nome_fantasia|default:empresa.razao_social }}">
+                {% else %}
+                <img src="{% static 'img/logo.png' %}" alt="Logo da Empresa">
+                {% endif %}
             </div>
-            <div class="col-md-6">
-                <p><strong>Proprietário:</strong> {{ caminhao.proprietario }}</p>
-                <p><strong>Status:</strong> {{ caminhao.get_status_display }}</p>
-                <p><strong>Km Atual:</strong> {{ caminhao.km_atual|intcomma }}</p>
-                <p><strong>Capacidade:</strong> {{ caminhao.capacidade_kg|intcomma }} kg</p>
-            </div>
+            <div class="company-name">{% if empresa %}{{ empresa.nome_fantasia|default:empresa.razao_social }}{% else %}TransportadorPRO{% endif %}</div>
+            {% if empresa %}
+            <div class="company-razao">{{ empresa.razao_social }}</div>
+            <div class="company-address">{{ empresa.logradouro }}, {{ empresa.numero }}{% if empresa.complemento %}, {{ empresa.complemento }}{% endif %}</div>
+            <div class="company-address">{{ empresa.bairro }}, {{ empresa.cidade }}/{{ empresa.estado }} - CEP: {{ empresa.cep }}</div>
+            <div class="company-contact">Tel: {{ empresa.telefone }}{% if empresa.celular %} / {{ empresa.celular }}{% endif %}</div>
+            <div class="company-contact">E-mail: {{ empresa.email }}</div>
+            <div class="company-contact">CNPJ: {{ empresa.cnpj }}</div>
+            {% if empresa.inscricao_estadual %}
+            <div class="company-contact">Insc. Estadual: {{ empresa.inscricao_estadual }}</div>
+            {% endif %}
+            {% else %}
+            <div class="company-address">Seu Endereço</div>
+            <div class="company-contact">Tel: (00) 0000-0000</div>
+            <div class="company-contact">E-mail: contato@transportadorpro.com</div>
+            {% endif %}
+        </div>
+        <div class="report-info">
+            <div class="report-title">Relatório de Veículo</div>
+            <div class="vehicle-info">{{ caminhao.marca }} {{ caminhao.modelo }} - {{ caminhao.placa }}</div>
+            <div>Período: {{ data_inicio|date:"d/m/Y" }} a {{ data_fim|date:"d/m/Y" }}</div>
+            <div>Dias no período: {{ dias_periodo }}</div>
+            <div>Proprietário: {{ caminhao.proprietario }}</div>
+            <div>Status: {{ caminhao.get_status_display }}</div>
+            <div>Km Atual: {{ caminhao.km_atual|intcomma }}</div>
+            <div>Data de Emissão: {% now "d/m/Y" %}</div>
         </div>
     </div>
 
-    <!-- Métricas Financeiras -->
-    <div class="report-section">
-        <h5>Métricas Financeiras</h5>
-        <div class="summary-cards">
-            <div class="metric-card">
-                <div class="metric-title">Receita Total</div>
-                <div class="metric-value">R$ {{ metricas.receita_total|floatformat:2|intcomma }}</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-title">Custos Totais</div>
-                <div class="metric-value">R$ {{ metricas.custos_totais|floatformat:2|intcomma }}</div>
-            </div>
-            <div class="metric-card {% if metricas.lucro_total >= 0 %}positive{% else %}negative{% endif %}">
-                <div class="metric-title">Lucro Total</div>
-                <div class="metric-value">R$ {{ metricas.lucro_total|floatformat:2|intcomma }}</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-title">Margem de Lucro</div>
-                <div class="metric-value">{{ metricas.margem_lucro|floatformat:2 }}%</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-title">Receita por Km</div>
-                <div class="metric-value">R$ {{ metricas.receita_por_km|floatformat:2 }}</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-title">Custo por Km</div>
-                <div class="metric-value">R$ {{ metricas.custo_por_km|floatformat:2 }}</div>
-            </div>
-            <div class="metric-card {% if metricas.lucro_por_km >= 0 %}positive{% else %}negative{% endif %}">
-                <div class="metric-title">Lucro por Km</div>
-                <div class="metric-value">R$ {{ metricas.lucro_por_km|floatformat:2 }}</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-title">Km Percorridos</div>
-                <div class="metric-value">{{ metricas.km_percorridos|intcomma }}</div>
+    <div class="print-content">
+        <!-- Métricas Financeiras -->
+        <div class="report-section">
+            <h5>Métricas Financeiras</h5>
+            <div class="summary-cards">
+                <div class="metric-card">
+                    <div class="metric-title">Receita Bruta</div>
+                    <div class="metric-value">R$ {{ metricas.receita_total|floatformat:2|intcomma }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Comissão do Motorista</div>
+                    <div class="metric-value">R$ {{ comissao_total|floatformat:2|intcomma }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Custos Totais</div>
+                    <div class="metric-value">R$ {{ metricas.custos_totais|floatformat:2|intcomma }}</div>
+                </div>
+                <div class="metric-card {% if metricas.lucro_total >= 0 %}positive{% else %}negative{% endif %}">
+                    <div class="metric-title">Lucro Operacional</div>
+                    <div class="metric-value">R$ {{ lucro_operacional|floatformat:2|intcomma }}</div>
+                </div>
+                <div class="metric-card {% if metricas.lucro_total >= 0 %}positive{% else %}negative{% endif %}">
+                    <div class="metric-title">Lucro Líquido</div>
+                    <div class="metric-value">R$ {{ lucro_liquido|floatformat:2|intcomma }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Margem de Lucro</div>
+                    <div class="metric-value">{{ metricas.margem_lucro|floatformat:2 }}%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Receita por Km</div>
+                    <div class="metric-value">R$ {{ metricas.receita_por_km|floatformat:2 }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Custo Fixo por Km</div>
+                    <div class="metric-value">R$ {{ custo_fixo_km|floatformat:2 }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Custo Variável por Km</div>
+                    <div class="metric-value">R$ {{ custo_variavel_km|floatformat:2 }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Custo Total por Km</div>
+                    <div class="metric-value">R$ {{ metricas.custo_por_km|floatformat:2 }}</div>
+                </div>
+                <div class="metric-card {% if metricas.lucro_por_km >= 0 %}positive{% else %}negative{% endif %}">
+                    <div class="metric-title">Lucro por Km</div>
+                    <div class="metric-value">R$ {{ metricas.lucro_por_km|floatformat:2 }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Km Percorridos</div>
+                    <div class="metric-value">{{ metricas.km_percorridos|intcomma }}</div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Custos Fixos Estimados -->
-    <div class="report-section">
-        <h5>Custos Fixos Estimados</h5>
-        <table class="table table-costs">
-            <thead>
-                <tr>
-                    <th>Categoria</th>
-                    <th>Valor Mensal (R$)</th>
-                    <th>Valor por Km (R$)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for categoria, subcategorias in custos_fixos.items %}
-                    <tr class="category">
-                        <td>{{ categoria }}</td>
-                        <td class="valor-monetario">{{ subcategorias.total_mensal|floatformat:2|intcomma }}</td>
-                        <td class="valor-monetario">{{ subcategorias.total_por_km|floatformat:2 }}</td>
-                    </tr>
-                    {% for subcategoria, valores in subcategorias.items %}
-                        {% if subcategoria != 'total_mensal' and subcategoria != 'total_por_km' %}
-                        <tr class="subcategory">
-                            <td>{{ subcategoria }}</td>
-                            <td class="valor-monetario">{{ valores.mensal|floatformat:2|intcomma }}</td>
-                            <td class="valor-monetario">{{ valores.por_km|floatformat:2 }}</td>
+        <!-- Métricas Operacionais -->
+        <div class="report-section">
+            <h5>Métricas Operacionais</h5>
+            <div class="summary-cards">
+                <div class="metric-card">
+                    <div class="metric-title">Quilometragem Total</div>
+                    <div class="metric-value">{{ km_total|intcomma }} km</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Total de Diesel</div>
+                    <div class="metric-value">{{ total_diesel|floatformat:2|intcomma }} L</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Média de Consumo</div>
+                    <div class="metric-value">{{ media_consumo|floatformat:2 }} km/L</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Custo Médio do Diesel</div>
+                    <div class="metric-value">R$ {{ custo_medio_diesel|floatformat:2 }}/L</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custos Estimados -->
+        <div class="report-section">
+            <h5>Custos Estimados</h5>
+            <div class="table-responsive">
+                <table class="table table-costs">
+                    <thead>
+                        <tr>
+                            <th>Categoria</th>
+                            <th>Valor Mensal (R$)</th>
+                            <th>Valor por Km (R$)</th>
+                            <th>% do Total</th>
                         </tr>
-                        {% endif %}
+                    </thead>
+                    <tbody>
+                        <tr class="category">
+                            <td>Custos Fixos</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="info-text">
+                                <small><i>Custos estimados: calculados com base nas estimativas de depreciação, licenciamento e seguros.</i></small>
+                            </td>
+                        </tr>
+                        {% for custo in custos_fixos %}
+                        <tr class="subcategory">
+                            <td>{{ custo.nome }}</td>
+                            <td class="valor-monetario">{{ custo.valor_mensal|floatformat:2|intcomma }}</td>
+                            <td class="valor-monetario">{{ custo.valor_por_km|floatformat:2 }}</td>
+                            <td class="valor-monetario">{{ custo.percentual|floatformat:2 }}%</td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="total-row">
+                            <td>Total Custos Fixos</td>
+                            <td class="valor-monetario">{{ total_custos_fixos_estimados|floatformat:2|intcomma }}</td>
+                            <td class="valor-monetario">{{ custo_fixo_km|floatformat:2 }}</td>
+                            <td class="valor-monetario">{{ percentual_custos_fixos|floatformat:2 }}%</td>
+                        </tr>
+                        
+                        <tr class="category">
+                            <td>Custos Variáveis</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="info-text">
+                                <small><i>Custos reais: calculados com base nas despesas registradas nas categorias e subcategorias.</i></small>
+                            </td>
+                        </tr>
+                        {% for custo in custos_variaveis %}
+                        <tr class="subcategory">
+                            <td>{{ custo.categoria }}</td>
+                            <td class="valor-monetario">{{ custo.valor_mensal|floatformat:2|intcomma }}</td>
+                            <td class="valor-monetario">{{ custo.valor_por_km|floatformat:2 }}</td>
+                            <td class="valor-monetario">{{ custo.percentual|floatformat:2 }}%</td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="total-row">
+                            <td>Total Custos Variáveis</td>
+                            <td class="valor-monetario">{{ total_custos_variaveis|floatformat:2|intcomma }}</td>
+                            <td class="valor-monetario">{{ custo_variavel_km|floatformat:2 }}</td>
+                            <td class="valor-monetario">{{ percentual_custos_variaveis|floatformat:2 }}%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Resumo dos Fretes -->
+        <div class="report-section">
+            <h5>Resumo dos Fretes</h5>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Cliente</th>
+                        <th>Origem → Destino</th>
+                        <th>Km</th>
+                        <th>Valor (R$)</th>
+                        <th>Comissão (R$)</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for frete in fretes %}
+                    <tr>
+                        <td>{{ frete.data_saida|date:"d/m/Y" }}</td>
+                        <td>{{ frete.cliente.nome_completo }}</td>
+                        <td>{{ frete.origem }} → {{ frete.destino }}</td>
+                        <td class="valor-peso" data-peso="{{ frete.km_total|default:0 }}">{{ frete.km_total|default:0|intcomma }}</td>
+                        <td class="valor-monetario" data-valor="{{ frete.valor_total|floatformat:2 }}">R$ {{ frete.valor_total|floatformat:2|intcomma }}</td>
+                        <td class="valor-monetario" data-valor="{{ frete.valor_comissao_motorista|floatformat:2 }}">R$ {{ frete.valor_comissao_motorista|floatformat:2|intcomma }}</td>
+                        <td>
+                            {% if frete.status == 'PAGO' %}
+                            <span class="status-concluido">Pago</span>
+                            {% elif frete.status == 'VENCIDO' %}
+                            <span class="status-atrasado">Vencido</span>
+                            {% elif frete.status == 'VENCE_HOJE' %}
+                            <span class="status-alerta">Vence Hoje</span>
+                            {% else %}
+                            <span class="status-andamento">Pendente</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center;">Nenhum frete registrado para este veículo.</td>
+                    </tr>
                     {% endfor %}
-                {% endfor %}
-                <tr class="total-row">
-                    <td>Total Geral</td>
-                    <td class="valor-monetario">{{ total_custos_fixos.mensal|floatformat:2|intcomma }}</td>
-                    <td class="valor-monetario">{{ total_custos_fixos.por_km|floatformat:2 }}</td>
-                </tr>
-            </tbody>
-        </table>
+                    {% if fretes %}
+                    <tr class="total-row">
+                        <td colspan="3"><strong>Total</strong></td>
+                        <td class="valor-peso" data-peso="{{ km_total }}"><strong>{{ km_total|intcomma }}</strong></td>
+                        <td class="valor-monetario" data-valor="{{ receita_total|floatformat:2 }}"><strong>R$ {{ receita_total|floatformat:2|intcomma }}</strong></td>
+                        <td class="valor-monetario" data-valor="{{ comissao_total|floatformat:2 }}"><strong>R$ {{ comissao_total|floatformat:2|intcomma }}</strong></td>
+                        <td></td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
     </div>
-
-    <!-- Resumo dos Fretes -->
-    <div class="report-section">
-        <h5>Resumo dos Fretes</h5>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Data</th>
-                    <th>Cliente</th>
-                    <th>Origem</th>
-                    <th>Destino</th>
-                    <th>Km</th>
-                    <th>Valor (R$)</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for frete in fretes %}
-                <tr>
-                    <td>{{ frete.data_saida|date:"d/m/Y" }}</td>
-                    <td>{{ frete.cliente.nome_fantasia }}</td>
-                    <td>{{ frete.origem }}</td>
-                    <td>{{ frete.destino }}</td>
-                    <td class="valor-peso">{{ frete.km_percorrido|default:0|intcomma }}</td>
-                    <td class="valor-monetario">{{ frete.valor_total|floatformat:2|intcomma }}</td>
-                    <td>
-                        {% if frete.status == 'concluido' %}
-                        <span class="status-concluido">Concluído</span>
-                        {% else %}
-                        <span class="status-andamento">Em andamento</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="7" class="text-center">Nenhum frete registrado para este veículo.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    
+    <div class="print-footer">
+        <span>TransportadorPRO.com - (64) 9 9611-5182 | {% if empresa %}{{ empresa.nome_fantasia }}{% else %}Sua Empresa{% endif %} | Página <span class="page-number"></span> | Gerado em {% now "d/m/Y H:i" %}</span>
     </div>
-</div>
-{% endblock %}
+    
+    <script>
+        // Formatação de valores monetários para o padrão brasileiro
+        function formatarMoedaBR(valor) {
+            if (isNaN(valor)) return "R$ 0,00";
+            
+            // Formata para ter duas casas decimais
+            valor = parseFloat(valor).toFixed(2);
+            
+            // Divide em parte inteira e decimal
+            let partes = valor.split('.');
+            let parteInteira = partes[0];
+            let parteDecimal = partes[1];
+            
+            // Adiciona separadores de milhar
+            parteInteira = parteInteira.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            
+            // Retorna no formato R$ 1.234,56
+            return "R$ " + parteInteira + "," + parteDecimal;
+        }
+        
+        // Formatação de valores de peso para o padrão brasileiro
+        function formatarPesoBR(valor) {
+            if (isNaN(valor)) return "0,00 kg";
+            
+            // Formata para ter duas casas decimais
+            valor = parseFloat(valor).toFixed(2);
+            
+            // Divide em parte inteira e decimal
+            let partes = valor.split('.');
+            let parteInteira = partes[0];
+            let parteDecimal = partes[1];
+            
+            // Adiciona separadores de milhar
+            parteInteira = parteInteira.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            
+            // Retorna no formato 1.234,56 kg
+            return parteInteira + "," + parteDecimal + " kg";
+        }
 
-{% block footer %}
-<span>TransportadorPRO.com - (64) 9 9611-5182 | {% if empresa %}{{ empresa.nome_fantasia }}{% else %}Sua Empresa{% endif %} | Página <span class="page-number"></span> | Gerado em {% now "d/m/Y H:i" %}</span>
-{% endblock %}
+        // Formatação de valores em colunas de peso sem a unidade
+        function formatarPesoSemUnidade(valor) {
+            if (isNaN(valor)) return "0,00";
+            
+            // Formata para ter duas casas decimais
+            valor = parseFloat(valor).toFixed(2);
+            
+            // Divide em parte inteira e decimal
+            let partes = valor.split('.');
+            let parteInteira = partes[0];
+            let parteDecimal = partes[1];
+            
+            // Adiciona separadores de milhar
+            parteInteira = parteInteira.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            
+            // Retorna no formato 1.234,56
+            return parteInteira + "," + parteDecimal;
+        }
 
-{% block scripts %}
-<script>
-    // Formatação de valores monetários para o padrão brasileiro
-    function formatarMoedaBR(valor) {
-        if (valor === null || valor === undefined || isNaN(parseFloat(valor))) {
-            return "R$ 0,00";
-        }
-        
-        valor = parseFloat(valor);
-        
-        return valor.toLocaleString('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-    }
-    
-    // Formatação de valores de peso para o padrão brasileiro
-    function formatarPesoBR(valor) {
-        if (valor === null || valor === undefined || isNaN(parseFloat(valor))) {
-            return "0 kg";
-        }
-        
-        valor = parseFloat(valor);
-        
-        return valor.toLocaleString('pt-BR', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        }) + " kg";
-    }
-    
-    // Formatação de valores em colunas de peso sem a unidade
-    function formatarPesoSemUnidade(valor) {
-        if (valor === null || valor === undefined || isNaN(parseFloat(valor))) {
-            return "0";
-        }
-        
-        valor = parseFloat(valor);
-        
-        return valor.toLocaleString('pt-BR', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        });
-    }
-    
-    // Executa quando a página carrega
-    window.onload = function() {
-        // Formatar valores monetários
-        document.querySelectorAll('.valor-monetario').forEach(function(elemento) {
-            if (elemento.dataset.valor) {
-                elemento.textContent = formatarMoedaBR(elemento.dataset.valor);
-            }
-        });
-        
-        // Formatar valores de peso
-        document.querySelectorAll('.valor-peso').forEach(function(elemento) {
-            if (elemento.dataset.valor) {
-                elemento.textContent = formatarPesoSemUnidade(elemento.dataset.valor);
-            }
-        });
-        
-        // Adicionar evento ao botão de impressão
-        document.querySelector('.print-button').addEventListener('click', function() {
-            window.print();
-        });
-    };
-</script>
-{% endblock %}
+        // Executa quando a página carrega
+        window.onload = function() {
+            // Numeração automática de páginas
+            document.querySelectorAll('.page-number').forEach(function(el) {
+                el.textContent = "1";
+            });
+            
+            // Formata valores monetários
+            document.querySelectorAll('.valor-monetario').forEach(function(el) {
+                const valorBruto = el.getAttribute('data-valor');
+                if (valorBruto) {
+                    el.textContent = formatarMoedaBR(valorBruto);
+                }
+            });
+            
+            // Formata valores de peso
+            document.querySelectorAll('.valor-peso').forEach(function(el) {
+                const pesoBruto = el.getAttribute('data-peso');
+                if (pesoBruto) {
+                    // Verifica se o texto atual contém "kg"
+                    if (el.textContent.includes('kg')) {
+                        el.textContent = formatarPesoBR(pesoBruto);
+                    } else {
+                        el.textContent = formatarPesoSemUnidade(pesoBruto);
+                    }
+                }
+            });
+        };
+    </script>
+</body>
+</html>

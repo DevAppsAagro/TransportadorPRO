@@ -14,6 +14,7 @@ from core.models.estimativa_manutencao import EstimativaManutencao
 from core.models.estimativa_custo_fixo import EstimativaCustoFixo
 from core.models.categoria import Categoria
 from core.models.subcategoria import Subcategoria
+from core.models.empresa import Empresa
 import json
 from django.db.models import Q
 from core.models.contato import Contato
@@ -38,6 +39,9 @@ def relatorio_veiculo(request):
             
             # Busca o caminhão e verifica se pertence ao usuário
             caminhao = get_object_or_404(Caminhao, id=caminhao_id, usuario=request.user)
+            
+            # Busca a empresa do usuário
+            empresa = Empresa.objects.filter(usuario=request.user).first()
             
             # Busca o conjunto ativo do caminhão
             conjunto = Conjunto.objects.filter(caminhao=caminhao, status='ATIVO').first()
@@ -240,6 +244,7 @@ def relatorio_veiculo(request):
                 'custo_total_km': custo_total_km,
                 'lucro_operacional': lucro_operacional,
                 'lucro_liquido': lucro_liquido,
+                'empresa': empresa,
             }
             
             return render(request, 'core/relatorios/veiculo_resultado.html', context)
@@ -252,7 +257,7 @@ def relatorio_veiculo_print(request):
     Versão de impressão do relatório de veículo.
     """
     if request.method == 'GET':
-        caminhao_id = request.GET.get('caminhao_id')
+        caminhao_id = request.GET.get('caminhao_id') or request.GET.get('id')
         data_inicio = request.GET.get('data_inicio')
         data_fim = request.GET.get('data_fim')
         
@@ -263,6 +268,9 @@ def relatorio_veiculo_print(request):
             
             # Busca o caminhão e verifica se pertence ao usuário
             caminhao = get_object_or_404(Caminhao, id=caminhao_id, usuario=request.user)
+            
+            # Busca a empresa do usuário
+            empresa = Empresa.objects.filter(usuario=request.user).first()
             
             # Busca o conjunto ativo do caminhão
             conjunto = Conjunto.objects.filter(caminhao=caminhao, status='ATIVO').first()
@@ -448,6 +456,12 @@ def relatorio_veiculo_print(request):
             if km_total > 0:
                 lucro_por_km = lucro_bruto / Decimal(km_total)
             
+            # Lucro operacional (sem considerar custos fixos)
+            lucro_operacional = receita_total - total_custos_variaveis - comissao_total
+            
+            # Lucro líquido (considerando todos os custos)
+            lucro_liquido = receita_total - total_custos - comissao_total
+            
             # Prepara o contexto para o template
             context = {
                 'caminhao': caminhao,
@@ -471,7 +485,95 @@ def relatorio_veiculo_print(request):
                 'custo_por_km': custo_por_km,
                 'receita_por_km': receita_por_km,
                 'lucro_por_km': lucro_por_km,
-                'relatorio_gerado': True
+                'relatorio_gerado': True,
+                
+                # Adicionando dados formatados para custos fixos
+                'custos_fixos': [
+                    {
+                        'nome': 'Depreciação do Caminhão',
+                        'is_category': True,
+                        'valor_mensal': custos_fixos_estimados.get('depreciacao_caminhao', 0) / Decimal(dias_periodo) * 30,
+                        'valor_periodo': custos_fixos_estimados.get('depreciacao_caminhao', 0),
+                        'percentual': (custos_fixos_estimados.get('depreciacao_caminhao', 0) / total_custos * 100) if total_custos else 0
+                    },
+                    {
+                        'nome': 'Depreciação da Carreta',
+                        'is_category': True,
+                        'valor_mensal': custos_fixos_estimados.get('depreciacao_carreta', 0) / Decimal(dias_periodo) * 30,
+                        'valor_periodo': custos_fixos_estimados.get('depreciacao_carreta', 0),
+                        'percentual': (custos_fixos_estimados.get('depreciacao_carreta', 0) / total_custos * 100) if total_custos else 0
+                    },
+                    {
+                        'nome': 'Seguro e Outros Custos Fixos',
+                        'is_category': True,
+                        'valor_mensal': custos_fixos_estimados.get('seguro', 0) / Decimal(dias_periodo) * 30,
+                        'valor_periodo': custos_fixos_estimados.get('seguro', 0),
+                        'percentual': (custos_fixos_estimados.get('seguro', 0) / total_custos * 100) if total_custos else 0
+                    },
+                    {
+                        'nome': 'Manutenção Planejada',
+                        'is_category': True,
+                        'valor_mensal': custos_fixos_estimados.get('manutencao', 0) / Decimal(dias_periodo) * 30,
+                        'valor_periodo': custos_fixos_estimados.get('manutencao', 0),
+                        'percentual': (custos_fixos_estimados.get('manutencao', 0) / total_custos * 100) if total_custos else 0
+                    },
+                    {
+                        'nome': 'Pneus Planejados',
+                        'is_category': True,
+                        'valor_mensal': custos_fixos_estimados.get('pneus', 0) / Decimal(dias_periodo) * 30,
+                        'valor_periodo': custos_fixos_estimados.get('pneus', 0),
+                        'percentual': (custos_fixos_estimados.get('pneus', 0) / total_custos * 100) if total_custos else 0
+                    },
+                    {
+                        'nome': 'Custos Administrativos',
+                        'is_category': True,
+                        'valor_mensal': custos_fixos_estimados.get('administrativo', 0) / Decimal(dias_periodo) * 30,
+                        'valor_periodo': custos_fixos_estimados.get('administrativo', 0),
+                        'percentual': (custos_fixos_estimados.get('administrativo', 0) / total_custos * 100) if total_custos else 0
+                    }
+                ],
+                'total_custos_fixos_mensal': sum([custos_fixos_estimados.get(k, 0) for k in custos_fixos_estimados]) / Decimal(dias_periodo) * 30,
+                'total_custos_fixos': total_custos_fixos_estimados,
+                'percentual_custos_fixos': (total_custos_fixos_estimados / total_custos * 100) if total_custos else 0,
+                
+                # Adicionando dados formatados para custos variáveis
+                'custos_variaveis': [
+                    {
+                        'nome': categoria,
+                        'is_category': True,
+                        'valor_total': sum(subcategorias.values()),
+                        'valor_km': (sum(subcategorias.values()) / Decimal(km_total)) if km_total else 0,
+                        'percentual': (sum(subcategorias.values()) / total_custos * 100) if total_custos else 0
+                    }
+                    for categoria, subcategorias in despesas_por_categoria.items()
+                ] + [
+                    {
+                        'nome': f"{categoria} - {subcategoria}",
+                        'is_category': False,
+                        'valor_total': valor,
+                        'valor_km': (valor / Decimal(km_total)) if km_total else 0,
+                        'percentual': (valor / total_custos * 100) if total_custos else 0
+                    }
+                    for categoria, subcategorias in despesas_por_categoria.items()
+                    for subcategoria, valor in subcategorias.items()
+                ],
+                'custo_variavel_km': custo_por_km - (total_custos_fixos_estimados / Decimal(km_total) if km_total else 0),
+                'percentual_custos_variaveis': (total_custos_variaveis / total_custos * 100) if total_custos else 0,
+                
+                # Adicionando métricas financeiras no formato esperado
+                'metricas': {
+                    'receita_total': receita_total,
+                    'custos_totais': total_custos,
+                    'lucro_total': lucro_bruto,
+                    'margem_lucro': margem_lucro,
+                    'receita_por_km': receita_por_km,
+                    'custo_por_km': custo_por_km,
+                    'lucro_por_km': lucro_por_km,
+                    'km_percorridos': km_total
+                },
+                'lucro_operacional': lucro_operacional,
+                'lucro_liquido': lucro_liquido,
+                'empresa': empresa,
             }
             
             return render(request, 'core/relatorios/veiculo_resultado_print.html', context)

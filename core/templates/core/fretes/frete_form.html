@@ -84,6 +84,13 @@
         padding: 0.2rem 0.4rem;
         font-weight: 500;
     }
+    
+    /* Ajustes para valor-monetario no modo escuro */
+    [data-bs-theme="dark"] .valor-monetario {
+        background-color: #2d3748;
+        color: #e2e8f0;
+        border: 1px solid #4a5568;
+    }
 </style>
 {% endblock %}
 
@@ -345,7 +352,7 @@
         const fatorMultiplicacao = cargaOption ? parseFloat(cargaOption.getAttribute('data-fator-multiplicacao')) || 1 : 1;
         
         // Calcular valor total
-        const valorTotal = pesoCarga * valorUnitario * fatorMultiplicacao;
+        const valorTotal = (pesoCarga / fatorMultiplicacao) * valorUnitario;
         document.getElementById('valor_total').value = valorTotal.toFixed(2);
         document.getElementById('valor_total_formatado').textContent = formatarMoedaBR(valorTotal);
         

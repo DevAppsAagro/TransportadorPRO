@@ -537,17 +537,9 @@
         const ctx = document.getElementById('despesasChart');
         if (ctx) {
             // Dados do gráfico
-            const labels = [
-                {% for categoria in despesas_por_categoria %}
-                    "{{ categoria.categoria }}",
-                {% endfor %}
-            ];
+            const labels = JSON.parse('[{% for categoria in despesas_por_categoria %}"{{ categoria.categoria }}"{% if not forloop.last %},{% endif %}{% endfor %}]');
             
-            const values = [
-                {% for categoria in despesas_por_categoria %}
-                    {{ categoria.valor }},
-                {% endfor %}
-            ];
+            const values = JSON.parse('[{% for categoria in despesas_por_categoria %}{{ categoria.valor }}{% if not forloop.last %},{% endif %}{% endfor %}]');
             
             const colors = generateColors(labels.length);
             
