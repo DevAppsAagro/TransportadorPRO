@@ -627,7 +627,7 @@
                         <td>{{ frete.data_saida|date:"d/m/Y" }}</td>
                         <td>{{ frete.cliente.nome_completo }}</td>
                         <td>{{ frete.origem }} → {{ frete.destino }}</td>
-                        <td>{{ frete.carga.nome }}</td>
+                        <td>{{ frete.carga.nome }} ({{ frete.carga.unidade_medida }})</td>
                         <td class="valor-peso" data-peso="{{ frete.peso_carga|floatformat:2 }}">{{ frete.peso_carga|floatformat:2|intcomma }}</td>
                         <td class="valor-monetario" data-valor="{{ frete.valor_unitario|floatformat:2 }}">R$ {{ frete.valor_unitario|floatformat:2|intcomma }}</td>
                         <td class="valor-peso" data-peso="{{ frete.km_total|default:0 }}">{{ frete.km_total|default:0|intcomma }}</td>
