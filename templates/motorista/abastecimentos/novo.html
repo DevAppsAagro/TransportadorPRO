@@ -142,16 +142,23 @@
         
         // Formatação de valores monetários
         valorLitroInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
+            // Remove todos os caracteres não numéricos, exceto a vírgula
+            let value = e.target.value.replace(/[^\d,]/g, '');
             
-            if (value === '') {
-                value = '0,00';
-            } else if (value.length === 1) {
-                value = '0,0' + value;
-            } else if (value.length === 2) {
-                value = '0,' + value;
-            } else {
-                value = value.substring(0, value.length - 2) + ',' + value.substring(value.length - 2);
+            // Garante que só tenha uma vírgula
+            const commaCount = (value.match(/,/g) || []).length;
+            if (commaCount > 1) {
+                const parts = value.split(',');
+                value = parts[0] + ',' + parts.slice(1).join('');
+            }
+            
+            // Limita a dois dígitos após a vírgula
+            if (value.includes(',')) {
+                const parts = value.split(',');
+                if (parts[1] && parts[1].length > 2) {
+                    parts[1] = parts[1].substring(0, 2);
+                    value = parts[0] + ',' + parts[1];
+                }
             }
             
             e.target.value = value;

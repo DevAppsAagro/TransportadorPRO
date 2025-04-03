@@ -76,7 +76,6 @@ def aprovar_abastecimento(request, id):
     abastecimento_pendente = get_object_or_404(
         AbastecimentoPendente, 
         pk=id,
-        caminhao__usuario=request.user,
         status='PENDENTE'
     )
     
@@ -89,9 +88,12 @@ def aprovar_abastecimento(request, id):
                 data_vencimento = request.POST.get('data_vencimento')
                 data_pagamento = request.POST.get('data_pagamento', None)
                 
+                # Adicionar mensagens de depuração
+                print(f"Dados do formulário: motorista={id_motorista}, situacao={situacao}, data_vencimento={data_vencimento}")
+                
                 # Validar dados
                 if not id_motorista or not situacao or not data_vencimento:
-                    messages.error(request, 'Todos os campos obrigatórios devem ser preenchidos!')
+                    messages.error(request, f'Todos os campos obrigatórios devem ser preenchidos! Motorista: {id_motorista}, Situação: {situacao}, Data Vencimento: {data_vencimento}')
                     return redirect('core:aprovar_abastecimento', id=id)
                 
                 # Obter objetos relacionados
