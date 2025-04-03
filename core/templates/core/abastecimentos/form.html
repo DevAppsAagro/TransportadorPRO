@@ -1,5 +1,26 @@
 {% extends 'base/base.html' %}
 
+{% block styles %}
+<style>
+    .smaller-text {
+        font-size: 0.8rem;
+    }
+    
+    .form-check-label {
+        cursor: pointer;
+    }
+    
+    #id_frete_container {
+        transition: all 0.3s ease;
+    }
+    
+    .highlight-em-andamento {
+        font-weight: bold;
+        color: #0056b3;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <h2>{% if abastecimento %}Editar{% else %}Novo{% endif %} Abastecimento</h2>
@@ -27,7 +48,7 @@
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label for="caminhao" class="form-label">Caminhão</label>
-                <select class="form-select" id="caminhao" name="caminhao" required>
+                <select class="form-select" id="caminhao" name="caminhao" required onchange="filtrarFretes()">
                     <option value="">Selecione um caminhão</option>
                     {% for caminhao in caminhoes %}
                         <option value="{{ caminhao.id }}" {% if abastecimento.caminhao.id == caminhao.id %}selected{% endif %}>
@@ -65,14 +86,34 @@
             
             <div class="col-md-6 mb-3">
                 <label for="frete" class="form-label">Frete em Andamento (Opcional)</label>
-                <select class="form-select" id="frete" name="frete">
-                    <option value="">Selecione um frete</option>
-                    {% for frete in fretes %}
-                        <option value="{{ frete.id }}" {% if abastecimento.frete.id == frete.id %}selected{% endif %}>
-                            {{ frete.origem }} - {{ frete.destino }} ({{ frete.data_inicio|date:'d/m/Y' }})
-                        </option>
-                    {% endfor %}
-                </select>
+                <div class="row g-1">
+                    <div class="col-md-9">
+                        <select class="form-select" id="frete" name="frete">
+                            <option value="">Selecione um frete</option>
+                        </select>
+                        <div class="form-text smaller-text">Mostrando apenas os 10 fretes mais recentes</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="usar_id_frete" onchange="toggleIdFrete()">
+                            <label class="form-check-label smaller-text" for="usar_id_frete">
+                                Usar ID do frete
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div id="id_frete_container" style="display: none;" class="mb-3">
+                    <div class="input-group">
+                        <input type="text" id="id_frete_input" class="form-control" placeholder="Digite o ID do frete">
+                        <button type="button" class="btn btn-primary" onclick="definirFreteManual()">Buscar</button>
+                    </div>
+                    <div id="frete_detalhes" class="mt-2 alert alert-success" style="display: none;">
+                        <h5 class="alert-heading">Frete encontrado!</h5>
+                        <p id="frete_info" class="mb-0"></p>
+                        <p id="frete_caminhao" class="mb-0 mt-1"></p>
+                        <p id="frete_status" class="mb-0 mt-1"></p>
+                    </div>
+                </div>
             </div>
             <div class="col-md-6 mb-3">
                 <label for="situacao" class="form-label">Situação</label>
@@ -122,5 +163,162 @@ function calcularTotal() {
     const total = litros * valorLitro;
     document.getElementById('total_valor').value = total.toFixed(2);
 }
+
+function filtrarFretes() {
+    const caminhaoSelect = document.getElementById('caminhao');
+    const freteSelect = document.getElementById('frete');
+    const caminhaoId = caminhaoSelect.value;
+    
+    // Limpar o select de fretes, mantendo apenas a opção padrão
+    while (freteSelect.options.length > 1) {
+        freteSelect.remove(1);
+    }
+    
+    // Se não houver caminhão selecionado, não faz nada
+    if (!caminhaoId) {
+        return;
+    }
+    
+    // Buscar os fretes do caminhão selecionado via AJAX
+    // Usar a URL completa com o caminho absoluto
+    const url = window.location.origin + '/api/caminhoes/' + caminhaoId + '/fretes/';
+    console.log('Buscando fretes na URL:', url);
+    
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erro ao buscar fretes');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Adicionar as opções de fretes ao select
+            if (data.fretes && data.fretes.length > 0) {
+                data.fretes.forEach(frete => {
+                    const option = document.createElement('option');
+                    option.value = frete.id;
+                    option.text = `#${frete.id} - ${frete.origem} - ${frete.destino} (${new Date(frete.data_saida).toLocaleDateString('pt-BR')})${frete.status === 'EM_ANDAMENTO' ? ' [Em andamento]' : ''}`;
+                    
+                    // Adicionar os atributos data
+                    option.setAttribute('data-caminhao', frete.caminhao_id);
+                    option.setAttribute('data-data', frete.data_saida);
+                    option.setAttribute('data-origem', frete.origem);
+                    option.setAttribute('data-destino', frete.destino);
+                    option.setAttribute('data-status', frete.status);
+                    
+                    // Destacar fretes em andamento
+                    if (frete.status === 'EM_ANDAMENTO') {
+                        option.classList.add('highlight-em-andamento');
+                    }
+                    
+                    freteSelect.add(option);
+                });
+            } else {
+                // Se não houver fretes, adicionar uma opção informativa
+                const option = document.createElement('option');
+                option.value = "";
+                option.text = "Nenhum frete encontrado para este caminhão";
+                option.disabled = true;
+                freteSelect.add(option);
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao buscar fretes:', error);
+            // Adicionar uma opção de erro
+            const option = document.createElement('option');
+            option.value = "";
+            option.text = "Erro ao carregar fretes";
+            option.disabled = true;
+            freteSelect.add(option);
+        });
+}
+
+function toggleIdFrete() {
+    const usarIdFrete = document.getElementById('usar_id_frete');
+    const idFreteContainer = document.getElementById('id_frete_container');
+    
+    if (usarIdFrete.checked) {
+        idFreteContainer.style.display = 'block';
+        document.getElementById('frete').disabled = true;
+    } else {
+        idFreteContainer.style.display = 'none';
+        document.getElementById('frete').disabled = false;
+    }
+}
+
+function definirFreteManual() {
+    const idFreteInput = document.getElementById('id_frete_input');
+    const idFrete = idFreteInput.value.trim();
+    
+    if (idFrete) {
+        // Buscar o frete pelo ID via AJAX
+        // Usar a URL completa com o caminho absoluto
+        const url = window.location.origin + '/api/fretes/' + idFrete + '/';
+        console.log('Buscando frete na URL:', url);
+        
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Frete não encontrado');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Atualizar o select de caminhão
+                const caminhaoSelect = document.getElementById('caminhao');
+                caminhaoSelect.value = data.caminhao_id;
+                
+                // Carregar os fretes do caminhão selecionado
+                filtrarFretes();
+                
+                // Esperar um pouco para garantir que os fretes foram carregados
+                setTimeout(() => {
+                    // Selecionar o frete específico
+                    const freteSelect = document.getElementById('frete');
+                    freteSelect.value = data.id;
+                    
+                    // Exibir os detalhes do frete
+                    const freteDetalhes = document.getElementById('frete_detalhes');
+                    freteDetalhes.style.display = 'block';
+                    const freteInfo = document.getElementById('frete_info');
+                    freteInfo.textContent = `#${data.id} - ${data.origem} - ${data.destino} (${new Date(data.data_saida).toLocaleDateString('pt-BR')})`;
+                    const freteCaminhao = document.getElementById('frete_caminhao');
+                    freteCaminhao.textContent = `Caminhão: ${data.caminhao_placa} - ${data.caminhao_modelo}`;
+                    const freteStatus = document.getElementById('frete_status');
+                    freteStatus.textContent = `Status: ${data.status === 'EM_ANDAMENTO' ? 'Em andamento' : data.status}`;
+                    
+                    // Não desmarcar o checkbox para manter a opção de busca visível
+                }, 500);
+            })
+            .catch(error => {
+                alert(`Erro: ${error.message}`);
+                console.error('Erro ao buscar frete:', error);
+            });
+    }
+}
+
+// Executar a função de filtro quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    // Calcular o total inicial se os valores já estiverem preenchidos
+    calcularTotal();
+    
+    // Verificar se já existe um abastecimento sendo editado
+    const freteSelect = document.getElementById('frete');
+    const caminhaoSelect = document.getElementById('caminhao');
+    
+    // Se já tiver um caminhão selecionado, filtrar os fretes
+    if (caminhaoSelect.value) {
+        filtrarFretes();
+        
+        // Se estiver editando um abastecimento com frete, precisamos selecionar o frete após carregar
+        const freteId = '{{ abastecimento.frete.id|default:"" }}';
+        if (freteId) {
+            // Esperar um pouco para garantir que os fretes foram carregados
+            setTimeout(() => {
+                freteSelect.value = freteId;
+            }, 500);
+        }
+    }
+});
 </script>
 {% endblock %}

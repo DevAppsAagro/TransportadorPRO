@@ -10,7 +10,7 @@ from .views.caminhoes import caminhoes, caminhao_novo, caminhao_editar, caminhao
 from .views.carretas import lista_carretas, criar_carreta, editar_carreta, excluir_carreta
 from .views.conjuntos import conjuntos, conjunto_novo, conjunto_editar, conjunto_excluir
 from .views.fretes import fretes, frete_novo, frete_editar, frete_excluir, frete_detalhes, frete_print
-from .views.abastecimentos import abastecimentos, abastecimento_novo, abastecimento_editar, abastecimento_excluir
+from .views.abastecimentos import abastecimentos, abastecimento_novo, abastecimento_editar, abastecimento_excluir, buscar_frete_por_id, buscar_fretes_por_caminhao
 from .views.estimativa_pneus import estimativa_pneus_list, estimativa_pneus_create, estimativa_pneus_edit, estimativa_pneus_delete, detalhes_estimativa
 from .views.estimativa_manutencao import estimativa_manutencao_list, estimativa_manutencao_create, estimativa_manutencao_edit, estimativa_manutencao_delete, detalhes_estimativa_manutencao
 from .views.estimativa_custo_fixo import estimativa_custo_fixo_list, estimativa_custo_fixo_create, estimativa_custo_fixo_edit, estimativa_custo_fixo_delete, detalhes_estimativa_custo_fixo, calcular_valor_por_dia
@@ -115,8 +115,13 @@ urlpatterns = [
     path('abastecimentos/novo/', abastecimento_novo, name='abastecimento_novo'),
     path('abastecimentos/<int:id>/editar/', abastecimento_editar, name='abastecimento_editar'),
     path('abastecimentos/<int:id>/excluir/', abastecimento_excluir, name='abastecimento_excluir'),
-    # Comentando o redirecionamento errado
-    # path('abastecimentos/pendentes/', lambda request: redirect('motorista:listar_abastecimentos_pendentes'), name='abastecimentos_pendentes'),
+    
+    # APIs para AJAX
+    path('api/fretes/<int:id>/', buscar_frete_por_id, name='api_frete'),
+    path('api/caminhoes/<int:caminhao_id>/fretes/', buscar_fretes_por_caminhao, name='api_caminhoes_fretes'),
+    path('api/subcategorias/', get_subcategorias, name='get_subcategorias'),
+    path('api/destinos-por-alocacao/', get_destinos_por_alocacao, name='get_destinos_por_alocacao'),
+    path('api/calcular-valor-por-dia/', calcular_valor_por_dia, name='calcular_valor_por_dia'),
     
     # Rotas de estimativa de pneus
     path('estimativa-pneus/', estimativa_pneus_list, name='estimativa_pneus_list'),
@@ -138,7 +143,6 @@ urlpatterns = [
     path('estimativa-custo-fixo/<int:id>/editar/', estimativa_custo_fixo_edit, name='estimativa_custo_fixo_edit'),
     path('estimativa-custo-fixo/<int:id>/excluir/', estimativa_custo_fixo_delete, name='estimativa_custo_fixo_delete'),
     path('estimativa-custo-fixo/<int:id>/detalhes/', detalhes_estimativa_custo_fixo, name='detalhes_estimativa_custo_fixo'),
-    path('api/calcular-valor-por-dia/', calcular_valor_por_dia, name='calcular_valor_por_dia'),
     
     # Rotas de despesas
     path('despesas/', despesa_list, name='despesa_list'),
@@ -147,8 +151,6 @@ urlpatterns = [
     path('despesas/<int:id>/excluir/', despesa_delete, name='despesa_delete'),
     path('despesas/<int:id>/detalhes/', despesa_detail, name='despesa_detail'),
     path('despesas/<int:id>/registrar-pagamento/', registrar_pagamento, name='registrar_pagamento'),
-    path('api/subcategorias/', get_subcategorias, name='get_subcategorias'),
-    path('api/destinos-por-alocacao/', get_destinos_por_alocacao, name='get_destinos_por_alocacao'),
     
     # Rotas de abastecimentos pendentes
     path('abastecimentos/pendentes/', listar_abastecimentos_pendentes, name='listar_abastecimentos_pendentes'),

@@ -25,7 +25,7 @@ from django.views.generic import TemplateView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('admin/guide/motorista/', TemplateView.as_view(template_name='admin/guide_motorista.html'), name='admin_guide_motorista'),
-    path('', include('core.urls')),  # URLs principais
+    path('', include(('core.urls', 'core'))),  # URLs principais com namespace 'core'
     path('motorista/', include(('transportador_pro.urls_motorista', 'motorista'))),  # URLs de motoristas (subdomínio)
     
     # Auth URLs

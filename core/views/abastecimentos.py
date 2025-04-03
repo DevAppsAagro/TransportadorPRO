@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum
 from decimal import Decimal
+from django.http import JsonResponse
 from core.models.abastecimento import Abastecimento
 from core.models.caminhao import Caminhao
 from core.models.contato import Contato
@@ -51,7 +52,7 @@ def abastecimento_novo(request):
         'caminhoes': Caminhao.objects.filter(usuario=request.user),
         'motoristas': Contato.objects.filter(tipo='MOTORISTA', usuario=request.user),
         'postos': Contato.objects.filter(tipo='POSTO', usuario=request.user),
-        'fretes': Frete.objects.filter(status='EM_ANDAMENTO', caminhao__usuario=request.user)
+        'fretes': Frete.objects.filter(caminhao__usuario=request.user).order_by('-data_saida')[:10]
     }
     return render(request, 'core/abastecimentos/form.html', context)
 
@@ -90,7 +91,7 @@ def abastecimento_editar(request, id):
         'caminhoes': Caminhao.objects.filter(usuario=request.user),
         'motoristas': Contato.objects.filter(tipo='MOTORISTA', usuario=request.user),
         'postos': Contato.objects.filter(tipo='POSTO', usuario=request.user),
-        'fretes': Frete.objects.filter(status='EM_ANDAMENTO', caminhao__usuario=request.user)
+        'fretes': Frete.objects.filter(caminhao__usuario=request.user).order_by('-data_saida')[:10]
     }
     return render(request, 'core/abastecimentos/form.html', context)
 
@@ -104,3 +105,52 @@ def abastecimento_excluir(request, id):
     except Exception as e:
         messages.error(request, f'Erro ao excluir abastecimento: {str(e)}')
     return redirect('core:abastecimentos')
+
+@login_required
+def buscar_frete_por_id(request, id):
+    try:
+        # Garantir que o usuário só possa ver seus próprios fretes
+        frete = get_object_or_404(Frete, pk=id, caminhao__usuario=request.user)
+        
+        # Retornar os dados do frete em formato JSON
+        return JsonResponse({
+            'id': frete.id,
+            'origem': frete.origem,
+            'destino': frete.destino,
+            'data_saida': frete.data_saida.strftime('%Y-%m-%d'),
+            'status': frete.status,
+            'caminhao_id': frete.caminhao.id,
+            'caminhao_placa': frete.caminhao.placa,
+            'caminhao_modelo': frete.caminhao.modelo
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=404)
+
+@login_required
+def buscar_fretes_por_caminhao(request, caminhao_id):
+    print(f"Buscando fretes para o caminhão {caminhao_id}")
+    try:
+        # Buscar o caminhão sem verificar o usuário (temporariamente para debug)
+        caminhao = get_object_or_404(Caminhao, pk=caminhao_id)
+        
+        # Buscar os 50 fretes mais recentes deste caminhão
+        fretes = Frete.objects.filter(caminhao=caminhao).order_by('-data_saida')[:50]
+        
+        # Preparar os dados para retornar em formato JSON
+        fretes_data = []
+        for frete in fretes:
+            fretes_data.append({
+                'id': frete.id,
+                'origem': frete.origem,
+                'destino': frete.destino,
+                'data_saida': frete.data_saida.strftime('%Y-%m-%d'),
+                'status': frete.status,
+                'caminhao_id': frete.caminhao.id,
+                'caminhao_placa': frete.caminhao.placa,
+                'caminhao_modelo': frete.caminhao.modelo
+            })
+        
+        return JsonResponse({'fretes': fretes_data})
+    except Exception as e:
+        print(f"Erro ao buscar fretes: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=404)
