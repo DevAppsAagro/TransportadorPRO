@@ -9,6 +9,11 @@ class Abastecimento(models.Model):
         ('EM_PERCURSO', 'Em Percurso'),
         ('FINAL_FRETE', 'Final de Frete'),
     ]
+    
+    TIPO_COMBUSTIVEL_CHOICES = [
+        ('DIESEL_S10', 'Diesel S10'),
+        ('DIESEL_S500', 'Diesel S500'),
+    ]
 
     data = models.DateField('Data do Abastecimento')
     data_vencimento = models.DateField('Data de Vencimento')
@@ -18,10 +23,25 @@ class Abastecimento(models.Model):
         on_delete=models.PROTECT,
         verbose_name='Caminhão'
     )
+    frete = models.ForeignKey(
+        Frete,
+        on_delete=models.SET_NULL,
+        verbose_name='Frete',
+        null=True,
+        blank=True
+    )
     situacao = models.CharField(
         'Situação',
         max_length=20,
         choices=SITUACAO_CHOICES
+    )
+    tipo_combustivel = models.CharField(
+        'Tipo de Combustível',
+        max_length=20,
+        choices=TIPO_COMBUSTIVEL_CHOICES,
+        default='DIESEL_S10',
+        null=True,
+        blank=True
     )
     litros = models.DecimalField(
         'Litros',
@@ -60,12 +80,9 @@ class Abastecimento(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f'Abastecimento {self.data} - {self.caminhao}'
+        return f'Abastecimento {self.caminhao} - {self.data}'
 
     class Meta:
         verbose_name = 'Abastecimento'
         verbose_name_plural = 'Abastecimentos'
         ordering = ['-data']
-
-    def __str__(self):
-        return f'Abastecimento {self.caminhao} - {self.data}'

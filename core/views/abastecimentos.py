@@ -30,6 +30,7 @@ def abastecimento_novo(request):
                 data_pagamento=request.POST.get('data_pagamento'),
                 caminhao=caminhao,
                 situacao=request.POST['situacao'],
+                tipo_combustivel=request.POST['tipo_combustivel'],
                 litros=Decimal(request.POST['litros']),
                 valor_litro=Decimal(request.POST['valor_litro']),
                 motorista=Contato.objects.get(id=request.POST['motorista'], usuario=request.user),
@@ -69,6 +70,7 @@ def abastecimento_editar(request, id):
             abastecimento.data_pagamento = request.POST.get('data_pagamento')
             abastecimento.caminhao = caminhao
             abastecimento.situacao = request.POST['situacao']
+            abastecimento.tipo_combustivel = request.POST['tipo_combustivel']
             abastecimento.litros = Decimal(request.POST['litros'])
             abastecimento.valor_litro = Decimal(request.POST['valor_litro'])
             abastecimento.motorista = Contato.objects.get(id=request.POST['motorista'], usuario=request.user)

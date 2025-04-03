@@ -147,6 +147,19 @@
             </div>
         </div>
 
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label for="tipo_combustivel">Tipo de Combustível (opcional)</label>
+                    <select class="form-control" id="tipo_combustivel" name="tipo_combustivel">
+                        <option value="">-- Selecione --</option>
+                        <option value="DIESEL_S10" {% if abastecimento.tipo_combustivel == 'DIESEL_S10' %}selected{% endif %}>Diesel S10</option>
+                        <option value="DIESEL_S500" {% if abastecimento.tipo_combustivel == 'DIESEL_S500' %}selected{% endif %}>Diesel S500</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
         <div class="row mt-3">
             <div class="col-12">
                 <button type="submit" class="btn btn-primary">Salvar</button>
