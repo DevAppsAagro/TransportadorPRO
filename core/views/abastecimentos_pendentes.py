@@ -95,7 +95,7 @@ def aprovar_abastecimento(request, id):
                     return redirect('core:aprovar_abastecimento', id=id)
                 
                 # Obter objetos relacionados
-                motorista = get_object_or_404(Contato, id=id_motorista, tipo='MOTORISTA', usuario=request.user)
+                motorista = get_object_or_404(Contato, id=id_motorista, tipo='MOTORISTA')
                 
                 # Criar o abastecimento no sistema
                 abastecimento = Abastecimento.objects.create(
