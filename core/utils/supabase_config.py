@@ -15,6 +15,12 @@ def get_supabase_client(use_service_role=True) -> Client:
     """
     url = settings.SUPABASE_URL
     
+    # Depuração para ambiente Vercel
+    logger.info(f"SUPABASE_URL: {'Configurado' if url else 'Não configurado'}")
+    logger.info(f"SUPABASE_KEY: {'Configurado' if hasattr(settings, 'SUPABASE_KEY') and settings.SUPABASE_KEY else 'Não configurado'}")
+    logger.info(f"SUPABASE_SERVICE_KEY: {'Configurado' if hasattr(settings, 'SUPABASE_SERVICE_KEY') and settings.SUPABASE_SERVICE_KEY else 'Não configurado'}")
+    logger.info(f"SUPABASE_STORAGE_BUCKET: {getattr(settings, 'SUPABASE_STORAGE_BUCKET', 'não definido')}")
+    
     # Usar chave de serviço se disponível
     if use_service_role and hasattr(settings, 'SUPABASE_SERVICE_KEY'):
         key = settings.SUPABASE_SERVICE_KEY
@@ -27,8 +33,24 @@ def get_supabase_client(use_service_role=True) -> Client:
         logger.error("Supabase URL or Key not configured")
         raise ValueError("Supabase configuration missing")
     
-    client = create_client(url, key)
-    return client
+    try:
+        # Criar cliente Supabase sem o argumento proxy
+        client = create_client(url, key)
+        return client
+    except TypeError as e:
+        if "proxy" in str(e):
+            logger.warning("Erro com argumento 'proxy', tentando método alternativo")
+            # Se o erro for relacionado ao argumento proxy, tente importar diretamente
+            try:
+                from supabase import Client as SupabaseClient
+                client = SupabaseClient(url, key)
+                return client
+            except Exception as inner_e:
+                logger.error(f"Erro ao criar cliente alternativo: {str(inner_e)}")
+                raise
+        else:
+            logger.error(f"Erro ao criar cliente Supabase: {str(e)}")
+            raise
 
 def upload_file(file_data, file_name, auth_token=None, content_type=None):
     """
@@ -58,8 +80,27 @@ def upload_file(file_data, file_name, auth_token=None, content_type=None):
         
         logger.info(f"Iniciando upload do arquivo para o bucket {bucket_name} com caminho {unique_file_name}")
         
+        # Verificar se as configurações do Supabase estão disponíveis
+        if not settings.SUPABASE_URL:
+            logger.error("SUPABASE_URL não está configurado")
+            return None
+            
+        if not settings.SUPABASE_SERVICE_KEY and not settings.SUPABASE_KEY:
+            logger.error("Nenhuma chave do Supabase está configurada")
+            return None
+        
         # Inicializar cliente Supabase com chave de serviço
-        supabase = get_supabase_client(use_service_role=True)
+        try:
+            supabase = get_supabase_client(use_service_role=True)
+        except ValueError as e:
+            logger.error(f"Erro ao criar cliente Supabase: {str(e)}")
+            # Tentar com a chave normal se a chave de serviço falhar
+            try:
+                logger.info("Tentando com a chave normal do Supabase")
+                supabase = get_supabase_client(use_service_role=False)
+            except ValueError as e:
+                logger.error(f"Erro ao criar cliente Supabase com chave normal: {str(e)}")
+                return None
         
         # Verificar se file_data é um objeto UploadedFile do Django ou dados binários
         if hasattr(file_data, 'read') and callable(file_data.read):
@@ -73,20 +114,43 @@ def upload_file(file_data, file_name, auth_token=None, content_type=None):
             # Já são dados binários
             file_content = file_data
         
-        # Upload do arquivo
-        result = supabase.storage.from_(bucket_name).upload(
-            path=unique_file_name,
-            file=file_content,
-            file_options={"contentType": content_type}
-        )
+        # Verificar se temos dados para upload
+        if not file_content:
+            logger.error("Nenhum conteúdo de arquivo para upload")
+            return None
+            
+        # Verificar se temos content_type
+        if not content_type:
+            # Tentar inferir do nome do arquivo
+            if file_ext.lower() in ['.jpg', '.jpeg']:
+                content_type = 'image/jpeg'
+            elif file_ext.lower() == '.png':
+                content_type = 'image/png'
+            elif file_ext.lower() == '.gif':
+                content_type = 'image/gif'
+            else:
+                content_type = 'application/octet-stream'
+                
+        logger.info(f"Fazendo upload com content_type: {content_type}")
         
-        if result:
-            # Gerar URL pública
-            public_url = supabase.storage.from_(bucket_name).get_public_url(unique_file_name)
-            logger.info(f"Upload concluído com sucesso. URL: {public_url}")
-            return public_url
-        else:
-            logger.error("Falha no upload: resposta inválida")
+        # Upload do arquivo
+        try:
+            result = supabase.storage.from_(bucket_name).upload(
+                path=unique_file_name,
+                file=file_content,
+                file_options={"contentType": content_type}
+            )
+            
+            if result:
+                # Gerar URL pública
+                public_url = supabase.storage.from_(bucket_name).get_public_url(unique_file_name)
+                logger.info(f"Upload concluído com sucesso. URL: {public_url}")
+                return public_url
+            else:
+                logger.error("Falha no upload: resposta inválida")
+                return None
+        except Exception as e:
+            logger.error(f"Erro durante o upload para o Supabase: {str(e)}")
             return None
             
     except Exception as e:
