@@ -8,8 +8,10 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.db import transaction
 from django.utils import timezone
+from django.db.models import Q
+from decimal import Decimal
 
-from ..models import AbastecimentoPendente, Caminhao, Contato
+from ..models import AbastecimentoPendente, Caminhao, Contato, Frete, Empresa
 
 # Constantes
 COMBUSTIVEL_CHOICES = [
@@ -80,16 +82,23 @@ def motorista_dashboard(request):
     # Buscar abastecimentos pendentes
     abastecimentos_pendentes = AbastecimentoPendente.objects.filter(motorista=motorista).order_by('-data_solicitacao')
     
-    # Buscar caminhão atual do motorista
+    # Buscar caminhão atual do motorista e a empresa associada
+    empresa = None
     try:
         caminhao_atual = motorista.perfil.caminhao_atual
+        if caminhao_atual:
+            # Obter a empresa do usuário dono do caminhão
+            empresas = Empresa.objects.filter(usuario=caminhao_atual.usuario)
+            if empresas.exists():
+                empresa = empresas.first()
     except:
         caminhao_atual = None
     
     return render(request, 'motorista/dashboard.html', {
         'motorista': motorista,
         'abastecimentos_pendentes': abastecimentos_pendentes[:5],
-        'caminhao_atual': caminhao_atual
+        'caminhao_atual': caminhao_atual,
+        'empresa': empresa
     })
 
 
@@ -125,36 +134,52 @@ def detalhe_abastecimento_pendente(request, pk):
 @login_required
 @motorista_required
 def criar_abastecimento_pendente(request):
-    """Permite que o motorista crie um novo pedido de abastecimento"""
+    """Permite que o motorista crie um novo abastecimento pendente"""
     motorista = request.user
     
-    # Formulário foi enviado
+    # Obter o caminhão atual do motorista
+    try:
+        caminhao = motorista.perfil.caminhao_atual
+    except:
+        messages.error(request, 'Você não possui um caminhão associado!')
+        return redirect('motorista:dashboard')
+    
     if request.method == 'POST':
         try:
             # Extrair dados do formulário
+            posto_id = request.POST.get('posto')
             data = request.POST.get('data')
-            id_posto = request.POST.get('posto')
             combustivel = request.POST.get('combustivel')
             litros = request.POST.get('litros')
             valor_litro = request.POST.get('valor_litro')
-            valor_total = request.POST.get('valor_total')
             km_atual = request.POST.get('km_atual')
             observacao = request.POST.get('observacao')
+            frete_id = request.POST.get('frete')
             
             # Validações básicas
-            if not data or not id_posto or not combustivel or not litros or not valor_litro or not valor_total or not km_atual:
+            if not posto_id or not data or not combustivel or not litros or not valor_litro or not km_atual:
                 messages.error(request, 'Todos os campos obrigatórios devem ser preenchidos!')
                 return redirect('motorista:criar_abastecimento_pendente')
             
-            # Buscar objetos relacionados
-            posto = get_object_or_404(Contato, id=id_posto, tipo='POSTO')
-            
-            # Identificar caminhão atual do motorista
-            if hasattr(motorista, 'perfil') and motorista.perfil.caminhao_atual:
-                caminhao = motorista.perfil.caminhao_atual
-            else:
-                messages.error(request, 'Você não possui um caminhão associado ao seu perfil!')
+            # Converter valores
+            try:
+                litros = Decimal(litros.replace(',', '.'))
+                valor_litro = Decimal(valor_litro.replace(',', '.'))
+                km_atual = int(km_atual)
+            except:
+                messages.error(request, 'Valores inválidos! Verifique os campos numéricos.')
                 return redirect('motorista:criar_abastecimento_pendente')
+            
+            # Obter objetos relacionados
+            posto = get_object_or_404(Contato, id=posto_id, tipo='POSTO')
+            
+            # Verificar se o frete foi selecionado
+            frete = None
+            if frete_id:
+                frete = get_object_or_404(Frete, id=frete_id, caminhao=caminhao)
+            
+            # Calcular valor total
+            valor_total = litros * valor_litro
             
             # Criar o abastecimento pendente
             abastecimento = AbastecimentoPendente.objects.create(
@@ -167,26 +192,30 @@ def criar_abastecimento_pendente(request):
                 valor_litro=valor_litro,
                 valor_total=valor_total,
                 km_atual=km_atual,
-                observacao=observacao
+                observacao=observacao,
+                frete=frete
             )
             
-            # Processar upload de comprovante se enviado
-            if 'comprovante' in request.FILES:
-                abastecimento.comprovante = request.FILES['comprovante']
-                abastecimento.save()
-            
-            messages.success(request, 'Solicitação de abastecimento criada com sucesso!')
+            messages.success(request, 'Abastecimento cadastrado com sucesso! Aguarde a aprovação.')
             return redirect('motorista:listar_abastecimentos_pendentes')
             
         except Exception as e:
-            messages.error(request, f'Erro ao criar solicitação: {str(e)}')
+            messages.error(request, f'Erro ao cadastrar abastecimento: {str(e)}')
     
-    # Carregar formulário
-    postos = Contato.objects.filter(tipo='POSTO')
+    # Obter postos para o formulário - CORRIGIDO: Mostrar apenas postos do administrador e os criados pelo motorista
+    admin_usuario = caminhao.usuario
+    postos = Contato.objects.filter(
+        tipo='POSTO'
+    ).filter(
+        Q(usuario=admin_usuario) | Q(usuario=motorista)
+    ).order_by('nome_completo')
+    
+    # Obter fretes recentes para o formulário
+    fretes = Frete.objects.filter(caminhao=caminhao).order_by('-data_saida')[:20]
     
     return render(request, 'motorista/abastecimentos/novo.html', {
         'postos': postos,
-        'combustiveis': COMBUSTIVEL_CHOICES
+        'fretes': fretes
     })
 
 
@@ -324,3 +353,55 @@ def contato_novo_motorista(request):
             return render(request, 'motorista/contatos/contato_form.html', {'contato': request.POST})
     
     return render(request, 'motorista/contatos/contato_form.html')
+
+
+@login_required
+@motorista_required
+def criar_posto(request):
+    """Permite que o motorista cadastre um novo posto de combustível"""
+    motorista = request.user
+    
+    if request.method == 'POST':
+        try:
+            # Extrair dados do formulário
+            nome_completo = request.POST.get('nome_completo')
+            nome_fantasia = request.POST.get('nome_fantasia')
+            telefone = request.POST.get('telefone')
+            email = request.POST.get('email')
+            cnpj = request.POST.get('cnpj')
+            inscricao_estadual = request.POST.get('inscricao_estadual')
+            endereco = request.POST.get('endereco')
+            cidade = request.POST.get('cidade')
+            estado = request.POST.get('estado')
+            cep = request.POST.get('cep')
+            observacoes = request.POST.get('observacoes')
+            
+            # Validações básicas
+            if not nome_completo:
+                messages.error(request, 'O nome do posto é obrigatório!')
+                return redirect('motorista:criar_posto')
+            
+            # Criar o posto como um contato do tipo POSTO
+            posto = Contato.objects.create(
+                usuario=motorista.perfil.caminhao_atual.usuario,  # Associar ao dono do caminhão
+                tipo='POSTO',
+                nome_completo=nome_completo,
+                nome_fantasia=nome_fantasia,
+                telefone=telefone,
+                email=email,
+                cnpj=cnpj,
+                inscricao_estadual=inscricao_estadual,
+                endereco=endereco,
+                cidade=cidade,
+                estado=estado,
+                cep=cep,
+                observacoes=observacoes
+            )
+            
+            messages.success(request, 'Posto cadastrado com sucesso!')
+            return redirect('motorista:criar_abastecimento_pendente')
+            
+        except Exception as e:
+            messages.error(request, f'Erro ao cadastrar posto: {str(e)}')
+    
+    return render(request, 'motorista/contatos/novo_posto.html')

@@ -3,82 +3,113 @@
 {% block title %}Novo Abastecimento - Área do Motorista{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid px-2 px-md-4">
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Novo Abastecimento</h1>
+        <h1 class="h2">Registrar Abastecimento</h1>
     </div>
 
     <div class="row justify-content-center">
-        <div class="col-lg-8">
+        <div class="col-12 col-lg-10">
             <div class="card shadow-sm">
-                <div class="card-body">
-                    <form method="post" action="{% url 'motorista:criar_abastecimento_pendente' %}" enctype="multipart/form-data" id="formAbastecimento">
+                <div class="card-body p-2 p-md-4">
+                    <form method="post" action="{% url 'motorista:criar_abastecimento_pendente' %}" id="formAbastecimento" enctype="multipart/form-data">
                         {% csrf_token %}
                         
-                        <div class="row mb-3">
-                            <div class="col-md-6">
+                        <div class="row g-3 mb-3">
+                            <div class="col-12 col-md-6">
                                 <label for="data" class="form-label">Data do Abastecimento</label>
-                                <input type="date" class="form-control" id="data" name="data" required max="{{ today|date:'Y-m-d' }}">
+                                <input type="date" class="form-control" id="data" name="data" required>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label for="posto" class="form-label">Posto</label>
-                                <select class="form-select" id="posto" name="posto" required>
-                                    <option value="">Selecione o posto</option>
-                                    {% for posto in postos %}
-                                    <option value="{{ posto.id }}">{{ posto.nome_fantasia|default:posto.nome_completo }}</option>
-                                    {% endfor %}
-                                </select>
+                                <div class="input-group">
+                                    <select class="form-select" id="posto" name="posto" required>
+                                        <option value="">Selecione o posto</option>
+                                        {% for posto in postos %}
+                                        <option value="{{ posto.id }}">{{ posto.nome_fantasia|default:posto.nome_completo }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <a href="{% url 'motorista:criar_posto' %}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-plus-circle"></i> <span class="d-none d-md-inline">Novo</span>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="row mb-3">
-                            <div class="col-md-6">
+                        <div class="row g-3 mb-3">
+                            <div class="col-12 col-md-6">
                                 <label for="combustivel" class="form-label">Combustível</label>
                                 <select class="form-select" id="combustivel" name="combustivel" required>
                                     <option value="">Selecione o combustível</option>
-                                    {% for valor, nome in combustiveis %}
-                                    <option value="{{ valor }}">{{ nome }}</option>
-                                    {% endfor %}
+                                    <option value="DIESEL_S10">Diesel S10</option>
+                                    <option value="DIESEL_S500">Diesel S500</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label for="km_atual" class="form-label">Quilometragem Atual</label>
-                                <input type="number" class="form-control" id="km_atual" name="km_atual" required min="0">
+                                <input type="number" class="form-control" id="km_atual" name="km_atual" required>
                             </div>
                         </div>
                         
-                        <div class="row mb-3">
-                            <div class="col-md-4">
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
                                 <label for="litros" class="form-label">Litros</label>
-                                <input type="number" class="form-control" id="litros" name="litros" required step="0.01" min="0.01" onchange="calcularTotal()">
+                                <input type="text" class="form-control" id="litros" name="litros" required>
                             </div>
-                            <div class="col-md-4">
-                                <label for="valor_litro" class="form-label">Valor por Litro (R$)</label>
-                                <input type="number" class="form-control" id="valor_litro" name="valor_litro" required step="0.01" min="0.01" onchange="calcularTotal()">
-                            </div>
-                            <div class="col-md-4">
-                                <label for="valor_total" class="form-label">Valor Total (R$)</label>
-                                <input type="number" class="form-control" id="valor_total" name="valor_total" required step="0.01" min="0.01">
+                            <div class="col-6">
+                                <label for="valor_litro" class="form-label">Valor por Litro</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="text" class="form-control" id="valor_litro" name="valor_litro" required>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="comprovante" class="form-label">Comprovante</label>
-                            <input type="file" class="form-control" id="comprovante" name="comprovante" accept="image/*">
-                            <div class="form-text">Envie uma foto ou imagem escaneada do comprovante (opcional, mas recomendado)</div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-12">
+                                <label for="valor_total" class="form-label">Valor Total</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="text" class="form-control" id="valor_total" name="valor_total" readonly>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="observacao" class="form-label">Observações</label>
-                            <textarea class="form-control" id="observacao" name="observacao" rows="3"></textarea>
+                        <div class="row g-3 mb-3">
+                            <div class="col-12">
+                                <label for="frete" class="form-label">Frete Associado (opcional)</label>
+                                <select class="form-select" id="frete" name="frete">
+                                    <option value="">Nenhum frete associado</option>
+                                    {% for frete in fretes %}
+                                    <option value="{{ frete.id }}">
+                                        #{{ frete.id }} - {{ frete.origem }} → {{ frete.destino }} ({{ frete.data_saida|date:"d/m/Y" }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Selecione um frete se este abastecimento está relacionado a uma viagem específica</div>
+                            </div>
                         </div>
                         
-                        <div class="d-flex justify-content-between mt-4">
-                            <a href="{% url 'motorista:listar_abastecimentos_pendentes' %}" class="btn btn-outline-secondary">
+                        <div class="row g-3 mb-3">
+                            <div class="col-12">
+                                <label for="comprovante" class="form-label">Comprovante (opcional)</label>
+                                <input type="file" class="form-control" id="comprovante" name="comprovante">
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mb-3">
+                            <div class="col-12">
+                                <label for="observacao" class="form-label">Observações (opcional)</label>
+                                <textarea class="form-control" id="observacao" name="observacao" rows="3"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex flex-column flex-md-row justify-content-between mt-4">
+                            <a href="{% url 'motorista:listar_abastecimentos_pendentes' %}" class="btn btn-outline-secondary mb-2 mb-md-0">
                                 <i class="bi bi-arrow-left me-1"></i> Voltar
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check2-circle me-1"></i> Salvar Abastecimento
+                                <i class="bi bi-check2-circle me-1"></i> Registrar Abastecimento
                             </button>
                         </div>
                     </form>
@@ -91,32 +122,62 @@
 
 {% block extra_js %}
 <script>
-    function calcularTotal() {
-        const litros = parseFloat(document.getElementById('litros').value) || 0;
-        const valorLitro = parseFloat(document.getElementById('valor_litro').value) || 0;
-        const valorTotal = (litros * valorLitro).toFixed(2);
-        
-        document.getElementById('valor_total').value = valorTotal;
-    }
-    
-    // Também calcular quando o valor total é alterado
-    document.getElementById('valor_total').addEventListener('change', function() {
-        const litros = parseFloat(document.getElementById('litros').value) || 0;
-        if (litros > 0) {
-            const valorTotal = parseFloat(this.value) || 0;
-            document.getElementById('valor_litro').value = (valorTotal / litros).toFixed(2);
-        }
-    });
-    
-    // Limitar a data de abastecimento para não ser futura
     document.addEventListener('DOMContentLoaded', function() {
-        const hoje = new Date();
-        const ano = hoje.getFullYear();
-        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-        const dia = String(hoje.getDate()).padStart(2, '0');
-        const dataHoje = `${ano}-${mes}-${dia}`;
+        const litrosInput = document.getElementById('litros');
+        const valorLitroInput = document.getElementById('valor_litro');
+        const valorTotalInput = document.getElementById('valor_total');
         
-        document.getElementById('data').setAttribute('max', dataHoje);
+        // Função para calcular o valor total
+        function calcularValorTotal() {
+            const litros = parseFloat(litrosInput.value.replace(',', '.')) || 0;
+            const valorLitro = parseFloat(valorLitroInput.value.replace(',', '.')) || 0;
+            const valorTotal = litros * valorLitro;
+            
+            valorTotalInput.value = valorTotal.toFixed(2).replace('.', ',');
+        }
+        
+        // Adicionar event listeners para recalcular o valor total
+        litrosInput.addEventListener('input', calcularValorTotal);
+        valorLitroInput.addEventListener('input', calcularValorTotal);
+        
+        // Formatação de valores monetários
+        valorLitroInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            if (value.length > 2) {
+                value = value.substring(0, value.length - 2) + ',' + value.substring(value.length - 2);
+            } else if (value.length === 2) {
+                value = '0,' + value;
+            } else if (value.length === 1) {
+                value = '0,0' + value;
+            } else {
+                value = '0,00';
+            }
+            
+            e.target.value = value;
+            calcularValorTotal();
+        });
+        
+        // Formatação de quantidade de litros
+        litrosInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^\d,]/g, '');
+            
+            // Garantir que só tenha uma vírgula
+            const commaCount = (value.match(/,/g) || []).length;
+            if (commaCount > 1) {
+                const parts = value.split(',');
+                value = parts[0] + ',' + parts.slice(1).join('');
+            }
+            
+            e.target.value = value;
+            calcularValorTotal();
+        });
+        
+        // Definir a data atual como padrão
+        const dataInput = document.getElementById('data');
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0];
+        dataInput.value = formattedDate;
     });
 </script>
 {% endblock %}

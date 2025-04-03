@@ -5,7 +5,7 @@ from django.db import transaction
 from django.http import JsonResponse
 from django.db.models import Count
 
-from ..models import AbastecimentoPendente, Abastecimento
+from ..models import AbastecimentoPendente, Abastecimento, Contato
 from ..views.motoristas import is_admin
 
 
@@ -83,17 +83,34 @@ def aprovar_abastecimento(request, id):
     if request.method == 'POST':
         try:
             with transaction.atomic():
+                # Extrair dados do formulário
+                id_motorista = request.POST.get('motorista')
+                situacao = request.POST.get('situacao')
+                data_vencimento = request.POST.get('data_vencimento')
+                data_pagamento = request.POST.get('data_pagamento', None)
+                
+                # Validar dados
+                if not id_motorista or not situacao or not data_vencimento:
+                    messages.error(request, 'Todos os campos obrigatórios devem ser preenchidos!')
+                    return redirect('core:aprovar_abastecimento', id=id)
+                
+                # Obter objetos relacionados
+                motorista = get_object_or_404(Contato, id=id_motorista, tipo='MOTORISTA', usuario=request.user)
+                
                 # Criar o abastecimento no sistema
                 abastecimento = Abastecimento.objects.create(
                     caminhao=abastecimento_pendente.caminhao,
                     posto=abastecimento_pendente.posto,
                     data=abastecimento_pendente.data,
-                    situacao='EM_PERCURSO',  # Definindo um valor padrão para situação
+                    situacao=situacao,
+                    tipo_combustivel=abastecimento_pendente.combustivel,  # Transferindo o tipo de combustível
                     litros=abastecimento_pendente.litros,
                     valor_litro=abastecimento_pendente.valor_litro,
-                    motorista=abastecimento_pendente.posto,  # Usando o posto como motorista temporariamente
+                    motorista=motorista,
                     km_abastecimento=abastecimento_pendente.km_atual,
-                    data_vencimento=abastecimento_pendente.data  # Usando a mesma data como vencimento por enquanto
+                    data_vencimento=data_vencimento,
+                    data_pagamento=data_pagamento if data_pagamento else None,
+                    frete=abastecimento_pendente.frete  # Transferindo o frete associado
                 )
                 
                 # Atualizar o status do abastecimento pendente
@@ -106,8 +123,12 @@ def aprovar_abastecimento(request, id):
         except Exception as e:
             messages.error(request, f'Erro ao aprovar abastecimento: {str(e)}')
     
+    # Obter motoristas para o formulário de confirmação
+    motoristas = Contato.objects.filter(tipo='MOTORISTA', usuario=request.user)
+    
     return render(request, 'core/abastecimentos_pendentes/confirmar_aprovacao.html', {
-        'abastecimento': abastecimento_pendente
+        'abastecimento': abastecimento_pendente,
+        'motoristas': motoristas
     })
 
 

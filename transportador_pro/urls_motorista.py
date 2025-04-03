@@ -23,4 +23,5 @@ urlpatterns = [
     # Contatos
     path('contatos/', motorista_views.contatos_motorista, name='contatos'),
     path('contatos/novo/', motorista_views.contato_novo_motorista, name='contato_novo'),
+    path('contatos/novo-posto/', motorista_views.criar_posto, name='criar_posto'),
 ]

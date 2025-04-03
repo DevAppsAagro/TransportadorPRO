@@ -1,0 +1,106 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Confirmar Aprovação de Abastecimento{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Confirmar Aprovação de Abastecimento</h1>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Detalhes do Abastecimento Pendente</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong>Caminhão:</strong> {{ abastecimento.caminhao.placa }} - {{ abastecimento.caminhao.modelo }}</p>
+                            <p><strong>Data:</strong> {{ abastecimento.data|date:"d/m/Y" }}</p>
+                            <p><strong>Posto:</strong> {{ abastecimento.posto.nome_fantasia|default:abastecimento.posto.nome_completo }}</p>
+                            <p><strong>Combustível:</strong> {{ abastecimento.get_combustivel_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Litros:</strong> {{ abastecimento.litros }}</p>
+                            <p><strong>Valor por Litro:</strong> R$ {{ abastecimento.valor_litro }}</p>
+                            <p><strong>Valor Total:</strong> R$ {{ abastecimento.valor_total }}</p>
+                            <p><strong>Quilometragem:</strong> {{ abastecimento.km_atual }} km</p>
+                        </div>
+                    </div>
+
+                    {% if abastecimento.frete %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">Frete Associado</h6>
+                                <p class="mb-0">
+                                    <strong>ID:</strong> {{ abastecimento.frete.id }} | 
+                                    <strong>Origem:</strong> {{ abastecimento.frete.origem }} | 
+                                    <strong>Destino:</strong> {{ abastecimento.frete.destino }} | 
+                                    <strong>Data:</strong> {{ abastecimento.frete.data_saida|date:"d/m/Y" }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if abastecimento.comprovante %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <p><strong>Comprovante:</strong></p>
+                            <img src="{{ abastecimento.comprovante.url }}" class="img-fluid img-thumbnail" style="max-height: 300px;">
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'core:aprovar_abastecimento' abastecimento.id %}">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="motorista" class="form-label">Motorista</label>
+                                <select class="form-select" id="motorista" name="motorista" required>
+                                    <option value="">Selecione o motorista</option>
+                                    {% for motorista in motoristas %}
+                                    <option value="{{ motorista.id }}">{{ motorista.nome_completo }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="situacao" class="form-label">Situação</label>
+                                <select class="form-select" id="situacao" name="situacao" required>
+                                    <option value="EM_PERCURSO">Em Percurso</option>
+                                    <option value="PAGO">Pago</option>
+                                    <option value="VENCIDO">Vencido</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="data_vencimento" class="form-label">Data de Vencimento</label>
+                                <input type="date" class="form-control" id="data_vencimento" name="data_vencimento" required value="{{ abastecimento.data|date:'Y-m-d' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="data_pagamento" class="form-label">Data de Pagamento (opcional)</label>
+                                <input type="date" class="form-control" id="data_pagamento" name="data_pagamento">
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'core:listar_abastecimentos_pendentes' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Voltar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle me-1"></i> Confirmar Aprovação
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

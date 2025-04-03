@@ -10,5 +10,6 @@ from .despesa import Despesa
 from .abastecimento_pendente import AbastecimentoPendente
 from .perfil_usuario import PerfilUsuario
 from .contato import Contato
+from .frete import Frete
 
-__all__ = ['Empresa', 'Categoria', 'Subcategoria', 'Caminhao', 'Abastecimento', 'EstimativaPneus', 'EstimativaManutencao', 'ItemManutencao', 'EstimativaCustoFixo', 'ItemCustoFixo', 'Despesa', 'AbastecimentoPendente', 'PerfilUsuario', 'Contato']
+__all__ = ['Empresa', 'Categoria', 'Subcategoria', 'Caminhao', 'Abastecimento', 'EstimativaPneus', 'EstimativaManutencao', 'ItemManutencao', 'EstimativaCustoFixo', 'ItemCustoFixo', 'Despesa', 'AbastecimentoPendente', 'PerfilUsuario', 'Contato', 'Frete']

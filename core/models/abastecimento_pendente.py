@@ -2,14 +2,12 @@ from django.db import models
 from django.contrib.auth.models import User
 from .caminhao import Caminhao
 from .contato import Contato
+from .frete import Frete
 
 # Definição das opções de combustível
 COMBUSTIVEL_CHOICES = [
-    ('DIESEL', 'Diesel'),
-    ('GASOLINA', 'Gasolina'),
-    ('ETANOL', 'Etanol'),
     ('DIESEL_S10', 'Diesel S10'),
-    ('ARLA_32', 'Arla 32')
+    ('DIESEL_S500', 'Diesel S500'),
 ]
 
 class AbastecimentoPendente(models.Model):
@@ -26,6 +24,13 @@ class AbastecimentoPendente(models.Model):
         Contato,
         on_delete=models.CASCADE,
         limit_choices_to={'tipo': 'POSTO'}
+    )
+    frete = models.ForeignKey(
+        Frete,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Frete Associado'
     )
     
     # Dados do abastecimento

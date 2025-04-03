@@ -16,6 +16,7 @@
         body {
             font-family: 'Roboto', sans-serif;
             background-color: #f8f9fa;
+            padding-bottom: 70px; /* Espaço para o menu de rodapé em dispositivos móveis */
         }
         
         .sidebar {
@@ -77,12 +78,39 @@
             padding: 1rem;
         }
         
+        /* Menu de rodapé para dispositivos móveis */
+        .mobile-footer-menu {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #343a40;
+            z-index: 1030;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .mobile-footer-menu .nav-link {
+            color: #ced4da;
+            text-align: center;
+            padding: 0.75rem 0;
+            font-size: 0.8rem;
+        }
+        
+        .mobile-footer-menu .nav-link i {
+            display: block;
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .mobile-footer-menu .nav-link.active {
+            color: #fff;
+            background-color: rgba(255, 255, 255, .2);
+        }
+        
         @media (max-width: 767.98px) {
             .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-                padding: 0;
+                display: none !important;
             }
             
             .content {
@@ -91,6 +119,14 @@
             
             .sidebar-sticky {
                 height: auto;
+            }
+            
+            .mobile-footer-menu {
+                display: flex;
+            }
+            
+            .navbar-nav .nav-item {
+                display: none; /* Esconder o botão Sair do cabeçalho em dispositivos móveis */
             }
         }
         
@@ -126,19 +162,16 @@
     <!-- Navegação principal -->
     <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
         <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="{% url 'motorista:dashboard' %}">TransportadorPRO</a>
-        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
         <div class="navbar-nav">
             <div class="nav-item text-nowrap">
-                <a class="nav-link px-3" href="{% url 'motorista:logout' %}">Sair <i class="bi bi-box-arrow-right"></i></a>
+                <a class="nav-link px-3" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">Sair <i class="bi bi-box-arrow-right"></i></a>
             </div>
         </div>
     </header>
     
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
+            <!-- Sidebar para desktop -->
             <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
                 <div class="position-sticky sidebar-sticky">
                     <ul class="nav flex-column">
@@ -166,6 +199,45 @@
                 {% include 'motorista/partials/messages.html' %}
                 {% block content %}{% endblock %}
             </main>
+        </div>
+    </div>
+    
+    <!-- Menu de rodapé para dispositivos móveis -->
+    <nav class="mobile-footer-menu">
+        <a class="nav-link flex-fill {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'motorista:dashboard' %}">
+            <i class="bi bi-speedometer2"></i>
+            <span>Dashboard</span>
+        </a>
+        <a class="nav-link flex-fill {% if 'abastecimentos' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'motorista:listar_abastecimentos_pendentes' %}">
+            <i class="bi bi-fuel-pump"></i>
+            <span>Abastecimentos</span>
+        </a>
+        <a class="nav-link flex-fill {% if request.resolver_match.url_name == 'perfil' %}active{% endif %}" href="{% url 'motorista:perfil' %}">
+            <i class="bi bi-person-circle"></i>
+            <span>Perfil</span>
+        </a>
+        <a class="nav-link flex-fill" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Sair</span>
+        </a>
+    </nav>
+    
+    <!-- Modal de Confirmação de Logout -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logoutModalLabel">Confirmar Saída</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja sair do sistema?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <a href="{% url 'motorista:logout' %}" class="btn btn-danger">Sair</a>
+                </div>
+            </div>
         </div>
     </div>
     
