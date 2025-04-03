@@ -553,6 +553,9 @@
                                 <th>Cliente</th>
                                 <th>Origem</th>
                                 <th>Destino</th>
+                                <th>Tipo de Carga</th>
+                                <th>Peso (kg)</th>
+                                <th>Valor Unit. (R$)</th>
                                 <th>Km</th>
                                 <th>Valor (R$)</th>
                                 <th>Comissão (R$)</th>
@@ -567,6 +570,9 @@
                                 <td>{{ frete.cliente.nome_completo }}</td>
                                 <td>{{ frete.origem }}</td>
                                 <td>{{ frete.destino }}</td>
+                                <td>{{ frete.carga.nome }}</td>
+                                <td class="valor-monetario">{{ frete.peso_carga|floatformat:2|intcomma }}</td>
+                                <td class="valor-monetario">{{ frete.valor_unitario|floatformat:2|intcomma }}</td>
                                 <td class="valor-monetario">{{ frete.km_total|intcomma }}</td>
                                 <td class="valor-monetario">{{ frete.valor_total|floatformat:2|intcomma }}</td>
                                 <td class="valor-monetario">{{ frete.valor_comissao_motorista|floatformat:2|intcomma }}</td>
@@ -584,12 +590,14 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="9" class="text-center">Nenhum frete registrado para este veículo.</td>
+                                <td colspan="12" class="text-center">Nenhum frete registrado para este veículo.</td>
                             </tr>
                             {% endfor %}
                             {% if fretes %}
                             <tr class="total-row">
-                                <td colspan="5"><strong>Total</strong></td>
+                                <td colspan="6"><strong>Total</strong></td>
+                                <td class="valor-monetario"><strong>{{ total_peso|default:"0"|floatformat:2|intcomma }}</strong></td>
+                                <td></td>
                                 <td class="valor-monetario"><strong>{{ km_total|intcomma }}</strong></td>
                                 <td class="valor-monetario"><strong>{{ receita_total|floatformat:2|intcomma }}</strong></td>
                                 <td class="valor-monetario"><strong>{{ comissao_total|floatformat:2|intcomma }}</strong></td>

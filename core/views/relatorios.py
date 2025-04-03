@@ -68,6 +68,11 @@ def relatorio_veiculo(request):
             # Calcula a quilometragem total no período
             km_total = sum(frete.km_total for frete in fretes)
             
+            # Calcula o peso total das cargas no período
+            total_peso = fretes.aggregate(
+                total=Coalesce(Sum('peso_carga'), Decimal('0'))
+            )['total']
+            
             # Calcula a receita total (valor total dos fretes)
             receita_total = fretes.aggregate(
                 total=Coalesce(Sum('valor_total'), Decimal('0'))
@@ -365,6 +370,7 @@ def relatorio_veiculo(request):
                 'dias_periodo': dias_periodo,
                 'fretes': fretes,
                 'km_total': km_total,
+                'total_peso': total_peso,
                 'receita_total': receita_total,
                 'comissao_total': comissao_total,
                 'total_diesel': total_diesel,
@@ -431,6 +437,11 @@ def relatorio_veiculo_print(request):
             
             # Calcula a quilometragem total no período
             km_total = sum(frete.km_total for frete in fretes)
+            
+            # Calcula o peso total das cargas no período
+            total_peso = fretes.aggregate(
+                total=Coalesce(Sum('peso_carga'), Decimal('0'))
+            )['total']
             
             # Calcula a receita total (valor total dos fretes)
             receita_total = fretes.aggregate(
@@ -741,6 +752,7 @@ def relatorio_veiculo_print(request):
                 'dias_periodo': dias_periodo,
                 'fretes': fretes,
                 'km_total': km_total,
+                'total_peso': total_peso,
                 'receita_total': receita_total,
                 'comissao_total': comissao_total,
                 'total_diesel': total_diesel,
