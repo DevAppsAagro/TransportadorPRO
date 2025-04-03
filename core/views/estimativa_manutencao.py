@@ -24,7 +24,7 @@ def estimativa_manutencao_list(request):
 
 @login_required
 def estimativa_manutencao_create(request):
-    conjuntos = Conjunto.objects.all()
+    conjuntos = Conjunto.objects.filter(usuario=request.user)
     today = datetime.date.today().strftime('%Y-%m-%d')
     
     if request.method == 'POST':
@@ -77,7 +77,7 @@ def estimativa_manutencao_create(request):
 @login_required
 def estimativa_manutencao_edit(request, pk):
     estimativa = get_object_or_404(EstimativaManutencao, pk=pk)
-    conjuntos = Conjunto.objects.all()
+    conjuntos = Conjunto.objects.filter(usuario=request.user)
     itens = estimativa.itens_manutencao.all()
     
     if request.method == 'POST':

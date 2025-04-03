@@ -18,6 +18,15 @@ from core.models.empresa import Empresa
 import json
 from django.db.models import Q
 from core.models.contato import Contato
+from django.template.defaulttags import register
+
+# Registrar filtro personalizado para divisão
+@register.filter
+def div(value, arg):
+    try:
+        return Decimal(value) / Decimal(arg)
+    except (ValueError, ZeroDivisionError):
+        return Decimal('0')
 
 @login_required
 def relatorios(request):
@@ -201,6 +210,27 @@ def relatorio_veiculo(request):
                 total=Coalesce(Sum('valor'), Decimal('0'))
             )['total']
             
+            # Adicionar os gastos com abastecimento aos custos variáveis
+            total_abastecimentos = abastecimentos.aggregate(
+                total=Coalesce(Sum('total_valor'), Decimal('0'))
+            )['total']
+            
+            # Calcular o total de litros abastecidos
+            total_litros = abastecimentos.aggregate(
+                total=Coalesce(Sum('litros'), Decimal('0'))
+            )['total']
+            
+            # Adicionar abastecimentos ao dicionário de despesas por categoria
+            if total_abastecimentos > 0:
+                if 'Combustível' not in despesas_por_categoria:
+                    despesas_por_categoria['Combustível'] = {}
+                if 'Diesel' not in despesas_por_categoria['Combustível']:
+                    despesas_por_categoria['Combustível']['Diesel'] = Decimal('0')
+                despesas_por_categoria['Combustível']['Diesel'] += total_abastecimentos
+                
+                # Atualizar o total de custos variáveis
+                total_custos_variaveis += total_abastecimentos
+            
             # Calcula os totais e métricas finais
             total_custos = total_custos_fixos_estimados + total_custos_variaveis
             
@@ -215,10 +245,116 @@ def relatorio_veiculo(request):
                 custo_total_km = total_custos / Decimal(km_total)
             
             # Lucro operacional (sem considerar custos fixos)
-            lucro_operacional = receita_total - total_custos_variaveis - comissao_total
+            lucro_operacional = receita_total - total_custos_variaveis
             
             # Lucro líquido (considerando todos os custos)
-            lucro_liquido = receita_total - total_custos - comissao_total
+            lucro_liquido = receita_total - total_custos
+            
+            # Preparar listas formatadas para o template
+            custos_fixos = []
+            total_custos_fixos_mensal = Decimal('0')
+            
+            # Adicionar itens de custo fixo
+            if custos_fixos_estimados.get('depreciacao_caminhao', Decimal('0')) > 0:
+                valor_periodo = custos_fixos_estimados['depreciacao_caminhao']
+                valor_mensal = valor_periodo / (dias_periodo / Decimal('30')) if dias_periodo > 0 else Decimal('0')
+                total_custos_fixos_mensal += valor_mensal
+                custos_fixos.append({
+                    'nome': 'Depreciação do Caminhão',
+                    'is_category': False,
+                    'valor_mensal': valor_mensal,
+                    'valor_periodo': valor_periodo,
+                    'percentual': (valor_periodo / total_custos) * 100 if total_custos > 0 else Decimal('0')
+                })
+            
+            if custos_fixos_estimados.get('depreciacao_carreta', Decimal('0')) > 0:
+                valor_periodo = custos_fixos_estimados['depreciacao_carreta']
+                valor_mensal = valor_periodo / (dias_periodo / Decimal('30')) if dias_periodo > 0 else Decimal('0')
+                total_custos_fixos_mensal += valor_mensal
+                custos_fixos.append({
+                    'nome': 'Depreciação da Carreta',
+                    'is_category': False,
+                    'valor_mensal': valor_mensal,
+                    'valor_periodo': valor_periodo,
+                    'percentual': (valor_periodo / total_custos) * 100 if total_custos > 0 else Decimal('0')
+                })
+            
+            if custos_fixos_estimados.get('seguro', Decimal('0')) > 0:
+                valor_periodo = custos_fixos_estimados['seguro']
+                valor_mensal = valor_periodo / (dias_periodo / Decimal('30')) if dias_periodo > 0 else Decimal('0')
+                total_custos_fixos_mensal += valor_mensal
+                custos_fixos.append({
+                    'nome': 'Seguro e Outros Custos Fixos',
+                    'is_category': False,
+                    'valor_mensal': valor_mensal,
+                    'valor_periodo': valor_periodo,
+                    'percentual': (valor_periodo / total_custos) * 100 if total_custos > 0 else Decimal('0')
+                })
+            
+            if custos_fixos_estimados.get('manutencao', Decimal('0')) > 0:
+                valor_periodo = custos_fixos_estimados['manutencao']
+                valor_mensal = valor_periodo / (dias_periodo / Decimal('30')) if dias_periodo > 0 else Decimal('0')
+                total_custos_fixos_mensal += valor_mensal
+                custos_fixos.append({
+                    'nome': 'Manutenção Planejada',
+                    'is_category': False,
+                    'valor_mensal': valor_mensal,
+                    'valor_periodo': valor_periodo,
+                    'percentual': (valor_periodo / total_custos) * 100 if total_custos > 0 else Decimal('0')
+                })
+            
+            if custos_fixos_estimados.get('pneus', Decimal('0')) > 0:
+                valor_periodo = custos_fixos_estimados['pneus']
+                valor_mensal = valor_periodo / (dias_periodo / Decimal('30')) if dias_periodo > 0 else Decimal('0')
+                total_custos_fixos_mensal += valor_mensal
+                custos_fixos.append({
+                    'nome': 'Pneus',
+                    'is_category': False,
+                    'valor_mensal': valor_mensal,
+                    'valor_periodo': valor_periodo,
+                    'percentual': (valor_periodo / total_custos) * 100 if total_custos > 0 else Decimal('0')
+                })
+            
+            if custos_fixos_estimados.get('administrativo', Decimal('0')) > 0:
+                valor_periodo = custos_fixos_estimados['administrativo']
+                valor_mensal = valor_periodo / (dias_periodo / Decimal('30')) if dias_periodo > 0 else Decimal('0')
+                total_custos_fixos_mensal += valor_mensal
+                custos_fixos.append({
+                    'nome': 'Custos Administrativos',
+                    'is_category': False,
+                    'valor_mensal': valor_mensal,
+                    'valor_periodo': valor_periodo,
+                    'percentual': (valor_periodo / total_custos) * 100 if total_custos > 0 else Decimal('0')
+                })
+            
+            # Preparar custos variáveis para o template
+            custos_variaveis = []
+            
+            # Adicionar categorias e subcategorias de custos variáveis
+            for categoria_nome, subcategorias in despesas_por_categoria.items():
+                # Adicionar categoria principal
+                total_categoria = sum(subcategorias.values())
+                custos_variaveis.append({
+                    'nome': categoria_nome,
+                    'is_category': True,
+                    'valor_total': total_categoria,
+                    'valor_km': total_categoria / Decimal(km_total) if km_total > 0 else Decimal('0'),
+                    'percentual': (total_categoria / total_custos) * 100 if total_custos > 0 else Decimal('0')
+                })
+                
+                # Adicionar subcategorias
+                for subcategoria_nome, valor in subcategorias.items():
+                    custos_variaveis.append({
+                        'nome': subcategoria_nome,
+                        'is_category': False,
+                        'valor_total': valor,
+                        'valor_km': valor / Decimal(km_total) if km_total > 0 else Decimal('0'),
+                        'percentual': (valor / total_custos) * 100 if total_custos > 0 else Decimal('0')
+                    })
+            
+            # Calcular percentuais para os totais
+            percentual_custos_fixos = (total_custos_fixos_estimados / total_custos) * 100 if total_custos > 0 else Decimal('0')
+            percentual_custos_variaveis = (total_custos_variaveis / total_custos) * 100 if total_custos > 0 else Decimal('0')
             
             # Prepara o contexto para o template
             context = {
@@ -245,6 +381,14 @@ def relatorio_veiculo(request):
                 'lucro_operacional': lucro_operacional,
                 'lucro_liquido': lucro_liquido,
                 'empresa': empresa,
+                'custos_fixos': custos_fixos,
+                'custos_variaveis': custos_variaveis,
+                'total_custos_fixos_mensal': total_custos_fixos_mensal,
+                'percentual_custos_fixos': percentual_custos_fixos,
+                'percentual_custos_variaveis': percentual_custos_variaveis,
+                'total_abastecimentos': total_abastecimentos,
+                'total_litros': total_litros,
+                'abastecimentos': abastecimentos,
             }
             
             return render(request, 'core/relatorios/veiculo_resultado.html', context)
@@ -430,6 +574,27 @@ def relatorio_veiculo_print(request):
                 total=Coalesce(Sum('valor'), Decimal('0'))
             )['total']
             
+            # Adicionar os gastos com abastecimento aos custos variáveis
+            total_abastecimentos = abastecimentos.aggregate(
+                total=Coalesce(Sum('total_valor'), Decimal('0'))
+            )['total']
+            
+            # Calcular o total de litros abastecidos
+            total_litros = abastecimentos.aggregate(
+                total=Coalesce(Sum('litros'), Decimal('0'))
+            )['total']
+            
+            # Adicionar abastecimentos ao dicionário de despesas por categoria
+            if total_abastecimentos > 0:
+                if 'Combustível' not in despesas_por_categoria:
+                    despesas_por_categoria['Combustível'] = {}
+                if 'Diesel' not in despesas_por_categoria['Combustível']:
+                    despesas_por_categoria['Combustível']['Diesel'] = Decimal('0')
+                despesas_por_categoria['Combustível']['Diesel'] += total_abastecimentos
+                
+                # Atualizar o total de custos variáveis
+                total_custos_variaveis += total_abastecimentos
+            
             # Calcula os totais e métricas finais
             total_custos = total_custos_fixos_estimados + total_custos_variaveis
             
@@ -457,10 +622,116 @@ def relatorio_veiculo_print(request):
                 lucro_por_km = lucro_bruto / Decimal(km_total)
             
             # Lucro operacional (sem considerar custos fixos)
-            lucro_operacional = receita_total - total_custos_variaveis - comissao_total
+            lucro_operacional = receita_total - total_custos_variaveis
             
             # Lucro líquido (considerando todos os custos)
-            lucro_liquido = receita_total - total_custos - comissao_total
+            lucro_liquido = receita_total - total_custos
+            
+            # Preparar listas formatadas para o template
+            custos_fixos = []
+            total_custos_fixos_mensal = Decimal('0')
+            
+            # Adicionar itens de custo fixo
+            if custos_fixos_estimados.get('depreciacao_caminhao', Decimal('0')) > 0:
+                valor_periodo = custos_fixos_estimados['depreciacao_caminhao']
+                valor_mensal = valor_periodo / (dias_periodo / Decimal('30')) if dias_periodo > 0 else Decimal('0')
+                total_custos_fixos_mensal += valor_mensal
+                custos_fixos.append({
+                    'nome': 'Depreciação do Caminhão',
+                    'is_category': False,
+                    'valor_mensal': valor_mensal,
+                    'valor_periodo': valor_periodo,
+                    'percentual': (valor_periodo / total_custos) * 100 if total_custos > 0 else Decimal('0')
+                })
+            
+            if custos_fixos_estimados.get('depreciacao_carreta', Decimal('0')) > 0:
+                valor_periodo = custos_fixos_estimados['depreciacao_carreta']
+                valor_mensal = valor_periodo / (dias_periodo / Decimal('30')) if dias_periodo > 0 else Decimal('0')
+                total_custos_fixos_mensal += valor_mensal
+                custos_fixos.append({
+                    'nome': 'Depreciação da Carreta',
+                    'is_category': False,
+                    'valor_mensal': valor_mensal,
+                    'valor_periodo': valor_periodo,
+                    'percentual': (valor_periodo / total_custos) * 100 if total_custos > 0 else Decimal('0')
+                })
+            
+            if custos_fixos_estimados.get('seguro', Decimal('0')) > 0:
+                valor_periodo = custos_fixos_estimados['seguro']
+                valor_mensal = valor_periodo / (dias_periodo / Decimal('30')) if dias_periodo > 0 else Decimal('0')
+                total_custos_fixos_mensal += valor_mensal
+                custos_fixos.append({
+                    'nome': 'Seguro e Outros Custos Fixos',
+                    'is_category': False,
+                    'valor_mensal': valor_mensal,
+                    'valor_periodo': valor_periodo,
+                    'percentual': (valor_periodo / total_custos) * 100 if total_custos > 0 else Decimal('0')
+                })
+            
+            if custos_fixos_estimados.get('manutencao', Decimal('0')) > 0:
+                valor_periodo = custos_fixos_estimados['manutencao']
+                valor_mensal = valor_periodo / (dias_periodo / Decimal('30')) if dias_periodo > 0 else Decimal('0')
+                total_custos_fixos_mensal += valor_mensal
+                custos_fixos.append({
+                    'nome': 'Manutenção Planejada',
+                    'is_category': False,
+                    'valor_mensal': valor_mensal,
+                    'valor_periodo': valor_periodo,
+                    'percentual': (valor_periodo / total_custos) * 100 if total_custos > 0 else Decimal('0')
+                })
+            
+            if custos_fixos_estimados.get('pneus', Decimal('0')) > 0:
+                valor_periodo = custos_fixos_estimados['pneus']
+                valor_mensal = valor_periodo / (dias_periodo / Decimal('30')) if dias_periodo > 0 else Decimal('0')
+                total_custos_fixos_mensal += valor_mensal
+                custos_fixos.append({
+                    'nome': 'Pneus',
+                    'is_category': False,
+                    'valor_mensal': valor_mensal,
+                    'valor_periodo': valor_periodo,
+                    'percentual': (valor_periodo / total_custos) * 100 if total_custos > 0 else Decimal('0')
+                })
+            
+            if custos_fixos_estimados.get('administrativo', Decimal('0')) > 0:
+                valor_periodo = custos_fixos_estimados['administrativo']
+                valor_mensal = valor_periodo / (dias_periodo / Decimal('30')) if dias_periodo > 0 else Decimal('0')
+                total_custos_fixos_mensal += valor_mensal
+                custos_fixos.append({
+                    'nome': 'Custos Administrativos',
+                    'is_category': False,
+                    'valor_mensal': valor_mensal,
+                    'valor_periodo': valor_periodo,
+                    'percentual': (valor_periodo / total_custos) * 100 if total_custos > 0 else Decimal('0')
+                })
+            
+            # Preparar custos variáveis para o template
+            custos_variaveis = []
+            
+            # Adicionar categorias e subcategorias de custos variáveis
+            for categoria_nome, subcategorias in despesas_por_categoria.items():
+                # Adicionar categoria principal
+                total_categoria = sum(subcategorias.values())
+                custos_variaveis.append({
+                    'nome': categoria_nome,
+                    'is_category': True,
+                    'valor_total': total_categoria,
+                    'valor_km': total_categoria / Decimal(km_total) if km_total > 0 else Decimal('0'),
+                    'percentual': (total_categoria / total_custos) * 100 if total_custos > 0 else Decimal('0')
+                })
+                
+                # Adicionar subcategorias
+                for subcategoria_nome, valor in subcategorias.items():
+                    custos_variaveis.append({
+                        'nome': subcategoria_nome,
+                        'is_category': False,
+                        'valor_total': valor,
+                        'valor_km': valor / Decimal(km_total) if km_total > 0 else Decimal('0'),
+                        'percentual': (valor / total_custos) * 100 if total_custos > 0 else Decimal('0')
+                    })
+            
+            # Calcular percentuais para os totais
+            percentual_custos_fixos = (total_custos_fixos_estimados / total_custos) * 100 if total_custos > 0 else Decimal('0')
+            percentual_custos_variaveis = (total_custos_variaveis / total_custos) * 100 if total_custos > 0 else Decimal('0')
             
             # Prepara o contexto para o template
             context = {
@@ -518,7 +789,7 @@ def relatorio_veiculo_print(request):
                         'percentual': (custos_fixos_estimados.get('manutencao', 0) / total_custos * 100) if total_custos else 0
                     },
                     {
-                        'nome': 'Pneus Planejados',
+                        'nome': 'Pneus',
                         'is_category': True,
                         'valor_mensal': custos_fixos_estimados.get('pneus', 0) / Decimal(dias_periodo) * 30,
                         'valor_periodo': custos_fixos_estimados.get('pneus', 0),
@@ -574,6 +845,9 @@ def relatorio_veiculo_print(request):
                 'lucro_operacional': lucro_operacional,
                 'lucro_liquido': lucro_liquido,
                 'empresa': empresa,
+                'total_abastecimentos': total_abastecimentos,
+                'total_litros': total_litros,
+                'abastecimentos': abastecimentos,
             }
             
             return render(request, 'core/relatorios/veiculo_resultado_print.html', context)
@@ -754,10 +1028,10 @@ def gerar_relatorio_frete(request, frete):
         custo_total_km = total_custos / Decimal(km_total)
     
     # Lucro operacional (sem considerar custos fixos)
-    lucro_operacional = receita_bruta - total_custos_variaveis - comissao_motorista
+    lucro_operacional = receita_bruta - total_custos_variaveis
     
     # Lucro líquido (considerando todos os custos)
-    lucro_liquido = receita_bruta - total_custos - comissao_motorista
+    lucro_liquido = receita_bruta - total_custos
     
     # Margem de lucro
     margem_lucro = Decimal('0')

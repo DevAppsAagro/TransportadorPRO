@@ -22,7 +22,7 @@ def estimativa_pneus_list(request):
 
 @login_required
 def estimativa_pneus_create(request):
-    conjuntos = Conjunto.objects.all()
+    conjuntos = Conjunto.objects.filter(usuario=request.user)
     today = datetime.date.today().strftime('%Y-%m-%d')
     
     if request.method == 'POST':
@@ -63,7 +63,7 @@ def estimativa_pneus_create(request):
 @login_required
 def estimativa_pneus_edit(request, pk):
     estimativa = get_object_or_404(EstimativaPneus, pk=pk)
-    conjuntos = Conjunto.objects.all()
+    conjuntos = Conjunto.objects.filter(usuario=request.user)
     
     if request.method == 'POST':
         try:

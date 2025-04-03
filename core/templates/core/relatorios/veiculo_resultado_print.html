@@ -482,8 +482,12 @@
                     <div class="metric-value">R$ {{ metricas.receita_por_km|floatformat:2 }}</div>
                 </div>
                 <div class="metric-card">
+                    <div class="metric-title">Quantidade de Fretes</div>
+                    <div class="metric-value">{{ fretes|length }}</div>
+                </div>
+                <div class="metric-card">
                     <div class="metric-title">Custo Fixo por Km</div>
-                    <div class="metric-value">R$ {{ custo_fixo_km|floatformat:2 }}</div>
+                    <div class="metric-value">R$ {% if km_total > 0 %}{{ total_custos_fixos_estimados|div:km_total|floatformat:2 }}{% else %}0.00{% endif %}</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-title">Custo Variável por Km</div>
@@ -556,14 +560,14 @@
                         <tr class="subcategory">
                             <td>{{ custo.nome }}</td>
                             <td class="valor-monetario">{{ custo.valor_mensal|floatformat:2|intcomma }}</td>
-                            <td class="valor-monetario">{{ custo.valor_por_km|floatformat:2 }}</td>
+                            <td class="valor-monetario">{% if km_total > 0 %}{{ custo.valor_periodo|div:km_total|floatformat:2 }}{% else %}0.00{% endif %}</td>
                             <td class="valor-monetario">{{ custo.percentual|floatformat:2 }}%</td>
                         </tr>
                         {% endfor %}
                         <tr class="total-row">
                             <td>Total Custos Fixos</td>
                             <td class="valor-monetario">{{ total_custos_fixos_estimados|floatformat:2|intcomma }}</td>
-                            <td class="valor-monetario">{{ custo_fixo_km|floatformat:2 }}</td>
+                            <td class="valor-monetario">{% if km_total > 0 %}{{ total_custos_fixos_estimados|div:km_total|floatformat:2 }}{% else %}0.00{% endif %}</td>
                             <td class="valor-monetario">{{ percentual_custos_fixos|floatformat:2 }}%</td>
                         </tr>
                         
@@ -580,9 +584,9 @@
                         </tr>
                         {% for custo in custos_variaveis %}
                         <tr class="subcategory">
-                            <td>{{ custo.categoria }}</td>
-                            <td class="valor-monetario">{{ custo.valor_mensal|floatformat:2|intcomma }}</td>
-                            <td class="valor-monetario">{{ custo.valor_por_km|floatformat:2 }}</td>
+                            <td>{{ custo.nome }}</td>
+                            <td class="valor-monetario">{{ custo.valor_total|floatformat:2|intcomma }}</td>
+                            <td class="valor-monetario">{{ custo.valor_km|floatformat:2 }}</td>
                             <td class="valor-monetario">{{ custo.percentual|floatformat:2 }}%</td>
                         </tr>
                         {% endfor %}
@@ -603,6 +607,7 @@
             <table>
                 <thead>
                     <tr>
+                        <th>#</th>
                         <th>Data</th>
                         <th>Cliente</th>
                         <th>Origem → Destino</th>
@@ -615,6 +620,7 @@
                 <tbody>
                     {% for frete in fretes %}
                     <tr>
+                        <td>{{ forloop.counter }}</td>
                         <td>{{ frete.data_saida|date:"d/m/Y" }}</td>
                         <td>{{ frete.cliente.nome_completo }}</td>
                         <td>{{ frete.origem }} → {{ frete.destino }}</td>
@@ -635,12 +641,12 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" style="text-align: center;">Nenhum frete registrado para este veículo.</td>
+                        <td colspan="8" style="text-align: center;">Nenhum frete registrado para este veículo.</td>
                     </tr>
                     {% endfor %}
                     {% if fretes %}
                     <tr class="total-row">
-                        <td colspan="3"><strong>Total</strong></td>
+                        <td colspan="5"><strong>Total</strong></td>
                         <td class="valor-peso" data-peso="{{ km_total }}"><strong>{{ km_total|intcomma }}</strong></td>
                         <td class="valor-monetario" data-valor="{{ receita_total|floatformat:2 }}"><strong>R$ {{ receita_total|floatformat:2|intcomma }}</strong></td>
                         <td class="valor-monetario" data-valor="{{ comissao_total|floatformat:2 }}"><strong>R$ {{ comissao_total|floatformat:2|intcomma }}</strong></td>
@@ -649,6 +655,52 @@
                     {% endif %}
                 </tbody>
             </table>
+        </div>
+
+        <!-- Nova seção para abastecimentos -->
+        <div class="report-section">
+            <h5>Resumo dos Abastecimentos</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm-font">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Data</th>
+                            <th>Posto</th>
+                            <th>Litros</th>
+                            <th>Valor por Litro (R$)</th>
+                            <th>Valor Total (R$)</th>
+                            <th>Km Atual</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for abastecimento in abastecimentos %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ abastecimento.data|date:"d/m/Y" }}</td>
+                            <td>{{ abastecimento.posto }}</td>
+                            <td class="valor-monetario">{{ abastecimento.litros|floatformat:2|intcomma }}</td>
+                            <td class="valor-monetario">{{ abastecimento.valor_litro|floatformat:2|intcomma }}</td>
+                            <td class="valor-monetario">{{ abastecimento.total_valor|floatformat:2|intcomma }}</td>
+                            <td class="valor-monetario">{{ abastecimento.km_atual|intcomma }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">Nenhum abastecimento registrado para este veículo.</td>
+                        </tr>
+                        {% endfor %}
+                        {% if abastecimentos %}
+                        <tr class="total-row">
+                            <td colspan="3"><strong>Total</strong></td>
+                            <td class="valor-monetario"><strong>{{ total_litros|floatformat:2|intcomma }}</strong></td>
+                            <td></td>
+                            <td class="valor-monetario"><strong>{{ total_abastecimentos|floatformat:2|intcomma }}</strong></td>
+                            <td></td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
     
