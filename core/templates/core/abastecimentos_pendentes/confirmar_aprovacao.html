@@ -55,7 +55,7 @@
                     </div>
                     {% endif %}
 
-                    <form method="post" action="{% url 'core:aprovar_abastecimento' abastecimento.id %}">
+                    <form method="post" action="{% url 'core:aprovar_abastecimento' abastecimento.id %}" id="formAprovacao">
                         {% csrf_token %}
                         
                         <div class="row mb-3">
@@ -71,6 +71,7 @@
                             <div class="col-md-6">
                                 <label for="situacao" class="form-label">Situação</label>
                                 <select class="form-select" id="situacao" name="situacao" required>
+                                    <option value="">Selecione a situação</option>
                                     <option value="EM_PERCURSO">Em Percurso</option>
                                     <option value="PAGO">Pago</option>
                                     <option value="VENCIDO">Vencido</option>
@@ -103,4 +104,45 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('formAprovacao');
+        const motoristaSelect = document.getElementById('motorista');
+        const situacaoSelect = document.getElementById('situacao');
+        const dataVencimentoInput = document.getElementById('data_vencimento');
+        
+        form.addEventListener('submit', function(e) {
+            // Verificar se os campos obrigatórios estão preenchidos
+            if (!motoristaSelect.value) {
+                e.preventDefault();
+                alert('Por favor, selecione um motorista.');
+                motoristaSelect.focus();
+                return false;
+            }
+            
+            if (!situacaoSelect.value) {
+                e.preventDefault();
+                alert('Por favor, selecione uma situação.');
+                situacaoSelect.focus();
+                return false;
+            }
+            
+            if (!dataVencimentoInput.value) {
+                e.preventDefault();
+                alert('Por favor, informe a data de vencimento.');
+                dataVencimentoInput.focus();
+                return false;
+            }
+            
+            // Se tudo estiver preenchido, o formulário será enviado normalmente
+            console.log('Formulário validado com sucesso. Enviando dados...');
+            console.log('Motorista:', motoristaSelect.value);
+            console.log('Situação:', situacaoSelect.value);
+            console.log('Data Vencimento:', dataVencimentoInput.value);
+        });
+    });
+</script>
 {% endblock %}

@@ -90,6 +90,7 @@ def aprovar_abastecimento(request, id):
                 
                 # Adicionar mensagens de depuração
                 print(f"Dados do formulário: motorista={id_motorista}, situacao={situacao}, data_vencimento={data_vencimento}")
+                print(f"POST data: {request.POST}")
                 
                 # Validar dados
                 if not id_motorista or not situacao or not data_vencimento:
