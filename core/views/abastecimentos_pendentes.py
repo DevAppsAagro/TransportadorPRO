@@ -84,21 +84,33 @@ def aprovar_abastecimento(request, id):
             with transaction.atomic():
                 # Extrair dados do formulário
                 id_motorista = request.POST.get('motorista')
-                situacao = request.POST.get('situacao')
-                data_vencimento = request.POST.get('data_vencimento')
+                situacao = request.POST.get('situacao', abastecimento_pendente.situacao)
+                data_vencimento = request.POST.get('data_vencimento', abastecimento_pendente.data_vencimento)
                 data_pagamento = request.POST.get('data_pagamento', None)
                 
                 # Adicionar mensagens de depuração
                 print(f"Dados do formulário: motorista={id_motorista}, situacao={situacao}, data_vencimento={data_vencimento}")
                 print(f"POST data: {request.POST}")
                 
-                # Validar dados
-                if not id_motorista or not situacao or not data_vencimento:
-                    messages.error(request, f'Todos os campos obrigatórios devem ser preenchidos! Motorista: {id_motorista}, Situação: {situacao}, Data Vencimento: {data_vencimento}')
-                    return redirect('core:aprovar_abastecimento', id=id)
+                # Variáveis para armazenar os motoristas
+                motorista = None  # Contato do tipo MOTORISTA
+                motorista_user = abastecimento_pendente.motorista  # Usuário motorista que criou o abastecimento
                 
-                # Obter objetos relacionados
-                motorista = get_object_or_404(Contato, id=id_motorista, tipo='MOTORISTA')
+                # Se um motorista foi selecionado no formulário, use-o
+                if id_motorista:
+                    try:
+                        motorista = get_object_or_404(Contato, id=id_motorista, tipo='MOTORISTA')
+                    except Exception as e:
+                        messages.error(request, f'Erro ao obter motorista selecionado: {str(e)}')
+                        return redirect('core:aprovar_abastecimento', id=id)
+                else:
+                    # Tentar encontrar um contato do tipo MOTORISTA associado ao usuário que criou o abastecimento
+                    try:
+                        motorista_contato = Contato.objects.filter(usuario=motorista_user, tipo='MOTORISTA').first()
+                        if motorista_contato:
+                            motorista = motorista_contato
+                    except Exception as e:
+                        print(f"Aviso: Não foi possível encontrar um contato do tipo MOTORISTA para o usuário: {str(e)}")
                 
                 # Criar o abastecimento no sistema
                 abastecimento = Abastecimento.objects.create(
@@ -109,11 +121,13 @@ def aprovar_abastecimento(request, id):
                     tipo_combustivel=abastecimento_pendente.combustivel,  # Transferindo o tipo de combustível
                     litros=abastecimento_pendente.litros,
                     valor_litro=abastecimento_pendente.valor_litro,
-                    motorista=motorista,
+                    motorista=motorista,  # Contato do tipo MOTORISTA (pode ser None)
+                    motorista_user=motorista_user,  # Usuário motorista que criou o abastecimento
                     km_abastecimento=abastecimento_pendente.km_atual,
                     data_vencimento=data_vencimento,
-                    data_pagamento=data_pagamento if data_pagamento else None,
-                    frete=abastecimento_pendente.frete  # Transferindo o frete associado
+                    data_pagamento=abastecimento_pendente.data_pagamento or (data_pagamento if data_pagamento else None),
+                    frete=abastecimento_pendente.frete,  # Transferindo o frete associado
+                    origem_pendente=True  # Marcando que veio de um abastecimento pendente
                 )
                 
                 # Atualizar o status do abastecimento pendente

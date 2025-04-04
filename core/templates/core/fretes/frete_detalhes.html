@@ -336,7 +336,16 @@
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-4 info-label">Data Recebimento:</div>
-                        <div class="col-md-8">{{ frete.data_recebimento|date:"d/m/Y"|default:"Não recebido" }}</div>
+                        <div class="col-md-8">
+                            {% if frete.data_recebimento %}
+                                {{ frete.data_recebimento|date:"d/m/Y" }}
+                            {% else %}
+                                Não recebido
+                                <button type="button" class="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#registrarRecebimentoModal">
+                                    <i class="fas fa-check-circle"></i> Registrar Recebimento
+                                </button>
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-4 info-label">Status Pagamento:</div>
@@ -473,5 +482,31 @@
         </div>
     </div>
     {% endif %}
+</div>
+
+<!-- Modal para Registrar Recebimento -->
+<div class="modal fade" id="registrarRecebimentoModal" tabindex="-1" aria-labelledby="registrarRecebimentoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="registrarRecebimentoModalLabel">Registrar Recebimento do Frete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form action="{% url 'core:registrar_recebimento_frete' id=frete.id %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="data_recebimento" class="form-label">Data de Recebimento</label>
+                        <input type="date" class="form-control" id="data_recebimento" name="data_recebimento" value="{% now 'Y-m-d' %}" required>
+                    </div>
+                    <p class="text-info"><i class="fas fa-info-circle"></i> Ao registrar o recebimento, o status do frete será alterado para "Pago".</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Confirmar Recebimento</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %}

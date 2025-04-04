@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, Avg, F, DecimalField
-from django.db.models.functions import Coalesce
+from django.db.models import Sum, Avg, F, DecimalField, Count, Q, Case, When, Value, IntegerField, Subquery, OuterRef, Exists, FloatField, ExpressionWrapper, DateField, CharField
+from django.db.models.functions import Coalesce, Cast, TruncMonth, TruncYear, TruncDate, ExtractMonth, ExtractYear
 from decimal import Decimal
 from datetime import datetime, timedelta
 from core.models.caminhao import Caminhao
@@ -1288,6 +1288,18 @@ def fluxo_caixa(request):
             total=Coalesce(Sum('valor'), Decimal('0'))
         )['total']
         
+        # Abastecimentos do mês
+        abastecimentos = Abastecimento.objects.filter(
+            caminhao__usuario=request.user,
+            data_vencimento__year=ano_selecionado,
+            data_vencimento__month=mes
+        ).aggregate(
+            total=Coalesce(Sum('total_valor'), Decimal('0'))
+        )['total']
+        
+        # Adicionar abastecimentos às despesas
+        despesas += abastecimentos
+        
         # Adicionar custos fixos estimados se solicitado
         custos_fixos_estimados = Decimal('0')
         if considerar_estimados:
@@ -1324,6 +1336,7 @@ def fluxo_caixa(request):
             }[mes],
             'receitas': receitas,
             'despesas': despesas - custos_fixos_estimados,  # Despesas sem os custos fixos
+            'abastecimentos': abastecimentos,  # Adicionando abastecimentos separadamente
             'custos_fixos_estimados': custos_fixos_estimados,  # Custos fixos separados
             'saldo_mes': saldo_mes,
             'saldo_acumulado': saldo_acumulado
@@ -1457,6 +1470,34 @@ def dre(request):
         total=Sum('valor')
     ).order_by('categoria__nome')
     
+    # === ABASTECIMENTOS ===
+    # Filtro para abastecimentos
+    if regime == 'caixa':
+        # No regime de caixa, considera a data de pagamento
+        filtro_data_abastecimentos = Q(data_pagamento__gte=data_inicio_dt, data_pagamento__lte=data_fim_dt, data_pagamento__isnull=False)
+    else:
+        # No regime de competência, considera a data de vencimento
+        filtro_data_abastecimentos = Q(data_vencimento__gte=data_inicio_dt, data_vencimento__lte=data_fim_dt)
+    
+    # Filtrar abastecimentos pelo usuário logado
+    filtro_usuario_abastecimentos = Q(caminhao__usuario=request.user)
+    
+    # Calcular o total de gastos com abastecimentos
+    total_abastecimentos = Abastecimento.objects.filter(
+        filtro_usuario_abastecimentos, 
+        filtro_data_abastecimentos
+    ).aggregate(
+        total=Coalesce(Sum('total_valor'), Decimal('0'))
+    )['total']
+    
+    # Adicionar abastecimentos às despesas por categoria
+    if total_abastecimentos > 0:
+        despesas_por_categoria = list(despesas_por_categoria)
+        despesas_por_categoria.append({
+            'categoria__nome': 'Combustíveis',
+            'total': total_abastecimentos
+        })
+    
     chart_labels = []
     chart_values = []
     
@@ -1483,8 +1524,8 @@ def dre(request):
         'meses': meses,
         'ano_selecionado': ano_selecionado,
         'mes_selecionado': mes_selecionado,
-        'receitas': {'total': total_receitas},
-        'despesas': {'total': total_despesas},
+        'receitas': {'total': total_receitas, 'fretes': total_receitas},
+        'despesas': {'total': total_despesas, 'abastecimentos': total_abastecimentos},
         'despesas_por_categoria': despesas_por_categoria,
         'resultados': resultados,
         'chart_labels': json.dumps(chart_labels),

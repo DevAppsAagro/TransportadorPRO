@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from decimal import Decimal
 from .caminhao import Caminhao
 from .contato import Contato
@@ -58,7 +59,17 @@ class Abastecimento(models.Model):
         on_delete=models.PROTECT,
         verbose_name='Motorista',
         related_name='abastecimentos_motorista',
-        limit_choices_to={'tipo': 'MOTORISTA'}
+        limit_choices_to={'tipo': 'MOTORISTA'},
+        null=True,
+        blank=True
+    )
+    motorista_user = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        verbose_name='Motorista (Usuário)',
+        related_name='abastecimentos_motorista_user',
+        null=True,
+        blank=True
     )
     posto = models.ForeignKey(
         Contato,
@@ -73,6 +84,11 @@ class Abastecimento(models.Model):
         max_digits=10,
         decimal_places=2,
         editable=False
+    )
+    origem_pendente = models.BooleanField(
+        'Origem Pendente',
+        default=False,
+        help_text='Indica se o abastecimento foi criado a partir de um abastecimento pendente'
     )
 
     def save(self, *args, **kwargs):

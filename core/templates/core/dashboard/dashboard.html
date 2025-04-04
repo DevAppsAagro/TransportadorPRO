@@ -113,8 +113,33 @@
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
-        <div>
-            <span class="text-muted me-3">{{ data_atual|date:"d/m/Y" }} - {{ nome_mes_atual }}/{{ data_atual|date:"Y" }}</span>
+        <div class="d-flex align-items-center">
+            <form method="get" class="d-flex me-3">
+                <div class="input-group">
+                    <select name="mes" class="form-select" style="min-width: 140px;">
+                        <option value="1" {% if mes_atual == 1 %}selected{% endif %}>Janeiro</option>
+                        <option value="2" {% if mes_atual == 2 %}selected{% endif %}>Fevereiro</option>
+                        <option value="3" {% if mes_atual == 3 %}selected{% endif %}>Março</option>
+                        <option value="4" {% if mes_atual == 4 %}selected{% endif %}>Abril</option>
+                        <option value="5" {% if mes_atual == 5 %}selected{% endif %}>Maio</option>
+                        <option value="6" {% if mes_atual == 6 %}selected{% endif %}>Junho</option>
+                        <option value="7" {% if mes_atual == 7 %}selected{% endif %}>Julho</option>
+                        <option value="8" {% if mes_atual == 8 %}selected{% endif %}>Agosto</option>
+                        <option value="9" {% if mes_atual == 9 %}selected{% endif %}>Setembro</option>
+                        <option value="10" {% if mes_atual == 10 %}selected{% endif %}>Outubro</option>
+                        <option value="11" {% if mes_atual == 11 %}selected{% endif %}>Novembro</option>
+                        <option value="12" {% if mes_atual == 12 %}selected{% endif %}>Dezembro</option>
+                    </select>
+                    <select name="ano" class="form-select" style="min-width: 100px;">
+                        {% for ano in anos_disponiveis %}
+                        <option value="{{ ano }}" {% if ano_atual == ano %}selected{% endif %}>{{ ano }}</option>
+                        {% endfor %}
+                    </select>
+                    <!-- Preservar outros parâmetros da URL -->
+                    {% if periodo %}<input type="hidden" name="periodo" value="{{ periodo }}">{% endif %}
+                    <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+                </div>
+            </form>
             <a href="{% url 'core:relatorios' %}" class="btn btn-primary">
                 <i class="bi bi-file-earmark-text"></i> Ver Relatórios
             </a>
@@ -210,79 +235,73 @@
     </div>
 
     <div class="row">
-        <!-- Resumo de Fretes -->
+        <!-- Quilometragem por Caminhão -->
         <div class="col-lg-4">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Resumo de Fretes</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">Quilometragem por Caminhão</h6>
                 </div>
                 <div class="card-body">
-                    <div class="stat-item">
-                        <span class="stat-label">Fretes do Mês:</span>
-                        <span class="stat-value">{{ total_fretes_mes }}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Em Andamento:</span>
-                        <span class="stat-value">{{ fretes_em_andamento }}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Concluídos no Mês:</span>
-                        <span class="stat-value">{{ fretes_concluidos_mes }}</span>
-                    </div>
+                    {% if km_por_caminhao %}
+                        {% for item in km_por_caminhao %}
+                        <div class="stat-item">
+                            <span class="stat-label">{{ item.caminhao }}:</span>
+                            <span class="stat-value">{{ item.km_rodados }} km</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-info">Não há dados de quilometragem para o período selecionado.</div>
+                    {% endif %}
                     <div class="mt-3">
-                        <a href="{% url 'core:fretes' %}" class="btn btn-primary btn-sm">Ver Todos os Fretes</a>
+                        <a href="{% url 'core:fretes' %}" class="btn btn-primary btn-sm">Ver Fretes</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Resumo de Veículos -->
+        <!-- Média de KM/L por Veículo -->
         <div class="col-lg-4">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Resumo de Veículos</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">Média de KM/L por Veículo</h6>
                 </div>
                 <div class="card-body">
-                    <div class="stat-item">
-                        <span class="stat-label">Caminhões Ativos:</span>
-                        <span class="stat-value">{{ total_caminhoes_ativos }}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Carretas Ativas:</span>
-                        <span class="stat-value">{{ total_carretas_ativas }}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Conjuntos Ativos:</span>
-                        <span class="stat-value">{{ total_conjuntos_ativos }}</span>
-                    </div>
+                    {% if media_kml_por_caminhao %}
+                        {% for item in media_kml_por_caminhao %}
+                        <div class="stat-item">
+                            <span class="stat-label">{{ item.caminhao }}:</span>
+                            <span class="stat-value">{{ item.media_kml }} km/l</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-info">Não há dados de consumo para o período selecionado.</div>
+                    {% endif %}
                     <div class="mt-3">
-                        <a href="{% url 'core:conjuntos' %}" class="btn btn-primary btn-sm">Ver Conjuntos</a>
+                        <a href="{% url 'core:abastecimentos' %}" class="btn btn-primary btn-sm">Ver Abastecimentos</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Resumo de Contatos -->
+        <!-- Receitas por Veículo -->
         <div class="col-lg-4">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Resumo de Contatos</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">Receitas por Veículo</h6>
                 </div>
                 <div class="card-body">
-                    <div class="stat-item">
-                        <span class="stat-label">Clientes:</span>
-                        <span class="stat-value">{{ total_clientes }}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Fornecedores:</span>
-                        <span class="stat-value">{{ total_fornecedores }}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Motoristas:</span>
-                        <span class="stat-value">{{ total_motoristas }}</span>
-                    </div>
+                    {% if receitas_por_caminhao %}
+                        {% for item in receitas_por_caminhao %}
+                        <div class="stat-item">
+                            <span class="stat-label">{{ item.caminhao }}:</span>
+                            <span class="stat-value">R$ {{ item.receita|floatformat:2 }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-info">Não há dados de receitas para o período selecionado.</div>
+                    {% endif %}
                     <div class="mt-3">
-                        <a href="{% url 'core:contatos' %}" class="btn btn-primary btn-sm">Ver Contatos</a>
+                        <a href="{% url 'core:fretes' %}" class="btn btn-primary btn-sm">Ver Fretes</a>
                     </div>
                 </div>
             </div>
@@ -367,13 +386,13 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Dados para o gráfico de Receitas e Despesas
-    const mesesLabels = {{ meses_labels|safe }};
-    const dadosReceitas = {{ dados_receitas|safe }};
-    const dadosDespesas = {{ dados_despesas|safe }};
+    const mesesLabels = JSON.parse('{{ meses_labels|escapejs }}');
+    const dadosReceitas = JSON.parse('{{ dados_receitas|escapejs }}');
+    const dadosDespesas = JSON.parse('{{ dados_despesas|escapejs }}');
     
     // Dados para o gráfico de Despesas por Categoria
-    const categoriasLabels = {{ categorias_labels|safe }};
-    const categoriasValores = {{ categorias_valores|safe }};
+    const categoriasLabels = JSON.parse('{{ categorias_labels|escapejs }}');
+    const categoriasValores = JSON.parse('{{ categorias_valores|escapejs }}');
     
     // Verifica se o tema é escuro
     const isDarkMode = document.documentElement.getAttribute('data-bs-theme') === 'dark';

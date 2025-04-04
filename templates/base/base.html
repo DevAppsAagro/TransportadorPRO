@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}TransportadorPRO{% endblock %}</title>
+    <link rel="icon" href="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//favicon.ico" type="image/x-icon">
     
     <!-- Bootstrap CSS e Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -48,6 +49,12 @@
             height: var(--navbar-height);
             display: flex;
             align-items: center;
+        }
+        
+        .sidebar-logo {
+            height: 30px;
+            margin-right: 0.5rem;
+            background-color: transparent;
         }
         
         .logo-container img {
@@ -127,6 +134,69 @@
         @media (max-width: 768px) {
             #sidebar-wrapper {
                 margin-left: calc(-1 * var(--sidebar-width));
+            }
+            
+            #sidebar-wrapper.collapsed {
+                margin-left: -15rem;
+                width: 4.5rem;
+            }
+            
+            .sidebar-collapsed #content-wrapper {
+                margin-left: 4.5rem;
+            }
+            
+            #sidebar-wrapper.collapsed .sidebar-heading {
+                text-align: center;
+                padding: 0.5rem;
+            }
+            
+            #sidebar-wrapper.collapsed .logo-container {
+                justify-content: center;
+            }
+            
+            .sidebar-logo {
+                max-height: 40px;
+            }
+            
+            /* Estilos para a logo da empresa no menu lateral */
+            .empresa-logo-container {
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                position: absolute;
+                bottom: 10px;
+                left: 0;
+                width: 200px;
+                padding-top: 5px;
+                z-index: 1000;
+                background-color: #212529;
+            }
+            
+            .sidebar-empresa-logo {
+                background-color: rgba(255, 255, 255, 0.1);
+                border-radius: 5px;
+                margin: 0 10px;
+            }
+            
+            .empresa-logo {
+                max-height: 25px;
+                max-width: 70%;
+            }
+            
+            /* Ajuste para o menu colapsado */
+            #sidebar-wrapper.collapsed .empresa-logo-container {
+                width: 70px;
+            }
+            
+            #sidebar-wrapper.collapsed .empresa-logo {
+                max-height: 20px;
+            }
+            
+
+            
+            /* Ajuste para dispositivos móveis */
+            @media (max-width: 768px) {
+                .empresa-logo-container {
+                    display: none;
+                }
             }
             
             #sidebar-wrapper.mobile-show {
@@ -365,19 +435,21 @@
         <div class="bg-light border-end" id="sidebar-wrapper">
             <div class="sidebar-heading border-bottom bg-dark text-white">
                 <div class="logo-container">
-                    <!-- Espaço para logo -->
-                    <img src="{% static 'img/logo.png' %}" alt="Logo" onerror="this.style.display='none'">
-                    <span class="sidebar-heading-text logo-text">TransportadorPRO</span>
+                    <!-- Logo do TransportadorPRO (versão completa) -->
+                    <img src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg" alt="Logo" class="sidebar-logo full-logo">
+                    <!-- Logo do TransportadorPRO (versão compacta) -->
+                    <img src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//pro%20logo%20hide.svg" alt="Logo" class="sidebar-logo compact-logo d-none">
                 </div>
                 <button class="btn btn-sm btn-dark d-md-none" id="close-sidebar">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
-            <div class="list-group list-group-flush">
-                <a href="{% url 'core:dashboard' %}" class="list-group-item list-group-item-action sidebar-link">
-                    <span class="menu-icon"><i class="bi bi-speedometer2"></i></span>
-                    <span class="menu-text">Dashboard</span>
-                </a>
+            <div class="list-group list-group-flush" style="padding-bottom: 40px; position: relative;">
+                
+                    <a href="{% url 'core:dashboard' %}" class="list-group-item list-group-item-action sidebar-link">
+                        <span class="menu-icon"><i class="bi bi-speedometer2"></i></span>
+                        <span class="menu-text">Dashboard</span>
+                    </a>
                 <div class="nav-item">
                     <a href="#financeiroSubmenu" data-bs-toggle="collapse" class="list-group-item list-group-item-action sidebar-link">
                         <span class="menu-icon"><i class="bi bi-cash-coin"></i></span>
@@ -482,7 +554,17 @@
                     <span class="menu-icon"><i class="bi bi-building"></i></span>
                     <span class="menu-text">Configurações da Empresa</span>
                 </a>
+
             </div>
+            
+            <!-- Logo da empresa na parte inferior do menu lateral -->
+            {% if empresa_usuario and empresa_usuario.logo %}
+            <div class="text-center empresa-logo-container">
+                <div class="sidebar-empresa-logo p-2 mb-1">
+                    <img src="{{ empresa_usuario.logo }}" alt="{{ empresa_usuario.nome_fantasia|default:empresa_usuario.razao_social }}" class="img-fluid empresa-logo">
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Page Content -->
@@ -565,6 +647,18 @@
                 e.preventDefault();
                 sidebar.classList.toggle('collapsed');
                 body.classList.toggle('sidebar-collapsed');
+                
+                // Alternar entre as versões da logo
+                const fullLogo = document.querySelector('.full-logo');
+                const compactLogo = document.querySelector('.compact-logo');
+                
+                if (sidebar.classList.contains('collapsed')) {
+                    fullLogo.classList.add('d-none');
+                    compactLogo.classList.remove('d-none');
+                } else {
+                    fullLogo.classList.remove('d-none');
+                    compactLogo.classList.add('d-none');
+                }
             });
             
             // Mobile Menu Toggle

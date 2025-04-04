@@ -21,7 +21,7 @@ $(document).ready(function() {
     // Máscara para valores decimais
     $('.decimal').mask('#.##0,00', {reverse: true});
 
-    // Validação do formulário
+    // Validação do formulário e conversão de valores monetários
     (function () {
         'use strict'
         var forms = document.querySelectorAll('.needs-validation')
@@ -31,6 +31,16 @@ $(document).ready(function() {
                     if (!form.checkValidity()) {
                         event.preventDefault()
                         event.stopPropagation()
+                    } else {
+                        // Converter valores monetários de formato brasileiro para formato americano
+                        $('.money, .decimal').each(function() {
+                            var value = $(this).val();
+                            if (value) {
+                                // Remove todos os pontos e substitui a vírgula por ponto
+                                value = value.replace(/\./g, '').replace(',', '.');
+                                $(this).val(value);
+                            }
+                        });
                     }
                     form.classList.add('was-validated')
                 }, false)

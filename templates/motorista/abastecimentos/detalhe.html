@@ -1,0 +1,147 @@
+{% extends 'motorista/base.html' %}
+
+{% block title %}Detalhes do Abastecimento - Área do Motorista{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Detalhes do Abastecimento</h1>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10">
+            <div class="card shadow-sm">
+                <div class="card-body p-2 p-md-4">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge {% if abastecimento.status == 'PENDENTE' %}bg-warning
+                                      {% elif abastecimento.status == 'APROVADO' %}bg-success
+                                      {% elif abastecimento.status == 'REJEITADO' %}bg-danger
+                                      {% endif %} fs-6 mb-3">
+                                    {{ abastecimento.get_status_display }}
+                                </span>
+                                <span class="text-muted">ID: {{ abastecimento.id }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <h6 class="fw-bold">Data do Abastecimento</h6>
+                            <p>{{ abastecimento.data|date:"d/m/Y" }}</p>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <h6 class="fw-bold">Posto</h6>
+                            <p>{{ abastecimento.posto.nome_fantasia|default:abastecimento.posto.nome_completo }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <h6 class="fw-bold">Combustível</h6>
+                            <p>{{ abastecimento.get_combustivel_display }}</p>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <h6 class="fw-bold">Quilometragem</h6>
+                            <p>{{ abastecimento.km_atual }} km</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <h6 class="fw-bold">Situação</h6>
+                            <p>{{ abastecimento.get_situacao_display }}</p>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <h6 class="fw-bold">Data de Vencimento</h6>
+                            <p>{{ abastecimento.data_vencimento|date:"d/m/Y" }}</p>
+                        </div>
+                    </div>
+
+                    {% if abastecimento.data_pagamento %}
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <h6 class="fw-bold">Data de Pagamento</h6>
+                            <p>{{ abastecimento.data_pagamento|date:"d/m/Y" }}</p>
+                        </div>
+                        <div class="col-12 col-md-6">
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-4">
+                            <h6 class="fw-bold">Litros</h6>
+                            <p>{{ abastecimento.litros }}</p>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <h6 class="fw-bold">Valor por Litro</h6>
+                            <p>R$ {{ abastecimento.valor_litro|floatformat:2 }}</p>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <h6 class="fw-bold">Valor Total</h6>
+                            <p>R$ {{ abastecimento.valor_total|floatformat:2 }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if abastecimento.frete %}
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <h6 class="fw-bold">Frete Associado</h6>
+                            <p>
+                                <a href="{% url 'motorista:detalhe_frete' abastecimento.frete.id %}">
+                                    #{{ abastecimento.frete.id }} - {{ abastecimento.frete.origem }} → {{ abastecimento.frete.destino }} ({{ abastecimento.frete.data_saida|date:"d/m/Y" }})
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if abastecimento.comprovante %}
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <h6 class="fw-bold">Comprovante</h6>
+                            <div class="mt-2">
+                                <a href="{{ abastecimento.comprovante.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-file-earmark-image me-1"></i> Ver Comprovante
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if abastecimento.observacao %}
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <h6 class="fw-bold">Observações</h6>
+                            <p>{{ abastecimento.observacao|linebreaks }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex flex-column flex-md-row justify-content-between mt-4">
+                        <a href="{% url 'motorista:listar_abastecimentos_pendentes' %}" class="btn btn-outline-secondary mb-2 mb-md-0">
+                            <i class="bi bi-arrow-left me-1"></i> Voltar para Lista
+                        </a>
+                        
+                        {% comment %}
+                        <!-- Botões de ação desativados temporariamente até que as URLs sejam implementadas -->
+                        {% if abastecimento.status == 'PENDENTE' %}
+                        <div>
+                            <button class="btn btn-primary me-2" disabled>
+                                <i class="bi bi-pencil-square me-1"></i> Editar
+                            </button>
+                            <button class="btn btn-danger" disabled>
+                                <i class="bi bi-trash me-1"></i> Excluir
+                            </button>
+                        </div>
+                        {% endif %}
+                        {% endcomment %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -6,6 +6,7 @@ class Contato(models.Model):
         ('FORNECEDOR', 'Fornecedor'),
         ('CLIENTE', 'Cliente'),
         ('FUNCIONARIO', 'Funcionário'),
+        ('MOTORISTA', 'Motorista'),
         ('POSTO', 'Posto de Combustível')
     ]
 

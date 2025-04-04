@@ -155,9 +155,12 @@ def criar_abastecimento_pendente(request):
             km_atual = request.POST.get('km_atual')
             observacao = request.POST.get('observacao')
             frete_id = request.POST.get('frete')
+            situacao = request.POST.get('situacao')
+            data_vencimento = request.POST.get('data_vencimento')
+            data_pagamento = request.POST.get('data_pagamento')
             
             # Validações básicas
-            if not posto_id or not data or not combustivel or not litros or not valor_litro or not km_atual:
+            if not posto_id or not data or not combustivel or not litros or not valor_litro or not km_atual or not situacao or not data_vencimento:
                 messages.error(request, 'Todos os campos obrigatórios devem ser preenchidos!')
                 return redirect('motorista:criar_abastecimento_pendente')
             
@@ -165,9 +168,33 @@ def criar_abastecimento_pendente(request):
             try:
                 litros = Decimal(litros.replace(',', '.'))
                 valor_litro = Decimal(valor_litro.replace(',', '.'))
-                km_atual = int(km_atual)
-            except:
-                messages.error(request, 'Valores inválidos! Verifique os campos numéricos.')
+                
+                # Verificar se o km_atual está dentro do intervalo permitido para IntegerField
+                try:
+                    km_atual_int = int(km_atual)
+                    # Verificar se o valor está dentro do intervalo válido para IntegerField
+                    if km_atual_int < -2147483648 or km_atual_int > 2147483647:
+                        raise ValueError(f"Quilometragem {km_atual_int} está fora do intervalo permitido")
+                    km_atual = km_atual_int
+                except ValueError as e:
+                    # Se não for possível converter para int ou o valor for muito grande
+                    messages.error(request, f'Quilometragem inválida! O valor deve ser um número inteiro entre -2147483648 e 2147483647. Erro: {str(e)}')
+                    return redirect('motorista:criar_abastecimento_pendente')
+                
+                # Converter data e data_vencimento para objeto date
+                from datetime import datetime
+                data = datetime.strptime(data, '%Y-%m-%d').date()
+                data_vencimento = datetime.strptime(data_vencimento, '%Y-%m-%d').date()
+                
+                # Converter data_pagamento se foi fornecida
+                data_pagamento_obj = None
+                if data_pagamento:
+                    data_pagamento_obj = datetime.strptime(data_pagamento, '%Y-%m-%d').date()
+            except ValueError as e:
+                messages.error(request, f'Valores inválidos! Verifique os campos numéricos. Erro: {str(e)}')
+                return redirect('motorista:criar_abastecimento_pendente')
+            except Exception as e:
+                messages.error(request, f'Erro ao processar os dados: {str(e)}')
                 return redirect('motorista:criar_abastecimento_pendente')
             
             # Obter objetos relacionados
@@ -193,7 +220,10 @@ def criar_abastecimento_pendente(request):
                 valor_total=valor_total,
                 km_atual=km_atual,
                 observacao=observacao,
-                frete=frete
+                frete=frete,
+                situacao=situacao,
+                data_vencimento=data_vencimento,
+                data_pagamento=data_pagamento_obj
             )
             
             messages.success(request, 'Abastecimento cadastrado com sucesso! Aguarde a aprovação.')

@@ -17,6 +17,11 @@ class AbastecimentoPendente(models.Model):
         ('REJEITADO', 'Rejeitado')
     ]
     
+    SITUACAO_CHOICES = [
+        ('EM_PERCURSO', 'Em Percurso'),
+        ('FINAL_FRETE', 'Final de Frete'),
+    ]
+    
     # Relacionamentos
     motorista = models.ForeignKey(User, on_delete=models.CASCADE, related_name='abastecimentos_pendentes')
     caminhao = models.ForeignKey(Caminhao, on_delete=models.CASCADE)
@@ -40,6 +45,9 @@ class AbastecimentoPendente(models.Model):
     valor_litro = models.DecimalField('Valor por Litro', max_digits=10, decimal_places=2)
     valor_total = models.DecimalField('Valor Total', max_digits=10, decimal_places=2)
     km_atual = models.IntegerField('Quilometragem Atual')
+    situacao = models.CharField('Situação', max_length=20, choices=SITUACAO_CHOICES, default='EM_PERCURSO', null=True, blank=True)
+    data_vencimento = models.DateField('Data de Vencimento', null=True, blank=True)
+    data_pagamento = models.DateField('Data de Pagamento', null=True, blank=True)
     
     # Metadados
     comprovante = models.ImageField('Comprovante', upload_to='comprovantes/', null=True, blank=True)

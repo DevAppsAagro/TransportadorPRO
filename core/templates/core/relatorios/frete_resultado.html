@@ -399,19 +399,19 @@
                     <div class="col-md-3">
                         <div class="metric-card">
                             <div class="metric-title">Receita por Km</div>
-                            <div class="metric-value">R$ {{ receita_por_km|floatformat:2 }}</div>
+                            <div class="metric-value">R$ {% if km_total > 0 %}{{ receita_bruta|div:km_total|floatformat:2 }}{% else %}0.00{% endif %}</div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="metric-card">
                             <div class="metric-title">Custo por Km</div>
-                            <div class="metric-value">R$ {{ custo_por_km|floatformat:2 }}</div>
+                            <div class="metric-value">R$ {{ custo_total_km|floatformat:2 }}</div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="metric-card">
                             <div class="metric-title">Lucro por Km</div>
-                            <div class="metric-value">R$ {{ lucro_por_km|floatformat:2 }}</div>
+                            <div class="metric-value">R$ {% if km_total > 0 %}{{ lucro_liquido|div:km_total|floatformat:2 }}{% else %}0.00{% endif %}</div>
                         </div>
                     </div>
                 </div>
@@ -429,17 +429,17 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for custo in custos_fixos %}
+                            {% for nome, valor in custos_fixos_estimados.items %}
                             <tr>
-                                <td>{{ custo.nome }}</td>
-                                <td class="valor-monetario">{{ custo.valor|floatformat:2|intcomma }}</td>
-                                <td class="valor-monetario">{{ custo.percentual|floatformat:2 }}%</td>
+                                <td>{{ nome|title }}</td>
+                                <td class="valor-monetario">{{ valor|floatformat:2|intcomma }}</td>
+                                <td class="valor-monetario">{% if total_custos > 0 %}{{ valor|div:total_custos|mul:100|floatformat:2 }}{% else %}0.00{% endif %}%</td>
                             </tr>
                             {% endfor %}
                             <tr class="total-row">
                                 <td><strong>Total Custos Fixos</strong></td>
-                                <td class="valor-monetario"><strong>{{ total_custos_fixos|floatformat:2|intcomma }}</strong></td>
-                                <td class="valor-monetario"><strong>{{ percentual_custos_fixos|floatformat:2 }}%</strong></td>
+                                <td class="valor-monetario"><strong>{{ total_custos_fixos_estimados|floatformat:2|intcomma }}</strong></td>
+                                <td class="valor-monetario"><strong>{% if total_custos > 0 %}{{ total_custos_fixos_estimados|div:total_custos|mul:100|floatformat:2 }}{% else %}0.00{% endif %}%</strong></td>
                             </tr>
                         </tbody>
                     </table>
@@ -458,20 +458,53 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for custo in custos_variaveis %}
                             <tr>
-                                <td>{{ custo.nome }}</td>
-                                <td class="valor-monetario">{{ custo.valor|floatformat:2|intcomma }}</td>
-                                <td class="valor-monetario">{{ custo.percentual|floatformat:2 }}%</td>
+                                <td>Despesas</td>
+                                <td class="valor-monetario">{{ total_despesas|floatformat:2|intcomma }}</td>
+                                <td class="valor-monetario">{% if total_custos > 0 %}{{ total_despesas|div:total_custos|mul:100|floatformat:2 }}{% else %}0.00{% endif %}%</td>
                             </tr>
-                            {% endfor %}
+                            <tr>
+                                <td>Combustível</td>
+                                <td class="valor-monetario">{{ total_valor_diesel|floatformat:2|intcomma }}</td>
+                                <td class="valor-monetario">{% if total_custos > 0 %}{{ total_valor_diesel|div:total_custos|mul:100|floatformat:2 }}{% else %}0.00{% endif %}%</td>
+                            </tr>
                             <tr class="total-row">
                                 <td><strong>Total Custos Variáveis</strong></td>
                                 <td class="valor-monetario"><strong>{{ total_custos_variaveis|floatformat:2|intcomma }}</strong></td>
-                                <td class="valor-monetario"><strong>{{ percentual_custos_variaveis|floatformat:2 }}%</strong></td>
+                                <td class="valor-monetario"><strong>{% if total_custos > 0 %}{{ total_custos_variaveis|div:total_custos|mul:100|floatformat:2 }}{% else %}0.00{% endif %}%</strong></td>
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h5>Métricas de Combustível</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Total de Diesel</div>
+                            <div class="metric-value">{{ total_diesel|floatformat:2|intcomma }} L</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Valor Médio do Diesel</div>
+                            <div class="metric-value">R$ {{ valor_medio_diesel|floatformat:2|intcomma }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Média de Km/L</div>
+                            <div class="metric-value">{{ media_km_l|floatformat:2|intcomma }} km/L</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Custo do Diesel por Km</div>
+                            <div class="metric-value">R$ {{ custo_diesel_km|floatformat:2|intcomma }}</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -494,18 +527,18 @@
                             {% for abastecimento in abastecimentos %}
                             <tr>
                                 <td>{{ abastecimento.data|date:"d/m/Y" }}</td>
-                                <td>{{ abastecimento.local }}</td>
+                                <td>{{ abastecimento.posto }}</td>
                                 <td class="valor-monetario">{{ abastecimento.litros|floatformat:2|intcomma }}</td>
-                                <td class="valor-monetario">{{ abastecimento.valor_unitario|floatformat:2|intcomma }}</td>
-                                <td class="valor-monetario">{{ abastecimento.valor_total|floatformat:2|intcomma }}</td>
-                                <td class="valor-monetario">{{ abastecimento.km|intcomma }}</td>
+                                <td class="valor-monetario">{{ abastecimento.valor_litro|floatformat:2|intcomma }}</td>
+                                <td class="valor-monetario">{{ abastecimento.total_valor|floatformat:2|intcomma }}</td>
+                                <td class="valor-monetario">{{ abastecimento.km_abastecimento|intcomma }}</td>
                             </tr>
                             {% endfor %}
                             <tr class="total-row">
                                 <td colspan="2"><strong>Total</strong></td>
-                                <td class="valor-monetario"><strong>{{ total_litros|floatformat:2|intcomma }}</strong></td>
-                                <td class="valor-monetario"><strong>{{ media_valor_unitario|floatformat:2|intcomma }}</strong></td>
-                                <td class="valor-monetario"><strong>{{ total_abastecimentos|floatformat:2|intcomma }}</strong></td>
+                                <td class="valor-monetario"><strong>{{ total_diesel|floatformat:2|intcomma }}</strong></td>
+                                <td class="valor-monetario"><strong>{{ valor_medio_diesel|floatformat:2|intcomma }}</strong></td>
+                                <td class="valor-monetario"><strong>{{ total_valor_diesel|floatformat:2|intcomma }}</strong></td>
                                 <td></td>
                             </tr>
                         </tbody>
@@ -560,9 +593,15 @@
                 ['Custo Total:', 'R$ {{ total_custos|floatformat:2|intcomma }}'],
                 ['Lucro Operacional:', 'R$ {{ lucro_operacional|floatformat:2|intcomma }}'],
                 ['Margem de Lucro:', '{{ margem_lucro|floatformat:2 }}%'],
-                ['Receita por Km:', 'R$ {{ receita_por_km|floatformat:2 }}'],
-                ['Custo por Km:', 'R$ {{ custo_por_km|floatformat:2 }}'],
-                ['Lucro por Km:', 'R$ {{ lucro_por_km|floatformat:2 }}'],
+                ['Receita por Km:', 'R$ {% if km_total > 0 %}{{ receita_bruta|div:km_total|floatformat:2 }}{% else %}0.00{% endif %}'],
+                ['Custo por Km:', 'R$ {{ custo_total_km|floatformat:2 }}'],
+                ['Lucro por Km:', 'R$ {% if km_total > 0 %}{{ lucro_liquido|div:km_total|floatformat:2 }}{% else %}0.00{% endif %}'],
+                [''],
+                ['Métricas de Combustível'],
+                ['Total de Diesel:', '{{ total_diesel|floatformat:2|intcomma }} L'],
+                ['Valor Médio do Diesel:', 'R$ {{ valor_medio_diesel|floatformat:2|intcomma }}'],
+                ['Média de Km/L:', '{{ media_km_l|floatformat:2|intcomma }} km/L'],
+                ['Custo do Diesel por Km:', 'R$ {{ custo_diesel_km|floatformat:2|intcomma }}'],
                 ['']
             ];
             

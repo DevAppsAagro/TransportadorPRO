@@ -61,20 +61,20 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="motorista" class="form-label">Motorista</label>
-                                <select class="form-select" id="motorista" name="motorista" required>
+                                <select class="form-select" id="motorista" name="motorista">
                                     <option value="">Selecione o motorista</option>
                                     {% for motorista in motoristas %}
                                     <option value="{{ motorista.id }}">{{ motorista.nome_completo }}</option>
                                     {% endfor %}
                                 </select>
+                                <small class="text-muted">Se não selecionar, será usado o motorista que criou o abastecimento: {{ abastecimento.motorista.username }}</small>
                             </div>
                             <div class="col-md-6">
                                 <label for="situacao" class="form-label">Situação</label>
                                 <select class="form-select" id="situacao" name="situacao" required>
                                     <option value="">Selecione a situação</option>
-                                    <option value="EM_PERCURSO">Em Percurso</option>
-                                    <option value="PAGO">Pago</option>
-                                    <option value="VENCIDO">Vencido</option>
+                                    <option value="EM_PERCURSO" {% if abastecimento.situacao == 'EM_PERCURSO' or not abastecimento.situacao %}selected{% endif %}>Em Percurso</option>
+                                    <option value="FINAL_FRETE" {% if abastecimento.situacao == 'FINAL_FRETE' %}selected{% endif %}>Final de Frete</option>
                                 </select>
                             </div>
                         </div>
@@ -82,7 +82,7 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="data_vencimento" class="form-label">Data de Vencimento</label>
-                                <input type="date" class="form-control" id="data_vencimento" name="data_vencimento" required value="{{ abastecimento.data|date:'Y-m-d' }}">
+                                <input type="date" class="form-control" id="data_vencimento" name="data_vencimento" required value="{% if abastecimento.data_vencimento %}{{ abastecimento.data_vencimento|date:'Y-m-d' }}{% else %}{{ abastecimento.data|date:'Y-m-d' }}{% endif %}">
                             </div>
                             <div class="col-md-6">
                                 <label for="data_pagamento" class="form-label">Data de Pagamento (opcional)</label>

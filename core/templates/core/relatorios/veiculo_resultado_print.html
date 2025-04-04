@@ -416,7 +416,7 @@
                 {% if empresa.logo %}
                 <img src="{{ empresa.logo }}" alt="Logo da {{ empresa.nome_fantasia|default:empresa.razao_social }}">
                 {% else %}
-                <img src="{% static 'img/logo.png' %}" alt="Logo da Empresa">
+                <img src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro.svg" alt="Logo da Empresa" style="height: 50px;">
                 {% endif %}
             </div>
             <div class="company-name">{% if empresa %}{{ empresa.nome_fantasia|default:empresa.razao_social }}{% else %}TransportadorPRO{% endif %}</div>

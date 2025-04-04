@@ -20,6 +20,14 @@ def abastecimentos(request):
     })
 
 @login_required
+def abastecimento_detalhe(request, id):
+    # Obter o abastecimento pelo ID
+    abastecimento = get_object_or_404(Abastecimento, id=id, caminhao__usuario=request.user)
+    return render(request, 'core/abastecimentos/detalhe.html', {
+        'abastecimento': abastecimento
+    })
+
+@login_required
 def abastecimento_novo(request):
     if request.method == 'POST':
         try:

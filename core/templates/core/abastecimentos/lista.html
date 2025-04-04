@@ -117,6 +117,7 @@
                             <th>Valor/L</th>
                             <th>Total</th>
                             <th>Situação</th>
+                            <th>Origem</th>
                             <th style="width: 100px;">Ações</th>
                         </tr>
                     </thead>
@@ -126,7 +127,15 @@
                             <td data-order="{{ abastecimento.data|date:'Y-m-d' }}">{{ abastecimento.data|date:"d/m/Y" }}</td>
                             <td data-order="{{ abastecimento.data_pagamento|date:'Y-m-d' }}">{{ abastecimento.data_pagamento|date:"d/m/Y"|default:"-" }}</td>
                             <td>{{ abastecimento.caminhao.placa }}</td>
-                            <td>{{ abastecimento.motorista.nome_completo }}</td>
+                            <td>
+                                {% if abastecimento.motorista %}
+                                    {{ abastecimento.motorista.nome_completo }}
+                                {% elif abastecimento.motorista_user %}
+                                    {{ abastecimento.motorista_user.get_full_name|default:abastecimento.motorista_user.username }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
                             <td>{{ abastecimento.posto.nome_completo }}</td>
                             <td data-order="{{ abastecimento.litros }}">{{ abastecimento.litros }}</td>
                             <td data-order="{{ abastecimento.valor_litro }}" class="valor-monetario">R$ {{ abastecimento.valor_litro }}</td>
@@ -139,11 +148,25 @@
                                 </span>
                             </td>
                             <td>
+                                {% if abastecimento.origem_pendente %}
+                                <span class="badge bg-info" title="Abastecimento criado pelo motorista">
+                                    <i class="fas fa-user-check"></i> Motorista
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary" title="Abastecimento criado pelo administrador">
+                                    <i class="fas fa-user-shield"></i> Admin
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
                                 <div class="btn-group btn-group-sm">
-                                    <a href="{% url 'core:abastecimento_editar' abastecimento.id %}" class="btn btn-sm btn-primary">
+                                    <a href="{% url 'core:abastecimento_detalhe' abastecimento.id %}" class="btn btn-sm btn-info" title="Ver detalhes">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'core:abastecimento_editar' abastecimento.id %}" class="btn btn-sm btn-primary" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a href="{% url 'core:abastecimento_excluir' abastecimento.id %}" class="btn btn-sm btn-danger"
+                                    <a href="{% url 'core:abastecimento_excluir' abastecimento.id %}" class="btn btn-sm btn-danger" title="Excluir"
                                     onclick="return confirm('Tem certeza que deseja excluir este abastecimento?');">
                                         <i class="fas fa-trash"></i>
                                     </a>
@@ -152,7 +175,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="10" class="text-center">Nenhum abastecimento cadastrado.</td>
+                            <td colspan="11" class="text-center">Nenhum abastecimento cadastrado.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -173,7 +196,7 @@
     $(document).ready(function() {
         // Verificar se há linhas na tabela além da linha "Nenhum abastecimento cadastrado"
         var rowCount = $('#tabela-abastecimentos tbody tr').length;
-        var emptyTable = $('#tabela-abastecimentos tbody tr td[colspan="10"]').length > 0;
+        var emptyTable = $('#tabela-abastecimentos tbody tr td[colspan="11"]').length > 0;
         
         if (rowCount > 0 && !emptyTable) {
             // Inicializa a tabela com DataTables

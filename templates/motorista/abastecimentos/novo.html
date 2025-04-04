@@ -52,6 +52,30 @@
                         </div>
                         
                         <div class="row g-3 mb-3">
+                            <div class="col-12 col-md-6">
+                                <label for="situacao" class="form-label">Situação</label>
+                                <select class="form-select" id="situacao" name="situacao" required>
+                                    <option value="EM_PERCURSO" selected>Em Percurso</option>
+                                    <option value="FINAL_FRETE">Final de Frete</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="data_vencimento" class="form-label">Data de Vencimento</label>
+                                <input type="date" class="form-control" id="data_vencimento" name="data_vencimento" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mb-3">
+                            <div class="col-12 col-md-6">
+                                <label for="data_pagamento" class="form-label">Data de Pagamento (opcional)</label>
+                                <input type="date" class="form-control" id="data_pagamento" name="data_pagamento">
+                                <div class="form-text">Preencha apenas se o pagamento já foi realizado</div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3 mb-3">
                             <div class="col-6">
                                 <label for="litros" class="form-label">Litros</label>
                                 <input type="text" class="form-control" id="litros" name="litros" required>

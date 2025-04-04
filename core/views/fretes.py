@@ -119,6 +119,31 @@ def frete_detalhes(request, id):
     return render(request, 'core/fretes/frete_detalhes.html', context)
 
 @login_required
+def registrar_recebimento_frete(request, id):
+    """Registra o recebimento do frete e atualiza seu status para 'PAGO'."""
+    # Garantir que o usuário só possa atualizar seus próprios fretes
+    frete = get_object_or_404(Frete, pk=id, caminhao__usuario=request.user)
+    
+    if request.method == 'POST':
+        data_recebimento = request.POST.get('data_recebimento')
+        
+        if data_recebimento:
+            from datetime import datetime
+            # Converter a string de data para objeto date
+            data_recebimento = datetime.strptime(data_recebimento, '%Y-%m-%d').date()
+            
+            # Atualizar o frete
+            frete.data_recebimento = data_recebimento
+            frete.status = 'PAGO'
+            frete.save()
+            
+            messages.success(request, 'Recebimento do frete registrado com sucesso!')
+        else:
+            messages.error(request, 'Data de recebimento inválida.')
+    
+    return redirect('core:frete_detalhes', id=id)
+
+@login_required
 def frete_novo(request):
     if request.method == 'POST':
         try:

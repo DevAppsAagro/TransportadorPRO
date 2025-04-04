@@ -1,0 +1,179 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <div class="d-sm-flex align-items-center justify-content-between mb-2">
+        <h1 class="h3 mb-0">Detalhes do Abastecimento #{{ abastecimento.id }}</h1>
+        <a href="{% url 'core:abastecimentos' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Voltar para Lista
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header py-2 bg-light">
+                    <h6 class="mb-0">Informações Gerais</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Data:</strong></p>
+                                    <p>{{ abastecimento.data|date:"d/m/Y" }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Data de Pagamento:</strong></p>
+                                    <p>{{ abastecimento.data_pagamento|date:"d/m/Y"|default:"Não informada" }}</p>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Situação:</strong></p>
+                                    <p>
+                                        <span class="badge {% if abastecimento.situacao == 'EM_PERCURSO' %}bg-warning
+                                                 {% elif abastecimento.situacao == 'FINAL_FRETE' %}bg-success
+                                                 {% endif %}">
+                                            {{ abastecimento.get_situacao_display }}
+                                        </span>
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Origem:</strong></p>
+                                    <p>
+                                        {% if abastecimento.origem_pendente %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-user-check me-1"></i> Motorista
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-user-shield me-1"></i> Administrador
+                                        </span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Caminhão:</strong></p>
+                                    <p>{{ abastecimento.caminhao.placa }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Quilometragem:</strong></p>
+                                    <p>{{ abastecimento.km_abastecimento }} km</p>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Tipo de Combustível:</strong></p>
+                                    <p>{{ abastecimento.tipo_combustivel }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Data de Vencimento:</strong></p>
+                                    <p>{{ abastecimento.data_vencimento|date:"d/m/Y"|default:"Não informada" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <hr>
+                            <h6 class="mb-3">Informações do Motorista e Posto</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Motorista:</strong></p>
+                            <p>
+                                {% if abastecimento.motorista %}
+                                    {{ abastecimento.motorista.nome_completo }}
+                                {% elif abastecimento.motorista_user %}
+                                    {{ abastecimento.motorista_user.get_full_name|default:abastecimento.motorista_user.username }}
+                                {% else %}
+                                    Não informado
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Posto:</strong></p>
+                            <p>{{ abastecimento.posto.nome_completo }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if abastecimento.frete %}
+            <div class="card shadow-sm mb-3">
+                <div class="card-header py-2 bg-light">
+                    <h6 class="mb-0">Frete Associado</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Frete:</strong></p>
+                            <p>{{ abastecimento.frete.origem }} → {{ abastecimento.frete.destino }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Cliente:</strong></p>
+                            <p>{{ abastecimento.frete.cliente.nome_completo }}</p>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <a href="{% url 'core:frete_detalhe' abastecimento.frete.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-external-link-alt me-1"></i> Ver Detalhes do Frete
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header py-2 bg-light">
+                    <h6 class="mb-0">Valores</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Litros:</strong></p>
+                            <p>{{ abastecimento.litros }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Valor por Litro:</strong></p>
+                            <p>R$ {{ abastecimento.valor_litro }}</p>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <p class="mb-1"><strong>Valor Total:</strong></p>
+                            <h3 class="text-primary">R$ {{ abastecimento.total_valor }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header py-2 bg-light">
+                    <h6 class="mb-0">Ações</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'core:abastecimento_editar' abastecimento.id %}" class="btn btn-primary">
+                            <i class="fas fa-edit me-1"></i> Editar Abastecimento
+                        </a>
+                        <a href="{% url 'core:abastecimento_excluir' abastecimento.id %}" class="btn btn-danger"
+                           onclick="return confirm('Tem certeza que deseja excluir este abastecimento?');">
+                            <i class="fas fa-trash me-1"></i> Excluir Abastecimento
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
