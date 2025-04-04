@@ -91,6 +91,26 @@ def abastecimento_editar(request, id):
                 abastecimento.frete = None
                 
             abastecimento.save()
+            
+            # Se o abastecimento tem origem em um abastecimento pendente, atualizar o pendente também
+            if abastecimento.origem_pendente and abastecimento.abastecimento_pendente:
+                try:
+                    # Atualizar o abastecimento pendente com os novos dados
+                    abastecimento_pendente = abastecimento.abastecimento_pendente
+                    abastecimento_pendente.frete = abastecimento.frete
+                    abastecimento_pendente.combustivel = abastecimento.tipo_combustivel
+                    abastecimento_pendente.litros = abastecimento.litros
+                    abastecimento_pendente.valor_litro = abastecimento.valor_litro
+                    abastecimento_pendente.valor_total = abastecimento.total_valor
+                    abastecimento_pendente.km_atual = abastecimento.km_abastecimento
+                    abastecimento_pendente.situacao = abastecimento.situacao
+                    abastecimento_pendente.data_vencimento = abastecimento.data_vencimento
+                    abastecimento_pendente.data_pagamento = abastecimento.data_pagamento
+                    abastecimento_pendente.data = abastecimento.data
+                    abastecimento_pendente.save()
+                except Exception as e:
+                    messages.warning(request, f'Abastecimento atualizado, mas houve um erro ao atualizar o abastecimento pendente: {str(e)}')
+            
             messages.success(request, 'Abastecimento atualizado com sucesso!')
             return redirect('core:abastecimentos')
         except Exception as e:

@@ -127,7 +127,8 @@ def aprovar_abastecimento(request, id):
                     data_vencimento=data_vencimento,
                     data_pagamento=abastecimento_pendente.data_pagamento or (data_pagamento if data_pagamento else None),
                     frete=abastecimento_pendente.frete,  # Transferindo o frete associado
-                    origem_pendente=True  # Marcando que veio de um abastecimento pendente
+                    origem_pendente=True,  # Marcando que veio de um abastecimento pendente
+                    abastecimento_pendente=abastecimento_pendente  # Referência ao abastecimento pendente original
                 )
                 
                 # Atualizar o status do abastecimento pendente

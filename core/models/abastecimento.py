@@ -4,6 +4,10 @@ from decimal import Decimal
 from .caminhao import Caminhao
 from .contato import Contato
 from .frete import Frete
+# Importação circular, mas necessária para o tipo de anotação
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .abastecimento_pendente import AbastecimentoPendente
 
 class Abastecimento(models.Model):
     SITUACAO_CHOICES = [
@@ -89,6 +93,14 @@ class Abastecimento(models.Model):
         'Origem Pendente',
         default=False,
         help_text='Indica se o abastecimento foi criado a partir de um abastecimento pendente'
+    )
+    abastecimento_pendente = models.OneToOneField(
+        'AbastecimentoPendente',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='abastecimento_aprovado',
+        verbose_name='Abastecimento Pendente Original'
     )
 
     def save(self, *args, **kwargs):
