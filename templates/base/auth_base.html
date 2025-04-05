@@ -14,6 +14,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Preload do vídeo com prioridade baixa -->
+    <link rel="preload" href="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//0228.mp4" as="video" type="video/mp4" fetchpriority="low">
     <style>
         :root {
             --bs-primary: #4e83fd;
@@ -123,6 +126,27 @@
             height: 100%;
             width: 100%;
             object-fit: cover;
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        /* Estilos para o placeholder do vídeo */
+        .video-placeholder {
+            position: absolute;
+            inset: 0;
+            height: 100%;
+            width: 100%;
+            background-color: #0f172a;
+            z-index: 3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        .placeholder-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         
         /* Overlay para escurecer o vídeo */
@@ -504,7 +528,16 @@
         
         <!-- Lado do vídeo -->
         <div class="auth-video-side">
-            <video autoplay muted loop playsinline>
+            <!-- Placeholder enquanto o vídeo carrega -->
+            <div class="video-placeholder" id="video-placeholder">
+                <div class="placeholder-spinner">
+                    <div class="spinner-border text-light" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <video id="background-video" autoplay muted loop playsinline preload="auto" style="opacity: 0;">
                 <source src="{% block video_source %}https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//0228.mp4{% endblock %}" type="video/mp4">
                 Seu navegador não suporta vídeos HTML5.
             </video>
@@ -554,5 +587,36 @@
     </script>
     
     {% block extra_js %}{% endblock %}
+    
+    <script>
+        // Script para gerenciar o carregamento do vídeo
+        document.addEventListener('DOMContentLoaded', function() {
+            const video = document.getElementById('background-video');
+            const placeholder = document.getElementById('video-placeholder');
+            
+            if (video && placeholder) {
+                // Verificar se o vídeo já está em cache
+                if (video.readyState >= 3) { // HAVE_FUTURE_DATA ou HAVE_ENOUGH_DATA
+                    showVideo();
+                } else {
+                    // Adicionar evento para quando o vídeo estiver pronto
+                    video.addEventListener('canplay', showVideo);
+                    
+                    // Adicionar um timeout para mostrar o vídeo mesmo se demorar muito
+                    setTimeout(showVideo, 3000);
+                }
+                
+                function showVideo() {
+                    video.style.opacity = '1';
+                    placeholder.style.opacity = '0';
+                    
+                    // Remover o placeholder após a transição
+                    setTimeout(function() {
+                        placeholder.style.display = 'none';
+                    }, 500);
+                }
+            }
+        });
+    </script>
 </body>
 </html>
