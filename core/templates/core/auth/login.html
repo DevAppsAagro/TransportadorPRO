@@ -265,7 +265,13 @@
                         welcomeText.textContent = `Bem-vindo, ${username}!`;
                     }
                     
-                    // Não precisamos mais definir a logo fixa, pois agora está sendo controlada pelo template
+                    // Usar a logo da empresa ou fallback
+                    const loadingLogo = document.getElementById('loading-logo');
+                    if (loadingLogo) {
+                        // Usar a logo da empresa ou fallback
+                        const empresaLogo = "{% if empresa_logo %}{{ empresa_logo }}{% else %}https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro.svg{% endif %}";
+                        loadingLogo.src = empresaLogo;
+                    }
                     
                     // Exibir a tela de carregamento
                     if (loadingScreen) {
