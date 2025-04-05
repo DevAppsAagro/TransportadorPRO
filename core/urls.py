@@ -2,14 +2,14 @@ from django.urls import path, include
 from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
 from .views import dashboard, financeiro, veiculos, relatorios, configuracao
-from .views.auth_views import register, login_view
+from .views.auth_views import register, login_view, perfil_usuario
 from .views.contatos import contatos, contato_novo, contato_editar, contato_excluir
 from .views.categorias import categorias, categoria_nova, categoria_editar, categoria_excluir, subcategorias, subcategoria_nova, subcategoria_editar, subcategoria_excluir
 from .views.cargas import cargas, carga_nova, carga_editar, carga_excluir
 from .views.caminhoes import caminhoes, caminhao_novo, caminhao_editar, caminhao_excluir, caminhao_detalhes
 from .views.carretas import lista_carretas, criar_carreta, editar_carreta, excluir_carreta
 from .views.conjuntos import conjuntos, conjunto_novo, conjunto_editar, conjunto_excluir
-from .views.fretes import fretes, frete_novo, frete_editar, frete_excluir, frete_detalhes, frete_print, registrar_recebimento_frete
+from .views.fretes import fretes, frete_novo, frete_editar, frete_excluir, frete_detalhes, frete_print, registrar_recebimento_frete, alterar_status_frete
 from .views.abastecimentos import abastecimentos, abastecimento_novo, abastecimento_editar, abastecimento_excluir, abastecimento_detalhe, buscar_frete_por_id, buscar_fretes_por_caminhao
 from .views.estimativa_pneus import estimativa_pneus_list, estimativa_pneus_create, estimativa_pneus_edit, estimativa_pneus_delete, detalhes_estimativa
 from .views.estimativa_manutencao import estimativa_manutencao_list, estimativa_manutencao_create, estimativa_manutencao_edit, estimativa_manutencao_delete, detalhes_estimativa_manutencao
@@ -39,6 +39,7 @@ urlpatterns = [
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='core/auth/password_reset_complete.html'), name='password_reset_complete'),
     path('logout/', auth_views.LogoutView.as_view(next_page='core:login'), name='logout'),
     path('register/', register, name='register'),
+    path('perfil/', perfil_usuario, name='perfil'),
     path('index/', landing_page, name='landing_page'),
     path('financeiro/', financeiro, name='financeiro'),
     path('veiculos/', veiculos, name='veiculos'),
@@ -110,6 +111,7 @@ urlpatterns = [
     path('fretes/<int:id>/detalhes/', frete_detalhes, name='frete_detalhes'),
     path('fretes/<int:id>/print/', frete_print, name='frete_print'),
     path('fretes/<int:id>/registrar-recebimento/', registrar_recebimento_frete, name='registrar_recebimento_frete'),
+    path('fretes/<int:id>/alterar-status/', alterar_status_frete, name='alterar_status_frete'),
     
     # Rotas de abastecimentos
     path('abastecimentos/', abastecimentos, name='abastecimentos'),

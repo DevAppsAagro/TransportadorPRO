@@ -38,8 +38,8 @@ def fretes(request):
     
     # Get counts and sums directly from the database
     metrics = {
-        'fretes_concluidos': Frete.objects.filter(caminhao__usuario=request.user, data_chegada__isnull=False).count(),
-        'fretes_em_andamento': Frete.objects.filter(caminhao__usuario=request.user, data_chegada__isnull=True).count(),
+        'fretes_concluidos': Frete.objects.filter(caminhao__usuario=request.user, status_andamento='FINALIZADO').count(),
+        'fretes_em_andamento': Frete.objects.filter(caminhao__usuario=request.user, status_andamento='EM_ANDAMENTO').count(),
         'valor_total': Frete.objects.filter(caminhao__usuario=request.user).aggregate(
             total=Coalesce(Sum('valor_total'), Value(0), output_field=DecimalField(max_digits=10, decimal_places=2))
         )['total'],
@@ -400,6 +400,32 @@ def frete_editar(request, id):
         'cargas': cargas,
         'titulo': 'Editar Frete'
     })
+
+@login_required
+def alterar_status_frete(request, id):
+    # Garantir que o usuário só possa alterar o status de seus próprios fretes
+    frete = get_object_or_404(Frete, pk=id, caminhao__usuario=request.user)
+    
+    if request.method == 'POST':
+        try:
+            status_andamento = request.POST.get('status_andamento')
+            
+            # Validar o status
+            if status_andamento not in ['EM_ANDAMENTO', 'FINALIZADO']:
+                raise ValueError('Status inválido')
+            
+            # Atualizar o status
+            frete.status_andamento = status_andamento
+            frete.save()
+            
+            messages.success(request, 'Status do frete atualizado com sucesso!')
+            return redirect('core:frete_detalhes', id=frete.id)
+        except Exception as e:
+            messages.error(request, f'Erro ao atualizar status do frete: {str(e)}')
+            return redirect('core:frete_detalhes', id=frete.id)
+    
+    # Se não for POST, redirecionar para a página de detalhes
+    return redirect('core:frete_detalhes', id=frete.id)
 
 @login_required
 def frete_excluir(request, id):

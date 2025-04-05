@@ -34,6 +34,9 @@
             transition: all var(--transition-speed) ease;
             overflow-y: auto;
             overflow-x: hidden;
+            padding-bottom: 0;
+            display: flex;
+            flex-direction: column;
         }
         
         #sidebar-wrapper .sidebar-heading {
@@ -96,6 +99,54 @@
         
         [data-bs-theme="dark"] .sidebar-link:hover {
             background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Remover todas as bordas dos itens do menu */
+        #sidebar-wrapper .list-group-item {
+            border: none !important;
+            border-radius: 0 !important;
+            margin-bottom: 1px;
+        }
+        
+        /* Adicionar linha separadora sutil */
+        #sidebar-wrapper .list-group-item {
+            position: relative;
+            padding-bottom: 0.7rem;
+        }
+        
+        #sidebar-wrapper .list-group-item::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 1px;
+            background: rgba(0, 0, 0, 0.05);
+        }
+        
+        [data-bs-theme="dark"] #sidebar-wrapper .list-group-item::after {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Estilo para itens de submenu */
+        .collapse .list-group-item {
+            padding-left: 2rem;
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+        
+        /* Remover linha separadora do último item de cada submenu */
+        .collapse .list-group-item:last-child::after {
+            display: none;
+        }
+        
+        /* Estilo hover para todos os itens */
+        #sidebar-wrapper .list-group-item:hover {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+        
+        [data-bs-theme="dark"] #sidebar-wrapper .list-group-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
         }
         
         .sidebar-link .menu-text {
@@ -176,21 +227,38 @@
                 margin: 0 10px;
             }
             
+            .empresa-logo-container {
+                position: absolute;
+                bottom: 0;
+                width: 100%;
+                z-index: 1000;
+                background-color: #212529;
+                transition: all var(--transition-speed) ease;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                padding-top: 5px;
+                left: 0;
+                padding-bottom: 5px;
+            }
+            
+            [data-bs-theme="light"] .empresa-logo-container {
+                background-color: #f8f9fa;
+                border-top: 1px solid rgba(0, 0, 0, 0.1);
+            }
+            
             .empresa-logo {
                 max-height: 25px;
                 max-width: 70%;
+                transition: all var(--transition-speed) ease;
             }
             
-            /* Ajuste para o menu colapsado */
             #sidebar-wrapper.collapsed .empresa-logo-container {
-                width: 70px;
+                width: var(--sidebar-collapsed-width);
             }
             
             #sidebar-wrapper.collapsed .empresa-logo {
                 max-height: 20px;
+                transform: scale(0.8) rotate(360deg);
             }
-            
-
             
             /* Ajuste para dispositivos móveis */
             @media (max-width: 768px) {
@@ -444,20 +512,20 @@
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
-            <div class="list-group list-group-flush" style="padding-bottom: 40px; position: relative;">
+            <div class="list-group list-group-flush flex-grow-1 overflow-auto">
                 
                     <a href="{% url 'core:dashboard' %}" class="list-group-item list-group-item-action sidebar-link">
                         <span class="menu-icon"><i class="bi bi-speedometer2"></i></span>
                         <span class="menu-text">Dashboard</span>
                     </a>
                 <div class="nav-item">
-                    <a href="#financeiroSubmenu" data-bs-toggle="collapse" class="list-group-item list-group-item-action sidebar-link">
+                    <a href="#" class="list-group-item list-group-item-action sidebar-link" onclick="event.preventDefault()" data-bs-toggle="collapse" data-bs-target="#financeiroSubmenu">
                         <span class="menu-icon"><i class="bi bi-cash-coin"></i></span>
                         <span class="menu-text">Financeiro</span>
                         <i class="bi bi-chevron-down ms-auto"></i>
                     </a>
                     <div class="collapse" id="financeiroSubmenu">
-                        <div class="list-group">
+                        <div class="list-group border-0">
                             <a href="{% url 'core:despesa_list' %}" class="list-group-item list-group-item-action ps-4 sidebar-link">
                                 <span class="menu-icon"><i class="bi bi-receipt"></i></span>
                                 <span class="menu-text">Despesas</span>
@@ -482,13 +550,13 @@
                     </div>
                 </div>
                 <div class="nav-item">
-                    <a href="#veiculosSubmenu" data-bs-toggle="collapse" class="list-group-item list-group-item-action sidebar-link">
+                    <a href="#" class="list-group-item list-group-item-action sidebar-link" onclick="event.preventDefault()" data-bs-toggle="collapse" data-bs-target="#veiculosSubmenu">
                         <span class="menu-icon"><i class="bi bi-truck"></i></span>
                         <span class="menu-text">Veículos</span>
                         <i class="bi bi-chevron-down ms-auto"></i>
                     </a>
                     <div class="collapse" id="veiculosSubmenu">
-                        <div class="list-group">
+                        <div class="list-group border-0">
                             <a href="{% url 'core:caminhoes' %}" class="list-group-item list-group-item-action ps-4 sidebar-link">
                                 <span class="menu-icon"><i class="bi bi-truck-flatbed"></i></span>
                                 <span class="menu-text">Caminhões</span>
@@ -523,13 +591,13 @@
                 
                 <!-- Motoristas -->
                 <div class="nav-item">
-                    <a href="#motoristasSubmenu" data-bs-toggle="collapse" class="list-group-item list-group-item-action sidebar-link">
+                    <a href="#" class="list-group-item list-group-item-action sidebar-link" onclick="event.preventDefault()" data-bs-toggle="collapse" data-bs-target="#motoristasSubmenu">
                         <span class="menu-icon"><i class="bi bi-person-badge"></i></span>
                         <span class="menu-text">Motoristas</span>
                         <i class="bi bi-chevron-down ms-auto"></i>
                     </a>
                     <div class="collapse" id="motoristasSubmenu">
-                        <div class="list-group">
+                        <div class="list-group border-0">
                             <a href="{% url 'core:listar_motoristas' %}" class="list-group-item list-group-item-action ps-4 sidebar-link">
                                 <span class="menu-icon"><i class="bi bi-people"></i></span>
                                 <span class="menu-text">Gerenciar Motoristas</span>
@@ -550,10 +618,7 @@
                     <span class="menu-icon"><i class="bi bi-file-earmark-text"></i></span>
                     <span class="menu-text">Relatórios</span>
                 </a>
-                <a href="{% url 'core:configuracoes_empresa' %}" class="list-group-item list-group-item-action sidebar-link">
-                    <span class="menu-icon"><i class="bi bi-building"></i></span>
-                    <span class="menu-text">Configurações da Empresa</span>
-                </a>
+                
 
             </div>
             
@@ -595,13 +660,21 @@
                         <div class="dropdown">
                             <button class="btn dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
                                 <i class="bi bi-person-circle me-2"></i>
-                                Usuário
+                                {{ request.user.first_name|default:request.user.username }}
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Perfil</a></li>
+                                <li><a class="dropdown-item" href="{% url 'core:perfil' %}"><i class="bi bi-person me-2"></i>Perfil</a></li>
+                                <li><a class="dropdown-item" href="{% url 'core:configuracoes_empresa' %}"><i class="bi bi-building me-2"></i>Configurações da Empresa</a></li>
                                 <li><a class="dropdown-item" href="{% url 'motorista:login' %}" target="_blank"><i class="bi bi-person-badge me-2"></i>Área do Motorista</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right me-2"></i>Sair</a></li>
+                                <li>
+                                    <form method="post" action="{% url 'core:logout' %}" class="m-0 p-0">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="bi bi-box-arrow-right me-2"></i>Sair
+                                        </button>
+                                    </form>
+                                </li>
                             </ul>
                         </div>
                     </div>

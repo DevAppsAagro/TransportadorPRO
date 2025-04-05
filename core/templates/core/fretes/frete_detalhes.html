@@ -220,13 +220,16 @@
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0">
             Detalhes do Frete #{{ frete.id }}
-            {% if frete.data_chegada %}
-                <span class="status-badge status-concluido">Concluído</span>
+            {% if frete.status_andamento == 'FINALIZADO' %}
+                <span class="status-badge status-concluido">Finalizado</span>
             {% else %}
                 <span class="status-badge status-andamento">Em Andamento</span>
             {% endif %}
         </h1>
         <div>
+            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#alterarStatusModal">
+                <i class="fas fa-exchange-alt"></i> Alterar Status
+            </button>
             <a href="{% url 'core:frete_print' id=frete.id %}" class="btn btn-sm btn-primary" target="_blank">
                 <i class="fas fa-print"></i> Imprimir
             </a>
@@ -507,6 +510,34 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-success">Confirmar Recebimento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Alterar Status -->
+<div class="modal fade" id="alterarStatusModal" tabindex="-1" aria-labelledby="alterarStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="alterarStatusModalLabel">Alterar Status do Frete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" action="{% url 'core:alterar_status_frete' id=frete.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="status_andamento" class="form-label-xs">Status de Andamento</label>
+                        <select name="status_andamento" id="status_andamento" class="form-select form-select-sm" required>
+                            <option value="EM_ANDAMENTO" {% if frete.status_andamento == 'EM_ANDAMENTO' %}selected{% endif %}>Em Andamento</option>
+                            <option value="FINALIZADO" {% if frete.status_andamento == 'FINALIZADO' %}selected{% endif %}>Finalizado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Salvar</button>
                 </div>
             </form>
         </div>

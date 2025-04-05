@@ -382,7 +382,9 @@
                     data.forEach(frete => {
                         const option = document.createElement('option');
                         option.value = frete.id;
-                        option.textContent = `Frete #${frete.id} - ${frete.cliente} - ${frete.origem} para ${frete.destino}`;
+                        // Incluir a placa do caminhão junto com as informações do frete
+                        const placaCaminhao = frete.caminhao_placa ? `[${frete.caminhao_placa}]` : '';
+                        option.textContent = `Frete #${frete.id} ${placaCaminhao} - ${frete.cliente} - ${frete.origem} para ${frete.destino}`;
                         freteSelect.appendChild(option);
                     });
                     

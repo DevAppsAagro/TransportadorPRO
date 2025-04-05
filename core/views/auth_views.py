@@ -4,6 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django import forms
+from django.contrib.auth.decorators import login_required
 
 class CustomUserCreationForm(UserCreationForm):
     first_name = forms.CharField(max_length=30, required=True, label='Nome')
@@ -13,6 +14,22 @@ class CustomUserCreationForm(UserCreationForm):
     class Meta:
         model = User
         fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2')
+
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'email')
+        labels = {
+            'first_name': 'Nome',
+            'last_name': 'Sobrenome',
+            'email': 'E-mail',
+        }
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control form-control-sm'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control form-control-sm'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control form-control-sm'}),
+        }
 
 def login_view(request):
     # Inicializar variável de logo da empresa
@@ -99,3 +116,34 @@ def register(request):
         form = CustomUserCreationForm()
     
     return render(request, 'core/auth/register.html', {'form': form, 'empresa_logo': empresa_logo})
+
+
+@login_required
+def perfil_usuario(request):
+    # Obter a empresa do usuário atual
+    from ..models import Empresa
+    empresa_usuario = None
+    try:
+        empresas = Empresa.objects.filter(usuario=request.user)
+        if empresas.exists():
+            empresa_usuario = empresas.first()
+    except Exception as e:
+        print(f"Erro ao buscar empresa do usuário: {e}")
+    
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Perfil atualizado com sucesso!')
+            return redirect('core:perfil')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        form = UserProfileForm(instance=request.user)
+    
+    return render(request, 'core/auth/perfil.html', {
+        'form': form,
+        'empresa_usuario': empresa_usuario
+    })

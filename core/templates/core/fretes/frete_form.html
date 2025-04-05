@@ -114,7 +114,7 @@
                 <div class="form-section">
                     <div class="form-section-title">Informações Básicas</div>
                     <div class="row g-2">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label-xs">Caminhão</label>
                             <select name="caminhao" class="form-select form-select-sm" required>
                                 <option value="">Selecione um caminhão</option>
@@ -125,7 +125,14 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <label class="form-label-xs">Status de Andamento</label>
+                            <select name="status_andamento" class="form-select form-select-sm" required>
+                                <option value="EM_ANDAMENTO" {% if frete and frete.status_andamento == 'EM_ANDAMENTO' %}selected{% endif %}>Em Andamento</option>
+                                <option value="FINALIZADO" {% if frete and frete.status_andamento == 'FINALIZADO' %}selected{% endif %}>Finalizado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
                             <label class="form-label-xs">Motorista (Usuário)</label>
                             <select name="motorista_user" id="motorista_user" class="form-select form-select-sm" onchange="checkMotoristaSelection()">
                                 <option value="">Selecione um motorista usuário</option>
@@ -137,7 +144,7 @@
                             </select>
                             <small class="form-text text-muted smaller-text">Preferencialmente</small>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label-xs">Motorista (Contato)</label>
                             <select name="motorista" id="motorista" class="form-select form-select-sm" onchange="checkMotoristaSelection()">
                                 <option value="">Selecione um motorista</option>

@@ -393,14 +393,15 @@ def get_destinos_por_alocacao(request):
                 for carreta in carretas
             ]
         elif tipo == 'frete':
-            # Retornar fretes do usuário
-            fretes = Frete.objects.filter(caminhao__usuario=request.user)
+            # Retornar fretes do usuário que estão em andamento
+            fretes = Frete.objects.filter(caminhao__usuario=request.user, status_andamento='EM_ANDAMENTO')
             response_data = [
                 {
                     'id': frete.id,
                     'cliente': frete.cliente.nome_completo if frete.cliente else 'Sem cliente',
                     'origem': frete.origem,
-                    'destino': frete.destino
+                    'destino': frete.destino,
+                    'caminhao_placa': frete.caminhao.placa if frete.caminhao else None
                 }
                 for frete in fretes
             ]
