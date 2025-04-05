@@ -68,6 +68,33 @@ class Frete(models.Model):
         logger.info('Salvando frete...')
         logger.info(f'Peso da carga: {self.peso_carga}')
         logger.info(f'Valor unitário: {self.valor_unitario}')
+        logger.info(f'Valor total: {self.valor_total}')
+        
+        # Verificar valores zerados ou negativos
+        if float(self.peso_carga) <= 0:
+            logger.warning(f'ALERTA: Peso da carga zerado ou negativo: {self.peso_carga}')
+            # Se for uma atualização (já existe ID), tentar recuperar o valor original
+            if hasattr(self, 'id') and self.id:
+                try:
+                    frete_original = Frete.objects.get(id=self.id)
+                    if float(frete_original.peso_carga) > 0:
+                        logger.info(f'Recuperando peso original: {frete_original.peso_carga}')
+                        self.peso_carga = frete_original.peso_carga
+                except Exception as e:
+                    logger.error(f'Erro ao recuperar frete original: {e}')
+        
+        if float(self.valor_unitario) <= 0:
+            logger.warning(f'ALERTA: Valor unitário zerado ou negativo: {self.valor_unitario}')
+            # Se for uma atualização (já existe ID), tentar recuperar o valor original
+            if hasattr(self, 'id') and self.id:
+                try:
+                    frete_original = Frete.objects.get(id=self.id)
+                    if float(frete_original.valor_unitario) > 0:
+                        logger.info(f'Recuperando valor unitário original: {frete_original.valor_unitario}')
+                        self.valor_unitario = frete_original.valor_unitario
+                except Exception as e:
+                    logger.error(f'Erro ao recuperar frete original: {e}')
+        
         logger.info(f'Fator de multiplicação: {self.carga.fator_multiplicacao}')
         
         # Calcula o valor total antes de salvar
@@ -84,15 +111,35 @@ class Frete(models.Model):
         # Atualiza o status com base na data de recebimento
         if self.data_recebimento:
             # Verificar se os valores importantes não estão zerados antes de marcar como pago
-            if self.valor_total <= 0 or self.peso_carga <= 0 or self.valor_unitario <= 0:
+            if float(self.valor_total) <= 0 or float(self.peso_carga) <= 0 or float(self.valor_unitario) <= 0:
                 logger.warning('ALERTA: Tentativa de marcar frete como PAGO com valores zerados ou negativos!')
                 logger.warning(f'Valor total: {self.valor_total}, Peso: {self.peso_carga}, Valor unitário: {self.valor_unitario}')
+                
+                # Remover a data de recebimento para evitar que o frete seja marcado como pago
+                self.data_recebimento = None
+                logger.warning('Data de recebimento removida para evitar status PAGO com valores zerados')
+                
                 # Manter o status anterior se os valores estiverem zerados
                 if not hasattr(self, 'id') or not self.id:
                     self.status = 'PENDENTE'
                     logger.warning('Novo frete com valores zerados definido como PENDENTE em vez de PAGO')
+                else:
+                    # Para fretes existentes, verificar o status atual e manter se não for PAGO
+                    try:
+                        frete_original = Frete.objects.get(id=self.id)
+                        if frete_original.status != 'PAGO':
+                            self.status = frete_original.status
+                            logger.warning(f'Mantendo status original: {self.status}')
+                        else:
+                            # Se já estava como PAGO, mas agora tem valores zerados, voltar para PENDENTE
+                            self.status = 'PENDENTE'
+                            logger.warning('Frete revertido de PAGO para PENDENTE devido a valores zerados')
+                    except Exception as e:
+                        logger.error(f'Erro ao recuperar status original: {e}')
+                        self.status = 'PENDENTE'
             else:
                 self.status = 'PAGO'
+                logger.info('Frete marcado como PAGO')
         else:
             hoje = timezone.now().date()
             if isinstance(self.data_saida, str):
