@@ -17,6 +17,7 @@
 <div id="loading-screen" class="loading-overlay" style="display: none;">
     <div class="loading-container">
         <div class="logo-container">
+            <!-- Debug: {{ empresa_logo }} -->
             <img src="{% if empresa_logo %}{{ empresa_logo }}{% else %}https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg{% endif %}" alt="Logo" class="loading-logo" id="loading-logo">
         </div>
         <div class="loading-spinner">

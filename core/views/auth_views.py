@@ -15,13 +15,16 @@ class CustomUserCreationForm(UserCreationForm):
         fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2')
 
 def login_view(request):
-    # Obter empresas para exibir logo no carregamento
+    # Buscar a empresa do usuário que está tentando fazer login
     from ..models import Empresa
-    empresas = Empresa.objects.all()
+    
+    # Inicialmente, usar a primeira empresa como fallback
     empresa_logo = None
+    empresas = Empresa.objects.all()
     if empresas.exists():
         empresa = empresas.first()
-        empresa_logo = empresa.logo if empresa.logo else None
+        if empresa and empresa.logo:
+            empresa_logo = empresa.logo
     
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -37,9 +40,10 @@ def login_view(request):
                 empresas = Empresa.objects.filter(usuario=user)
                 if empresas.exists():
                     empresa = empresas.first()
-                    empresa_logo = empresa.logo if empresa.logo else None
-            except:
-                pass
+                    if empresa and empresa.logo:
+                        empresa_logo = empresa.logo
+            except Exception as e:
+                print(f"Erro ao buscar empresa do usuário: {e}")
             
             # Redirecionar diretamente para o dashboard
             # A tela de carregamento agora é exibida como sobreposição no próprio formulário de login
@@ -50,13 +54,16 @@ def login_view(request):
     return render(request, 'core/auth/login.html', {'empresa_logo': empresa_logo})
 
 def register(request):
-    # Obter empresas para exibir logo no carregamento
+    # Buscar a empresa do usuário que está tentando se registrar
     from ..models import Empresa
-    empresas = Empresa.objects.all()
+    
+    # Inicialmente, usar a primeira empresa como fallback
     empresa_logo = None
+    empresas = Empresa.objects.all()
     if empresas.exists():
         empresa = empresas.first()
-        empresa_logo = empresa.logo if empresa.logo else None
+        if empresa and empresa.logo:
+            empresa_logo = empresa.logo
     
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)

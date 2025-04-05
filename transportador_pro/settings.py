@@ -196,7 +196,9 @@ STATICFILES_DIRS = [
 
 if os.environ.get('VERCEL'):
     # Configuração para servir arquivos estáticos no Vercel
-    STATICFILES_DIRS = []
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, 'core/static'),
+    ]
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
     STATIC_URL = '/static/'
 
