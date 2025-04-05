@@ -23,7 +23,9 @@ def login_view(request):
     empresa_logo = None
     if empresas.exists():
         empresa = empresas.first()
-        empresa_logo = empresa.logo if empresa.logo else None
+        # Garantir que a URL da logo seja completa
+        if empresa.logo:
+            empresa_logo = empresa.logo
     
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -39,7 +41,9 @@ def login_view(request):
                 empresas = Empresa.objects.filter(usuario=user)
                 if empresas.exists():
                     empresa = empresas.first()
-                    empresa_logo = empresa.logo if empresa.logo else None
+                    # Garantir que a URL da logo seja completa
+                    if empresa.logo:
+                        empresa_logo = empresa.logo
             except Exception as e:
                 print(f"Erro ao buscar empresa do usuário: {e}")
             
