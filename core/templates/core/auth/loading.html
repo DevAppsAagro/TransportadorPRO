@@ -1,0 +1,97 @@
+{% extends 'base/auth_base.html' %}
+{% load static %}
+
+{% block title %}Carregando - TransportadorPRO{% endblock %}
+
+{% block video_source %}https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//0228.mp4{% endblock %}
+{% block video_title %}{% endblock %}
+{% block video_text %}{% endblock %}
+
+{% block slogan %}Gerenciamento inteligente para sua frota{% endblock %}
+
+{% block logo_url %}https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg{% endblock %}
+
+{% block content %}
+<div class="loading-container">
+    <div class="logo-container">
+        <img src="{% if empresa_logo %}{{ empresa_logo }}{% else %}https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg{% endif %}" alt="Logo" class="loading-logo">
+    </div>
+    <div class="loading-spinner">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+    </div>
+    <div class="loading-text">
+        <h2>Bem-vindo, {{ user.first_name|default:'Usuário' }}!</h2>
+        <p>Carregando seu dashboard...</p>
+    </div>
+</div>
+
+<script>
+    // Redirecionar para o dashboard após 2 segundos
+    setTimeout(function() {
+        window.location.href = "{% url 'core:dashboard' %}";
+    }, 2000);
+</script>
+
+<style>
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        width: 100%;
+        color: white;
+        text-align: center;
+        gap: 1.5rem;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(8px);
+        border-radius: 1rem;
+        padding: 2rem;
+    }
+    
+    .logo-container {
+        margin-bottom: 1rem;
+    }
+    
+    .loading-logo {
+        max-width: 200px;
+        height: auto;
+        animation: pulse 2s infinite;
+    }
+    
+    .loading-spinner {
+        margin: 1rem 0;
+    }
+    
+    .loading-text {
+        margin-top: 1rem;
+    }
+    
+    .loading-text h2 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .loading-text p {
+        font-size: 1rem;
+        opacity: 0.8;
+    }
+    
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.05);
+            opacity: 0.8;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+</style>
+{% endblock %}
