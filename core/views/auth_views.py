@@ -15,6 +15,14 @@ class CustomUserCreationForm(UserCreationForm):
         fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2')
 
 def login_view(request):
+    # Obter empresas para exibir logo no carregamento
+    from ..models import Empresa
+    empresas = Empresa.objects.all()
+    empresa_logo = None
+    if empresas.exists():
+        empresa = empresas.first()
+        empresa_logo = empresa.logo if empresa.logo else None
+    
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -22,19 +30,43 @@ def login_view(request):
         
         if user is not None:
             login(request, user)
-            return redirect('core:dashboard')  # Modificado para redirecionar para 'core:dashboard'
+            
+            # Buscar empresa associada ao usuário (se existir)
+            empresa = None
+            try:
+                empresas = Empresa.objects.filter(usuario=user)
+                if empresas.exists():
+                    empresa = empresas.first()
+                    empresa_logo = empresa.logo if empresa.logo else None
+            except:
+                pass
+            
+            # Redirecionar diretamente para o dashboard
+            # A tela de carregamento agora é exibida como sobreposição no próprio formulário de login
+            return redirect('core:dashboard')
         else:
             messages.error(request, 'Usuário ou senha inválidos.')
     
-    return render(request, 'core/auth/login.html')
+    return render(request, 'core/auth/login.html', {'empresa_logo': empresa_logo})
 
 def register(request):
+    # Obter empresas para exibir logo no carregamento
+    from ..models import Empresa
+    empresas = Empresa.objects.all()
+    empresa_logo = None
+    if empresas.exists():
+        empresa = empresas.first()
+        empresa_logo = empresa.logo if empresa.logo else None
+    
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
             messages.success(request, 'Conta criada com sucesso!')
+            
+            # Redirecionar diretamente para o dashboard
+            # A tela de carregamento agora é exibida como sobreposição no próprio formulário de registro
             return redirect('core:dashboard')
         else:
             for field, errors in form.errors.items():
@@ -43,4 +75,4 @@ def register(request):
     else:
         form = CustomUserCreationForm()
     
-    return render(request, 'core/auth/register.html', {'form': form})
+    return render(request, 'core/auth/register.html', {'form': form, 'empresa_logo': empresa_logo})

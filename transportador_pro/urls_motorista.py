@@ -7,6 +7,7 @@ urlpatterns = [
     # Autenticação
     path('', motorista_views.motorista_login, name='login'),
     path('logout/', motorista_views.motorista_logout, name='logout'),
+    path('get_first_name/', motorista_views.get_first_name, name='get_first_name'),
     
     # Dashboard
     path('dashboard/', motorista_views.motorista_dashboard, name='dashboard'),
