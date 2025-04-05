@@ -155,9 +155,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'pt-br'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Sao_Paulo'
 
 USE_I18N = True
 
@@ -221,7 +221,7 @@ EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'TransportadorPRO <noreply@example.com>')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'TransportadorPRO <noreply@transportadorpro.com>')
 
 # Logging Configuration
 LOGGING = {
@@ -265,7 +265,7 @@ if not os.environ.get('VERCEL') and DEBUG:
 
 # Configurações de Email
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'noreply@transportadorpro.com'
+DEFAULT_FROM_EMAIL = 'TransportadorPRO <noreply@transportadorpro.com>'
 
 # Configurações para produção (se necessário)
 if not DEBUG:
@@ -275,3 +275,4 @@ if not DEBUG:
     EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
     EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
     EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+    DEFAULT_FROM_EMAIL = 'TransportadorPRO <noreply@transportadorpro.com>'
