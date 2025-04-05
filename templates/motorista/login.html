@@ -237,7 +237,7 @@
     <div id="loading-screen" class="loading-overlay" style="display: none;">
         <div class="loading-container">
             <div class="logo-container">
-                <img src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro.svg" alt="Logo" class="loading-logo" id="loading-logo">
+                <img src="{% if empresa_logo %}{{ empresa_logo }}{% else %}https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg{% endif %}" alt="Logo" class="loading-logo" id="loading-logo">
             </div>
             <div class="loading-spinner">
                 <div class="spinner-border text-primary" role="status">
