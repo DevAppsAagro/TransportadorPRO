@@ -1,5 +1,9 @@
 {% extends 'base/base.html' %}
 {% load static %}
+
+{% block extra_css %}
+<link href="{% static 'core/css/fretes.css' %}" rel="stylesheet">
+{% endblock %}
 {% load humanize %}
 
 {% block title %}Detalhes do Frete{% endblock %}

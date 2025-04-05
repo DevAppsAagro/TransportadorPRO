@@ -17,7 +17,7 @@
 <div id="loading-screen" class="loading-overlay" style="display: none;">
     <div class="loading-container">
         <div class="logo-container">
-            <img src="{% if empresa_logo %}{{ empresa_logo }}{% else %}https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg{% endif %}" alt="Logo" class="loading-logo" id="loading-logo">
+            <img src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg" alt="Logo" class="loading-logo" id="loading-logo">
         </div>
         <div class="loading-spinner">
             <div class="spinner-border text-primary" role="status">
@@ -210,9 +210,8 @@
                     // Usar a logo da empresa do usuário
                     const loadingLogo = document.getElementById('loading-logo');
                     if (loadingLogo) {
-                        // Usar a logo da empresa ou fallback
-                        const empresaLogo = "{{ empresa_logo|default:'https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg' }}";
-                        loadingLogo.src = empresaLogo;
+                        // Usar o logo padrão do TransportadorPRO
+                        loadingLogo.src = "https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg";
                     }
                     
                     // Exibir a tela de carregamento
