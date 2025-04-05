@@ -15,16 +15,15 @@ class CustomUserCreationForm(UserCreationForm):
         fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2')
 
 def login_view(request):
-    # Buscar a empresa do usuário que está tentando fazer login
+    # Inicializar variável de logo da empresa
     from ..models import Empresa
     
-    # Inicialmente, usar a primeira empresa como fallback
-    empresa_logo = None
+    # Obter empresas para exibir logo no carregamento
     empresas = Empresa.objects.all()
+    empresa_logo = None
     if empresas.exists():
         empresa = empresas.first()
-        if empresa and empresa.logo:
-            empresa_logo = empresa.logo
+        empresa_logo = empresa.logo if empresa.logo else None
     
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -40,8 +39,7 @@ def login_view(request):
                 empresas = Empresa.objects.filter(usuario=user)
                 if empresas.exists():
                     empresa = empresas.first()
-                    if empresa and empresa.logo:
-                        empresa_logo = empresa.logo
+                    empresa_logo = empresa.logo if empresa.logo else None
             except Exception as e:
                 print(f"Erro ao buscar empresa do usuário: {e}")
             
