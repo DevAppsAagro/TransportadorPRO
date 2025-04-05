@@ -83,7 +83,16 @@ class Frete(models.Model):
 
         # Atualiza o status com base na data de recebimento
         if self.data_recebimento:
-            self.status = 'PAGO'
+            # Verificar se os valores importantes não estão zerados antes de marcar como pago
+            if self.valor_total <= 0 or self.peso_carga <= 0 or self.valor_unitario <= 0:
+                logger.warning('ALERTA: Tentativa de marcar frete como PAGO com valores zerados ou negativos!')
+                logger.warning(f'Valor total: {self.valor_total}, Peso: {self.peso_carga}, Valor unitário: {self.valor_unitario}')
+                # Manter o status anterior se os valores estiverem zerados
+                if not hasattr(self, 'id') or not self.id:
+                    self.status = 'PENDENTE'
+                    logger.warning('Novo frete com valores zerados definido como PENDENTE em vez de PAGO')
+            else:
+                self.status = 'PAGO'
         else:
             hoje = timezone.now().date()
             if isinstance(self.data_saida, str):

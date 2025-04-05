@@ -78,6 +78,20 @@
         margin-left: 2px;
     }
     
+    /* Destacar campos financeiros importantes */
+    .campo-financeiro {
+        border-left: 3px solid #ffc107 !important;
+        font-weight: 500;
+    }
+    
+    /* Aviso para campos zerados */
+    .aviso-valor-zerado {
+        display: none;
+        color: #dc3545;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+    }
+    
     .valor-monetario {
         background-color: #f8f9fa;
         border-radius: 0.2rem;
@@ -190,8 +204,8 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label-xs">Peso da Carga (kg)</label>
-                            <input type="number" step="0.01" name="peso_carga" class="form-control form-control-sm" required
+                            <label class="form-label-xs required-field">Peso da Carga (kg)</label>
+                            <input type="number" step="0.01" name="peso_carga" class="form-control form-control-sm campo-financeiro" required
                                 value="{% if frete %}{{ frete.peso_carga }}{% endif %}" id="peso_carga">
                         </div>
                         <div class="col-md-3">
@@ -207,14 +221,14 @@
                     <div class="form-section-title">Valores</div>
                     <div class="row g-2">
                         <div class="col-md-3">
-                            <label class="form-label-xs">Valor Unitário (R$)</label>
-                            <input type="number" step="0.01" name="valor_unitario" class="form-control form-control-sm" required
+                            <label class="form-label-xs required-field">Valor Unitário</label>
+                            <input type="number" step="0.01" name="valor_unitario" class="form-control form-control-sm campo-financeiro" required
                                 value="{% if frete %}{{ frete.valor_unitario }}{% endif %}" id="valor_unitario">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label-xs">Valor Total (R$)</label>
                             <div class="d-flex align-items-center">
-                                <input type="number" step="0.01" name="valor_total" class="form-control form-control-sm bg-light" readonly
+                                <input type="number" step="0.01" name="valor_total" class="form-control form-control-sm bg-light campo-financeiro" readonly
                                     value="{% if frete %}{{ frete.valor_total }}{% endif %}" id="valor_total">
                                 <span class="ms-2 valor-monetario" id="valor_total_formatado">R$ 0,00</span>
                             </div>
@@ -240,9 +254,10 @@
                     <div class="form-section-title">Rota e Quilometragem</div>
                     <div class="row g-2">
                         <div class="col-md-3">
-                            <label class="form-label-xs">Origem</label>
-                            <input type="text" name="origem" class="form-control form-control-sm" required
-                                value="{% if frete %}{{ frete.origem }}{% endif %}">
+                            <label class="form-label-xs required-field">Valor Total</label>
+                            <input type="text" name="valor_total" class="form-control form-control-sm campo-financeiro" required
+                                value="{% if frete %}{{ frete.valor_total }}{% endif %}" id="valor_total" readonly>
+                            <div class="valor-monetario mt-1" id="valor_total_formatado">R$ 0,00</div>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label-xs">Destino</label>
@@ -392,10 +407,42 @@
     });
     
     function validarFormulario(event) {
-        if (!checkMotoristaSelection()) {
+        // Verificar seleção de motorista
+        const motoristaValido = checkMotoristaSelection();
+        
+        // Verificar valores importantes
+        const valoresValidos = checkValoresImportantes();
+        
+        // Se qualquer validação falhar, impedir o envio do formulário
+        if (!motoristaValido || !valoresValidos) {
             event.preventDefault();
             event.stopPropagation();
         }
+    }
+    
+    function checkValoresImportantes() {
+        // Verificar se os valores importantes não estão zerados
+        const pesoCarga = parseFloat(document.getElementById('peso_carga').value) || 0;
+        const valorUnitario = parseFloat(document.getElementById('valor_unitario').value) || 0;
+        const valorTotal = parseFloat(document.getElementById('valor_total').value) || 0;
+        
+        // Verificar se a data de recebimento está preenchida (indica que o frete está sendo marcado como pago)
+        const dataRecebimento = document.querySelector('input[name="data_recebimento"]').value;
+        
+        // Se a data de recebimento estiver preenchida, os valores não podem ser zero
+        if (dataRecebimento && (pesoCarga <= 0 || valorUnitario <= 0 || valorTotal <= 0)) {
+            // Mostrar alerta
+            alert('ATENÇÃO: Não é possível marcar um frete como recebido/pago com valores zerados.\n\nPor favor, preencha corretamente os seguintes campos:\n- Peso da Carga\n- Valor Unitário\n- Valor Total');
+            
+            // Destacar os campos com problema
+            if (pesoCarga <= 0) document.getElementById('peso_carga').classList.add('is-invalid');
+            if (valorUnitario <= 0) document.getElementById('valor_unitario').classList.add('is-invalid');
+            if (valorTotal <= 0) document.getElementById('valor_total').classList.add('is-invalid');
+            
+            return false;
+        }
+        
+        return true;
     }
     
     function checkMotoristaSelection() {

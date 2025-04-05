@@ -318,21 +318,38 @@ def frete_editar(request, id):
             
             # Log dos valores numéricos
             logger.info('\nPROCESSANDO VALORES NUMÉRICOS:')
-            peso_carga = request.POST.get('peso_carga', '0')
-            valor_unitario = request.POST.get('valor_unitario', '0')
-            valor_total = request.POST.get('valor_total', '0')
-            comissao_motorista = request.POST.get('comissao_motorista', '0')
+            peso_carga = request.POST.get('peso_carga', '')
+            valor_unitario = request.POST.get('valor_unitario', '')
+            valor_total = request.POST.get('valor_total', '')
+            comissao_motorista = request.POST.get('comissao_motorista', '')
             
             logger.info(f'Peso da carga: {peso_carga}')
             logger.info(f'Valor unitário: {valor_unitario}')
             logger.info(f'Valor total: {valor_total}')
             logger.info(f'Comissão do motorista: {comissao_motorista}')
             
+            # Verificar se os campos estão vazios e manter os valores originais se estiverem
+            if not peso_carga.strip():
+                peso_carga = str(frete.peso_carga)
+                logger.info(f'Usando valor original para peso da carga: {peso_carga}')
+            
+            if not valor_unitario.strip():
+                valor_unitario = str(frete.valor_unitario)
+                logger.info(f'Usando valor original para valor unitário: {valor_unitario}')
+            
+            if not valor_total.strip():
+                valor_total = str(frete.valor_total)
+                logger.info(f'Usando valor original para valor total: {valor_total}')
+            
+            if not comissao_motorista.strip():
+                comissao_motorista = str(frete.comissao_motorista)
+                logger.info(f'Usando valor original para comissão do motorista: {comissao_motorista}')
+            
             # Converter valores para Decimal
-            peso_carga = Decimal(peso_carga.replace(',', '.') if peso_carga else '0')
-            valor_unitario = Decimal(valor_unitario.replace(',', '.') if valor_unitario else '0')
-            valor_total = Decimal(valor_total.replace(',', '.') if valor_total else '0')
-            comissao_motorista = Decimal(comissao_motorista.replace(',', '.') if comissao_motorista else '0')
+            peso_carga = Decimal(peso_carga.replace(',', '.'))
+            valor_unitario = Decimal(valor_unitario.replace(',', '.'))
+            valor_total = Decimal(valor_total.replace(',', '.'))
+            comissao_motorista = Decimal(comissao_motorista.replace(',', '.'))
             
             # Calcular valor total se não foi fornecido
             if valor_total == 0:
