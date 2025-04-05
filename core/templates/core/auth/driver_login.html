@@ -1,22 +1,23 @@
 {% extends 'base/auth_base.html' %}
-{% load crispy_forms_tags %}
 
-{% block title %}Login - TransportadorPRO{% endblock %}
+{% block title %}Login de Motorista - TransportadorPRO{% endblock %}
 
 {% block video_source %}https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//0228.mp4{% endblock %}
 
 {% block video_title %}{% endblock %}
 {% block video_text %}{% endblock %}
 
-{% block slogan %}Gerenciamento inteligente para sua frota{% endblock %}
+{% block slogan %}Sua parceria confiável na estrada{% endblock %}
 
 {% block logo_url %}https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg{% endblock %}
 
+{% block form_title %}Login de Motorista <span class="badge bg-warning text-dark">Área Restrita</span>{% endblock %}
+
 {% block content %}
 <form method="post" class="w-full">
-    <div class="flex flex-col items-center gap-1 text-center mb-3">
-        <h2 class="text-lg font-semibold">Acesse sua conta</h2>
-        <p class="text-xs text-muted">Gerencie sua frota com eficiência</p>
+    <div class="flex flex-col items-center gap-2 text-center mb-4">
+        <h1 class="text-2xl font-bold">Área do Motorista <span class="badge bg-warning text-dark">Restrita</span></h1>
+        <p class="text-sm text-muted">Acesse o sistema para gerenciar suas entregas</p>
     </div>
     
     {% if messages %}
@@ -43,7 +44,7 @@
     <div class="form-group mb-3">
         <div class="d-flex justify-between items-center">
             <label for="password" class="form-label form-label-xs">Senha</label>
-            <a href="{% url 'core:password_reset' %}" class="link text-sm ml-auto">Esqueceu?</a>
+            <a href="#" class="link text-sm ml-auto">Esqueceu?</a>
         </div>
         <div class="input-group">
             <span class="input-group-text"><i class="bi bi-lock"></i></span>
@@ -51,21 +52,17 @@
         </div>
     </div>
     
-    <button type="submit" class="btn btn-primary btn-sm w-full mb-3">
-        <i class="bi bi-box-arrow-in-right me-2"></i>Entrar no Sistema
+    <button type="submit" class="btn btn-warning btn-sm w-full mb-3">
+        <i class="bi bi-box-arrow-in-right me-2"></i>Entrar como Motorista
     </button>
     
     <div class="separator">
         <span>Ou</span>
     </div>
     
-    <a href="https://motorista.transportadorpro.com" class="btn btn-outline btn-sm w-full mb-3">
-        <i class="bi bi-truck me-2"></i>Acesso para Motoristas
+    <a href="{% url 'core:login' %}" class="btn btn-outline btn-sm w-full mb-3">
+        <i class="bi bi-building me-2"></i>Acesso para Transportadoras
     </a>
-    
-    <div class="text-center text-sm">
-        Não tem uma conta? <a href="{% url 'core:register' %}" class="link">Criar conta</a>
-    </div>
 </form>
 
 
@@ -79,15 +76,6 @@
         line-height: 1.4;
     }
     
-    /* Ajuste para os ícones nos inputs */
-    .input-group-text {
-        height: calc(1.5em + 0.5rem + 2px);
-        padding: 0.15rem 0.4rem;
-        font-size: 0.8rem;
-        display: flex;
-        align-items: center;
-    }
-    
     /* Labels */
     .form-label-xs {
         font-size: 0.8rem;
@@ -97,6 +85,16 @@
     /* Textos menores */
     .smaller-text {
         font-size: 0.8rem;
+    }
+    
+    /* Estilos específicos para o login de motoristas */
+    .btn-warning {
+        color: #212529;
+    }
+    
+    /* Ícone de caminhão maior no botão */
+    .btn .bi-truck {
+        font-size: 1.1em;
     }
 </style>
 {% endblock %}

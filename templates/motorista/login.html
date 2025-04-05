@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,95 +14,267 @@
     
     <style>
         body {
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             align-items: center;
             background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Vídeo de fundo */
+        .bg-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -2;
+            opacity: 0.8;
+        }
+        
+        /* Overlay escuro para o vídeo */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: -1;
         }
         
         .form-signin {
-            max-width: 400px;
+            max-width: 420px;
+            width: 100%;
             padding: 15px;
         }
         
-        .form-signin .form-floating:focus-within {
-            z-index: 2;
+        /* Estilo compacto para inputs */
+        .form-control-sm {
+            height: calc(1.5em + 0.5rem + 2px);
+            padding: 0.15rem 0.4rem;
+            font-size: 0.8rem;
+            line-height: 1.4;
         }
         
-        .form-signin input[type="text"] {
-            margin-bottom: -1px;
-            border-bottom-right-radius: 0;
-            border-bottom-left-radius: 0;
+        /* Ajuste para os ícones nos inputs */
+        .input-group-text {
+            height: calc(1.5em + 0.5rem + 2px);
+            padding: 0.15rem 0.4rem;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
         }
         
-        .form-signin input[type="password"] {
-            margin-bottom: 10px;
-            border-top-left-radius: 0;
-            border-top-right-radius: 0;
+        /* Textos menores */
+        .smaller-text {
+            font-size: 0.8rem;
+        }
+        
+        /* Labels */
+        .form-label-xs {
+            font-size: 0.8rem;
+            margin-bottom: 0.2rem;
+        }
+        
+        .login-card {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.2);
+            background-color: rgba(255, 255, 255, 0.65);
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(4px);
+        }
+        
+        /* Ajuste para modo escuro */
+        [data-bs-theme="dark"] .login-card {
+            background-color: rgba(33, 37, 41, 0.65);
+            color: #e9ecef;
+        }
+        
+        [data-bs-theme="dark"] .bg-video {
+            opacity: 0.4;
         }
         
         .login-header {
             text-align: center;
             margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
         
-        .login-header img {
-            width: 120px;
-            margin-bottom: 1rem;
-        }
-        
-        .login-header h1 {
+        .login-header h2 {
             font-weight: 600;
-            font-size: 1.75rem;
+            font-size: 1.5rem;
+            margin-top: 0.25rem;
         }
         
-        .login-card {
-            border-radius: 10px;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        .motorista-badge {
+            background-color: #0d6efd;
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 30px;
+            margin-top: -5px;
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        /* Botão de login */
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            padding: 0.4rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+        
+        /* Ícones de tema */
+        .theme-icon-light, .theme-icon-dark {
+            font-size: 1.2rem;
+            color: #6c757d;
+        }
+        
+        [data-bs-theme="dark"] .theme-icon-light {
+            display: none;
+        }
+        
+        [data-bs-theme="light"] .theme-icon-dark {
+            display: none;
+        }
+        
+        /* Efeito hover para o botão */
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
         }
     </style>
 </head>
 <body>
+    <!-- Vídeo de fundo -->
+    <video class="bg-video" autoplay muted loop playsinline>
+        <source src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//0228.mp4" type="video/mp4">
+    </video>
     <main class="form-signin w-100 m-auto">
         <div class="card login-card">
             <div class="card-body p-4 p-sm-5">
-                <div class="login-header">
-                    <i class="bi bi-truck-front display-1 text-primary"></i>
-                    <h1>Transportador<span class="text-primary">PRO</span></h1>
-                    <p class="text-muted">Acesso exclusivo para motoristas</p>
+                <!-- Botão de alternância de tema -->
+                <div class="position-absolute top-0 end-0 p-3">
+                    <button class="btn btn-sm btn-link text-decoration-none" id="theme-toggle">
+                        <i class="bi bi-sun-fill theme-icon-light"></i>
+                        <i class="bi bi-moon-fill theme-icon-dark"></i>
+                    </button>
                 </div>
+                <div class="login-header">
+                    <div style="text-align: center; width: 100%;">
+                        <img src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro.svg" alt="TransportadorPRO" height="35" class="mb-2" id="transportador-logo" style="display: inline-block;">
+                        <div class="motorista-badge">Acesso para Motoristas</div>
+                    </div>
+                </div>
+                
+                <script>
+                // Função para atualizar a logo do TransportadorPRO conforme o tema
+                function updateTransportadorLogo() {
+                    const isDarkMode = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+                    const logoElement = document.getElementById('transportador-logo');
+                    
+                    if (isDarkMode) {
+                        logoElement.src = 'https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg';
+                    } else {
+                        logoElement.src = 'https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro.svg';
+                    }
+                }
+                
+                // Observar mudanças no tema para atualizar a logo
+                const logoObserver = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.attributeName === 'data-bs-theme') {
+                            updateTransportadorLogo();
+                        }
+                    });
+                });
+                
+                document.addEventListener('DOMContentLoaded', function() {
+                    updateTransportadorLogo();
+                    logoObserver.observe(document.documentElement, { attributes: true });
+                });
+                </script>
                 
                 {% include 'motorista/partials/messages.html' %}
                 
                 <form method="post" action="{% url 'motorista:login' %}">
                     {% csrf_token %}
                     
-                    <div class="form-floating mb-3">
-                        <input type="text" name="username" class="form-control" id="floatingInput" placeholder="nome de usuário" required autofocus>
-                        <label for="floatingInput">Nome de usuário</label>
+                    <div class="mb-2">
+                        <label for="username" class="form-label form-label-xs">Nome de usuário</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" name="username" class="form-control form-control-sm" id="username" required autofocus>
+                        </div>
                     </div>
                     
-                    <div class="form-floating mb-3">
-                        <input type="password" name="password" class="form-control" id="floatingPassword" placeholder="Senha" required>
-                        <label for="floatingPassword">Senha</label>
+                    <div class="mb-2">
+                        <label for="password" class="form-label form-label-xs">Senha</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" name="password" class="form-control form-control-sm" id="password" required>
+                        </div>
                     </div>
                     
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-lg btn-primary" type="submit">
-                            <i class="bi bi-box-arrow-in-right me-2"></i> Entrar
+                                    <div class="d-grid gap-2 mt-3">
+                        <button class="btn btn-primary btn-sm" type="submit">
+                            <i class="bi bi-box-arrow-in-right me-1"></i>Entrar no Sistema
                         </button>
                     </div>
                     
                     <div class="text-center mt-3">
-                        <p class="text-muted">Esqueceu sua senha? Entre em contato com o suporte.</p>
+                        <p class="text-muted smaller-text">Esqueceu sua senha? Entre em contato com o suporte.</p>
                     </div>
                 </form>
             </div>
         </div>
         
-        <div class="text-center mt-4">
-            <p class="text-muted">&copy; 2025 TransportadorPRO. Todos os direitos reservados.</p>
+        <div class="text-center mt-3">
+            <img src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo%20lwl%20claro.svg" alt="LWL Solutions" height="25" class="mb-1">
+            <p class="mb-0" style="font-size: 0.65rem; color: rgba(255, 255, 255, 0.9);">
+                LWL Solutions Ltda &copy; 2020-2025 - Todos os direitos reservados<br>
+                CNPJ: 48.837.685/0001-51
+            </p>
         </div>
+        
+        <script>
+        // Alternância de tema claro/escuro
+        document.getElementById('theme-toggle').addEventListener('click', function() {
+            const htmlElement = document.documentElement;
+            const currentTheme = htmlElement.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            htmlElement.setAttribute('data-bs-theme', newTheme);
+            
+            // Salvar preferência no localStorage
+            localStorage.setItem('theme', newTheme);
+        });
+        
+        // Verificar tema salvo no localStorage ao carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-bs-theme', savedTheme);
+            }
+        });
+        </script>
     </main>
 
     <!-- Bootstrap JS Bundle with Popper -->

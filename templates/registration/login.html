@@ -1,36 +1,55 @@
 {% extends 'base/auth_base.html' %}
 
+{% block title %}Login - TransportadorPRO{% endblock %}
+
+{% block video_source %}https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//0228.mp4{% endblock %}
+
+{% block video_title %}Bem-vindo ao TransportadorPRO{% endblock %}
+{% block video_text %}A solução completa para gestão de transportes e logística{% endblock %}
+
+{% block logo_url %}https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg{% endblock %}
+
+{% block form_title %}Acesse sua conta{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-primary text-white text-center">
-                    <h4 class="mb-0">Login</h4>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        {% if form.errors %}
-                        <div class="alert alert-danger">
-                            <strong>Erro:</strong> Usuário ou senha inválidos.
-                        </div>
-                        {% endif %}
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Usuário</label>
-                            <input type="text" name="username" class="form-control" id="username" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Senha</label>
-                            <input type="password" name="password" class="form-control" id="password" required>
-                        </div>
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">Entrar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+{% if form.errors %}
+<div class="alert alert-danger py-2">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    Usuário ou senha incorretos. Por favor, tente novamente.
+</div>
+{% endif %}
+
+<form method="post" class="w-100">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label for="id_username" class="form-label form-label-xs">Nome de usuário</label>
+        <div class="input-group">
+            <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+            <input type="text" name="username" class="form-control form-control-sm" id="id_username" placeholder="Nome de usuário" required>
         </div>
     </div>
+    
+    <div class="mb-3">
+        <label for="id_password" class="form-label form-label-xs">Senha</label>
+        <div class="input-group">
+            <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+            <input type="password" name="password" class="form-control form-control-sm" id="id_password" placeholder="Senha" required>
+        </div>
+    </div>
+    
+    <div class="d-grid gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Entrar
+        </button>
+    </div>
+</form>
+
+<div class="text-center mt-4">
+    <p class="smaller-text mb-0">
+        <a href="{% url 'password_reset' %}" class="text-decoration-none">Esqueceu sua senha?</a>
+    </p>
+    <p class="smaller-text mt-2">
+        Não tem uma conta? <a href="{% url 'core:register' %}" class="text-decoration-none">Registre-se</a>
+    </p>
 </div>
 {% endblock %}
