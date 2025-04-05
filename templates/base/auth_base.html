@@ -276,10 +276,7 @@
             background-color: #2d3748;
         }
         
-        [data-bs-theme="dark"] .separator span {
-            background-color: #1e293b;
-            color: #94a3b8;
-        }
+        /* Regra para o tema escuro do separador foi removida */
         
         .btn-primary {
             color: #fff;
@@ -308,27 +305,30 @@
         
         /* Separador */
         .separator {
-            position: relative;
+            display: flex;
+            align-items: center;
             text-align: center;
             font-size: 0.875rem;
-            margin: 1.5rem 0;
+            margin: 0.5rem 0;
+            color: #6c757d;
+        }
+        
+        .separator::before,
+        .separator::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--bs-border-color);
+        }
+        
+        .separator::before {
+            margin-right: 0.5em;
         }
         
         .separator::after {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background-color: var(--bs-border-color);
-            z-index: 0;
+            margin-left: 0.5em;
         }
         
         .separator span {
-            position: relative;
-            z-index: 1;
-            background-color: #fff;
             padding: 0 0.5rem;
             color: var(--bs-muted-foreground);
         }

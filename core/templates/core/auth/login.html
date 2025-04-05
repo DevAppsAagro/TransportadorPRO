@@ -175,6 +175,31 @@
         font-size: 0.8rem;
     }
     
+    /* Separador com OU */
+    .separator {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        margin: 0.5rem 0;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .separator::before,
+    .separator::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .separator::before {
+        margin-right: 0.5em;
+    }
+    
+    .separator::after {
+        margin-left: 0.5em;
+    }
+    
     /* Estilos para a tela de carregamento */
     .loading-overlay {
         position: fixed;
