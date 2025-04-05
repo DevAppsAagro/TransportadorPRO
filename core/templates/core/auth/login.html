@@ -17,7 +17,7 @@
 <div id="loading-screen" class="loading-overlay" style="display: none;">
     <div class="loading-container">
         <div class="logo-container">
-            <img src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg" alt="Logo" class="loading-logo" id="loading-logo">
+            <img src="{% if empresa_logo %}{{ empresa_logo }}{% else %}https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg{% endif %}" alt="Logo" class="loading-logo" id="loading-logo">
         </div>
         <div class="loading-spinner">
             <div class="spinner-border text-primary" role="status">
@@ -207,12 +207,7 @@
                         welcomeText.textContent = `Bem-vindo, ${username}!`;
                     }
                     
-                    // Usar a logo da empresa ou fallback
-                    const loadingLogo = document.getElementById('loading-logo');
-                    if (loadingLogo) {
-                        // Definir logo padrão para garantir que algo seja exibido
-                        loadingLogo.src = "https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg";
-                    }
+                    // Não precisamos definir a logo aqui, já está definida no HTML
                     
                     // Exibir a tela de carregamento
                     if (loadingScreen) {
