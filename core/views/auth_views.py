@@ -24,9 +24,9 @@ def login_view(request):
     if empresas.exists():
         empresa = empresas.first()
         # Garantir que a URL da logo seja completa e absoluta
-        if empresa.logo and empresa.logo.url:
-            # Garantir que a URL seja absoluta
-            empresa_logo = empresa.logo.url
+        if empresa.logo:
+            # O campo logo já é uma string URL
+            empresa_logo = empresa.logo
             # Se a URL não começar com http ou https, adicionar o domínio
             if not (empresa_logo.startswith('http://') or empresa_logo.startswith('https://')):
                 from django.contrib.sites.shortcuts import get_current_site
@@ -49,9 +49,9 @@ def login_view(request):
                 if empresas.exists():
                     empresa = empresas.first()
                     # Garantir que a URL da logo seja completa e absoluta
-                    if empresa.logo and empresa.logo.url:
-                        # Garantir que a URL seja absoluta
-                        empresa_logo = empresa.logo.url
+                    if empresa.logo:
+                        # O campo logo já é uma string URL
+                        empresa_logo = empresa.logo
                         # Se a URL não começar com http ou https, adicionar o domínio
                         if not (empresa_logo.startswith('http://') or empresa_logo.startswith('https://')):
                             from django.contrib.sites.shortcuts import get_current_site
