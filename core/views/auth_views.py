@@ -23,8 +23,16 @@ def login_view(request):
     empresa_logo = None
     if empresas.exists():
         empresa = empresas.first()
-        # Garantir que a URL da logo seja completa
-        empresa_logo = empresa.logo if empresa.logo else None
+        # Garantir que a URL da logo seja completa e absoluta
+        if empresa.logo and empresa.logo.url:
+            # Garantir que a URL seja absoluta
+            empresa_logo = empresa.logo.url
+            # Se a URL não começar com http ou https, adicionar o domínio
+            if not (empresa_logo.startswith('http://') or empresa_logo.startswith('https://')):
+                from django.contrib.sites.shortcuts import get_current_site
+                current_site = get_current_site(request)
+                protocol = 'https' if request.is_secure() else 'http'
+                empresa_logo = f"{protocol}://{current_site.domain}{empresa_logo}"
     
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -40,8 +48,16 @@ def login_view(request):
                 empresas = Empresa.objects.filter(usuario=user)
                 if empresas.exists():
                     empresa = empresas.first()
-                    # Garantir que a URL da logo seja completa
-                    empresa_logo = empresa.logo if empresa.logo else None
+                    # Garantir que a URL da logo seja completa e absoluta
+                    if empresa.logo and empresa.logo.url:
+                        # Garantir que a URL seja absoluta
+                        empresa_logo = empresa.logo.url
+                        # Se a URL não começar com http ou https, adicionar o domínio
+                        if not (empresa_logo.startswith('http://') or empresa_logo.startswith('https://')):
+                            from django.contrib.sites.shortcuts import get_current_site
+                            current_site = get_current_site(request)
+                            protocol = 'https' if request.is_secure() else 'http'
+                            empresa_logo = f"{protocol}://{current_site.domain}{empresa_logo}"
             except Exception as e:
                 print(f"Erro ao buscar empresa do usuário: {e}")
             
