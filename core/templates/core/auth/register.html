@@ -67,7 +67,7 @@
 <div id="loading-screen" class="loading-overlay" style="display: none;">
     <div class="loading-container">
         <div class="logo-container">
-            <img src="{% if empresa_logo %}{{ empresa_logo }}{% else %}https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg{% endif %}" alt="Logo" class="loading-logo" id="loading-logo">
+            <img src="https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg" alt="Logo" class="loading-logo" id="loading-logo">
         </div>
         <div class="loading-spinner">
             <div class="spinner-border text-primary" role="status">
@@ -215,9 +215,27 @@
                     // Usar a logo da empresa do usuário
                     const loadingLogo = document.getElementById('loading-logo');
                     if (loadingLogo) {
-                        // Usar a logo da empresa ou fallback
-                        const empresaLogo = "{% if empresa_logo %}{{ empresa_logo }}{% else %}https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg{% endif %}";
-                        loadingLogo.src = empresaLogo;
+                        // Buscar a logo da empresa do usuário via AJAX
+                        fetch(`/motorista/get_empresa_logo/?username=${encodeURIComponent(username)}`, {
+                            method: 'GET',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.empresa_logo) {
+                                loadingLogo.src = data.empresa_logo;
+                            } else {
+                                // Fallback para a logo padrão
+                                loadingLogo.src = "https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg";
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Erro ao buscar logo da empresa:', error);
+                            // Fallback para a logo padrão
+                            loadingLogo.src = "https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg";
+                        });
                     }
                     
                     // Exibir a tela de carregamento

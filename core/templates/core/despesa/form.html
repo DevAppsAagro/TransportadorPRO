@@ -107,8 +107,8 @@
                                         <label for="valor" class="form-label-xs required-field">Valor</label>
                                         <div class="input-group input-group-sm">
                                             <span class="input-group-text">R$</span>
-                                            <input type="number" class="form-control form-control-sm" id="valor" name="valor" 
-                                                   step="0.01" min="0.01" value="{{ despesa.valor|default:'0.00' }}" required>
+                                            <input type="text" class="form-control form-control-sm" id="valor" name="valor" 
+                                                   value="{{ despesa.valor|default:'0,00' }}" required oninput="formatarValor(this)">
                                         </div>
                                     </div>
                                     
@@ -229,25 +229,60 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Elementos do formulário
         const categoriaSelect = document.getElementById('categoria');
         const subcategoriaSelect = document.getElementById('subcategoria');
         const destinoVeiculo = document.getElementById('destino-veiculo');
         const destinoFrete = document.getElementById('destino-frete');
         const destinoAdministrativo = document.getElementById('destino-administrativo');
-        
-        // Elementos dos destinos
         const caminhaoSelect = document.getElementById('caminhao');
         const carretaSelect = document.getElementById('carreta');
         const freteSelect = document.getElementById('frete');
         const empresaSelect = document.getElementById('empresa');
+        const valorInput = document.getElementById('valor');
         
-        // Status para evitar carregamentos repetidos
+        // Controle de carregamento
         let carregouCaminhoes = false;
         let carregouCarretas = false;
         let carregouFretes = false;
         let carregouEmpresas = false;
         
-        // Função para carregar subcategorias
+        // Função para formatar o valor inicial
+        function formatarValorInicial() {
+            if (valorInput.value) {
+                // Preservar o valor exato sem arredondamento
+                const valorStr = String(valorInput.value);
+                const partes = valorStr.split('.');
+                let resultado = partes[0];
+                
+                if (partes.length > 1) {
+                    // Se tiver parte decimal, mostrar apenas 2 casas (truncando, não arredondando)
+                    resultado += ',' + (partes[1].length > 2 ? partes[1].substring(0, 2) : partes[1].padEnd(2, '0'));
+                } else {
+                    // Se não tiver parte decimal, adicionar ,00
+                    resultado += ',00';
+                }
+                
+                valorInput.value = resultado;
+            }
+        }
+        
+        // Função para formatar o valor durante a digitação
+        function formatarValor(input) {
+            // Remover tudo que não for número ou vírgula
+            let valor = input.value.replace(/[^0-9,]/g, '');
+            
+            // Garantir que só exista uma vírgula
+            const partes = valor.split(',');
+            if (partes.length > 2) {
+                valor = partes[0] + ',' + partes.slice(1).join('');
+            }
+            
+            // Atualizar o valor no input
+            input.value = valor;
+        }
+        
+        // Carregar subcategorias
         function carregarSubcategorias(categoriaId) {
             if (!categoriaId) {
                 subcategoriaSelect.innerHTML = '<option value="">Selecione uma subcategoria</option>';
@@ -276,11 +311,9 @@
                             subcategoriaSelect.appendChild(option);
                         });
                         
-                        // Se estiver editando, selecionar a subcategoria atual
                         {% if despesa and despesa.subcategoria_id %}
                             subcategoriaSelect.value = "{{ despesa.subcategoria_id }}";
                             
-                            // Se a subcategoria não estiver na lista, adicione-a
                             if (subcategoriaSelect.value === "") {
                                 const option = document.createElement('option');
                                 option.value = "{{ despesa.subcategoria_id }}";
@@ -300,7 +333,7 @@
                 });
         }
         
-        // Função para carregar caminhões
+        // Carregar caminhões
         function carregarCaminhoes() {
             if (carregouCaminhoes) return;
             
@@ -333,7 +366,7 @@
                 });
         }
         
-        // Função para carregar carretas
+        // Carregar carretas
         function carregarCarretas() {
             if (carregouCarretas) return;
             
@@ -366,7 +399,7 @@
                 });
         }
         
-        // Função para carregar fretes
+        // Carregar fretes
         function carregarFretes() {
             if (carregouFretes) return;
             
@@ -382,7 +415,6 @@
                     data.forEach(frete => {
                         const option = document.createElement('option');
                         option.value = frete.id;
-                        // Incluir a placa do caminhão junto com as informações do frete
                         const placaCaminhao = frete.caminhao_placa ? `[${frete.caminhao_placa}]` : '';
                         option.textContent = `Frete #${frete.id} ${placaCaminhao} - ${frete.cliente} - ${frete.origem} para ${frete.destino}`;
                         freteSelect.appendChild(option);
@@ -401,7 +433,7 @@
                 });
         }
         
-        // Função para carregar empresas
+        // Carregar empresas
         function carregarEmpresas() {
             if (carregouEmpresas) return;
             
@@ -434,14 +466,12 @@
                 });
         }
         
-        // Função para mostrar o destino correto baseado na alocação
+        // Mostrar destino
         function mostrarDestino(alocacao) {
-            // Esconder todos os destinos
             destinoVeiculo.classList.remove('active');
             destinoFrete.classList.remove('active');
             destinoAdministrativo.classList.remove('active');
             
-            // Mostrar o destino correspondente e carregar dados se necessário
             if (alocacao === 'VEICULO') {
                 destinoVeiculo.classList.add('active');
                 carregarCaminhoes();
@@ -455,7 +485,7 @@
             }
         }
         
-        // Evento de mudança na categoria
+        // Eventos
         categoriaSelect.addEventListener('change', function() {
             const categoriaId = this.value;
             const alocacao = this.options[this.selectedIndex].getAttribute('data-alocacao');
@@ -466,12 +496,27 @@
             }
         });
         
-        // Inicialização - somente se estiver editando
         {% if despesa and despesa.categoria_id %}
             const alocacao = categoriaSelect.options[categoriaSelect.selectedIndex].getAttribute('data-alocacao');
             carregarSubcategorias(categoriaSelect.value);
             mostrarDestino(alocacao);
         {% endif %}
+        
+        // Converter vírgula para ponto antes de enviar o formulário
+        document.getElementById('despesaForm').addEventListener('submit', function(e) {
+            const valorInput = document.getElementById('valor');
+            if (valorInput.value) {
+                valorInput.value = valorInput.value.replace(',', '.');
+            }
+        });
+        
+        // Formatar o valor inicial quando a página carrega
+        formatarValorInicial();
+        
+        // Adicionar evento para formatar o valor durante a digitação
+        document.getElementById('valor').addEventListener('input', function() {
+            formatarValor(this);
+        });
     });
 </script>
 {% endblock %}

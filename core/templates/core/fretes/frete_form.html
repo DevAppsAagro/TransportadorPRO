@@ -180,7 +180,7 @@
                         <div class="col-md-3">
                             <label class="form-label-xs required-field">Peso da Carga (kg)</label>
                             <input type="text" id="peso_carga" name="peso_carga" class="form-control form-control-sm campo-financeiro" required
-                                value="{% if frete.peso_carga > 0 %}{{ frete.peso_carga|floatformat:2 }}{% endif %}"
+                                value="{% if frete.peso_carga > 0 %}{{ frete.peso_carga|stringformat:'s'|slice:':-3'|default:frete.peso_carga|stringformat:'s' }}{% endif %}"
                                 data-original-value="{% if frete.peso_carga > 0 %}{{ frete.peso_carga }}{% endif %}">
                         </div>
                         <div class="col-md-3">
@@ -198,7 +198,7 @@
                         <div class="col-md-3">
                             <label class="form-label-xs required-field">Valor Unitário (R$)</label>
                             <input type="text" id="valor_unitario" name="valor_unitario" class="form-control form-control-sm campo-financeiro" required
-                                value="{% if frete.valor_unitario > 0 %}{{ frete.valor_unitario|floatformat:2 }}{% endif %}">
+                                value="{% if frete.valor_unitario > 0 %}{{ frete.valor_unitario|stringformat:'s'|slice:':-3'|default:frete.valor_unitario|stringformat:'s' }}{% endif %}">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label-xs">Valor Base (unidades)</label>
@@ -212,7 +212,7 @@
                             <label class="form-label-xs">Valor Total (R$)</label>
                             <div class="input-group input-group-sm">
                                 <input type="text" name="valor_total" class="form-control form-control-sm bg-light campo-financeiro" readonly
-                                    value="{% if frete.valor_total > 0 %}{{ frete.valor_total|floatformat:2 }}{% endif %}" id="valor_total"
+                                    value="{% if frete.valor_total > 0 %}{{ frete.valor_total|stringformat:'s'|slice:':-3'|default:frete.valor_total|stringformat:'s' }}{% endif %}" id="valor_total"
                                     data-original-value="{% if frete.valor_total > 0 %}{{ frete.valor_total }}{% endif %}">
                                 <span class="input-group-text bg-light">R$</span>
                             </div>
@@ -222,7 +222,7 @@
                             <label class="form-label-xs">Comissão do Motorista (%)</label>
                             <div class="input-group input-group-sm">
                                 <input type="text" name="comissao_motorista" class="form-control form-control-sm campo-financeiro" required
-                                    value="{% if frete.comissao_motorista > 0 %}{{ frete.comissao_motorista|floatformat:2 }}{% endif %}" id="comissao_motorista">
+                                    value="{% if frete.comissao_motorista > 0 %}{{ frete.comissao_motorista|stringformat:'s'|slice:':-3'|default:frete.comissao_motorista|stringformat:'s' }}{% endif %}" id="comissao_motorista">
                                 <span class="input-group-text bg-light">%</span>
                             </div>
                             <small class="form-text text-muted smaller-text">Valor: <span id="valor_comissao">R$ 0,00</span></small>
@@ -477,9 +477,22 @@ function converterParaNumero(valor) {
     return parseFloat(valor.replace(/\./g, '').replace(',', '.')) || 0;
 }
 
-// Função para formatar número para o formato brasileiro
+// Função para formatar número para o formato brasileiro sem arredondamento
 function formatarParaBrasileiro(numero) {
-    return numero.toFixed(2).replace('.', ',');
+    // Converter para string e separar parte inteira e decimal
+    const valorStr = String(numero);
+    const partes = valorStr.split('.');
+    let resultado = partes[0];
+    
+    if (partes.length > 1) {
+        // Se tiver parte decimal, mostrar apenas 2 casas (truncando, não arredondando)
+        resultado += ',' + (partes[1].length > 2 ? partes[1].substring(0, 2) : partes[1].padEnd(2, '0'));
+    } else {
+        // Se não tiver parte decimal, adicionar ,00
+        resultado += ',00';
+    }
+    
+    return resultado;
 }
 
 function calcularValores() {
@@ -500,7 +513,9 @@ function calcularValores() {
     const cargaSelect = document.querySelector('select[name="carga"]');
     if (cargaSelect && cargaSelect.selectedIndex > 0) {
         const selectedOption = cargaSelect.options[cargaSelect.selectedIndex];
-        fatorMultiplicacao = parseFloat(selectedOption.getAttribute('data-fator-multiplicacao')) || 1;
+        // Converter o fator de multiplicação para número, considerando que pode estar no formato brasileiro
+        const fatorStr = selectedOption.getAttribute('data-fator-multiplicacao');
+        fatorMultiplicacao = converterParaNumero(fatorStr) || 1;
     }
     
     // Calcular o valor base (peso da carga dividido pelo fator de multiplicação)

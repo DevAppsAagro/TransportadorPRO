@@ -36,9 +36,34 @@ def motorista_required(view_func):
 
 
 def motorista_logout(request):
-    """View de logout para o subdomínio de motoristas"""
+    """Logout de motorista"""
     logout(request)
     return redirect('motorista:login')
+
+
+@login_required
+@motorista_required
+def loading_screen(request):
+    """Exibe a tela de loading antes de redirecionar para o dashboard"""
+    motorista = request.user
+    empresa_logo = None
+    
+    # Buscar a empresa associada ao caminhão atual do motorista
+    try:
+        caminhao_atual = motorista.perfil.caminhao_atual
+        if caminhao_atual:
+            # Obter a empresa do usuário dono do caminhão
+            empresas = Empresa.objects.filter(usuario=caminhao_atual.usuario)
+            if empresas.exists():
+                empresa = empresas.first()
+                empresa_logo = empresa.logo if empresa.logo else None
+    except Exception as e:
+        print(f"Erro ao buscar logo da empresa: {str(e)}")
+    
+    return render(request, 'motorista/loading.html', {
+        'user': motorista,
+        'empresa_logo': empresa_logo
+    })
 
 
 def get_first_name(request):
@@ -59,18 +84,53 @@ def get_first_name(request):
     return JsonResponse({'first_name': first_name})
 
 
+def get_empresa_logo(request):
+    """View para obter a logo da empresa do motorista via AJAX"""
+    from django.http import JsonResponse
+    from django.contrib.auth.models import User
+    
+    username = request.GET.get('username')
+    empresa_logo = None
+    
+    if username:
+        try:
+            user = User.objects.get(username=username)
+            
+            # Verificar se o usuário é motorista e tem caminhão atual
+            if hasattr(user, 'perfil') and user.perfil.tipo_usuario == 'MOTORISTA':
+                caminhao_atual = user.perfil.caminhao_atual
+                if caminhao_atual:
+                    # Buscar a empresa do proprietário do caminhão
+                    empresas = Empresa.objects.filter(usuario=caminhao_atual.usuario)
+                    if empresas.exists():
+                        empresa = empresas.first()
+                        empresa_logo = empresa.logo if empresa.logo else None
+        except Exception as e:
+            print(f"Erro ao buscar logo da empresa: {str(e)}")
+    
+    return JsonResponse({'empresa_logo': empresa_logo})
+
+
 def motorista_login(request):
     """View de login para o subdomínio de motoristas"""
     # Redirecionar para o dashboard se já estiver logado como motorista
     if is_motorista(request.user):
         return redirect('motorista:dashboard')
     
-    # Obter empresas para exibir logo no carregamento
-    empresas = Empresa.objects.all()
+    # Inicializar a variável de logo da empresa
     empresa_logo = None
-    if empresas.exists():
-        empresa = empresas.first()
-        empresa_logo = empresa.logo if empresa.logo else None
+    
+    # Se o usuário estiver autenticado, buscar a logo da empresa associada ao caminhão atual
+    if request.user.is_authenticated and hasattr(request.user, 'perfil') and request.user.perfil.tipo_usuario == 'MOTORISTA':
+        try:
+            caminhao_atual = request.user.perfil.caminhao_atual
+            if caminhao_atual:
+                empresas = Empresa.objects.filter(usuario=caminhao_atual.usuario)
+                if empresas.exists():
+                    empresa = empresas.first()
+                    empresa_logo = empresa.logo if empresa.logo else None
+        except Exception as e:
+            print(f"Erro ao buscar logo da empresa: {str(e)}")
     
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -88,7 +148,7 @@ def motorista_login(request):
                     user.perfil.save()
                 
                 # Buscar empresa associada ao motorista (se tiver caminhão atual)
-                empresa = None
+                empresa_logo = None
                 try:
                     caminhao_atual = user.perfil.caminhao_atual
                     if caminhao_atual:
@@ -96,12 +156,11 @@ def motorista_login(request):
                         if empresas.exists():
                             empresa = empresas.first()
                             empresa_logo = empresa.logo if empresa.logo else None
-                except:
-                    pass
+                except Exception as e:
+                    print(f"Erro ao buscar logo da empresa: {str(e)}")
                 
-                # Redirecionar diretamente para o dashboard
-                # A tela de carregamento agora é exibida como sobreposição no próprio formulário de login
-                return redirect('motorista:dashboard')
+                # Redirecionar para a tela de loading antes de ir para o dashboard
+                return redirect('motorista:loading')
             else:
                 messages.error(request, 'Acesso negado. Esta área é restrita para motoristas.')
         else:

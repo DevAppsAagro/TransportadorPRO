@@ -8,8 +8,10 @@ urlpatterns = [
     path('', motorista_views.motorista_login, name='login'),
     path('logout/', motorista_views.motorista_logout, name='logout'),
     path('get_first_name/', motorista_views.get_first_name, name='get_first_name'),
+    path('get_empresa_logo/', motorista_views.get_empresa_logo, name='get_empresa_logo'),
     
     # Dashboard
+    path('loading/', motorista_views.loading_screen, name='loading'),
     path('dashboard/', motorista_views.motorista_dashboard, name='dashboard'),
     
     # Abastecimentos

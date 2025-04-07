@@ -30,7 +30,7 @@
                 </div>
                 <div class="mb-3">
                     <label for="fator_multiplicacao" class="form-label">Fator de Multiplicação</label>
-                    <input type="number" step="0.01" class="form-control" id="fator_multiplicacao" name="fator_multiplicacao" value="{{ carga.fator_multiplicacao|default:'' }}" required>
+                    <input type="text" class="form-control" id="fator_multiplicacao" name="fator_multiplicacao" value="{% if carga.fator_multiplicacao %}{{ carga.fator_multiplicacao|stringformat:'s'|slice:':-3'|default:carga.fator_multiplicacao|stringformat:'s' }}{% endif %}" required oninput="formatarValor(this)">
                     <div class="invalid-feedback">
                         Por favor, informe o fator de multiplicação.
                     </div>
@@ -47,6 +47,23 @@
 
 {% block extra_js %}
 <script>
+    // Função para formatar valor no formato brasileiro
+    function formatarValor(input) {
+        let valor = input.value.replace(/[^0-9,]/g, '');
+        const partes = valor.split(',');
+        if (partes.length > 2) {
+            valor = partes[0] + ',' + partes.slice(1).join('');
+        }
+        input.value = valor;
+    }
+    
+    // Função para converter valor no formato brasileiro para número
+    function converterParaNumero(valor) {
+        if (!valor) return 0;
+        // Remove pontos de milhar e substitui vírgula por ponto
+        return parseFloat(valor.replace(/\./g, '').replace(',', '.')) || 0;
+    }
+    
     // Validação do formulário
     (function () {
         'use strict'
@@ -56,6 +73,13 @@
                 if (!form.checkValidity()) {
                     event.preventDefault()
                     event.stopPropagation()
+                } else {
+                    // Converter o valor do fator de multiplicação para o formato padrão antes de enviar
+                    const fatorElement = document.getElementById('fator_multiplicacao');
+                    if (fatorElement && fatorElement.value) {
+                        const valorNumerico = converterParaNumero(fatorElement.value);
+                        fatorElement.value = valorNumerico;
+                    }
                 }
                 form.classList.add('was-validated')
             }, false)
