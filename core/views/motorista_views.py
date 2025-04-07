@@ -57,8 +57,16 @@ def loading_screen(request):
             if empresas.exists():
                 empresa = empresas.first()
                 empresa_logo = empresa.logo if empresa.logo else None
+                print(f"Logo da empresa encontrada: {empresa_logo} para o usuário {motorista.username}")
+            else:
+                print(f"Nenhuma empresa encontrada para o usuário dono do caminhão {caminhao_atual.usuario.username}")
+        else:
+            print(f"Motorista {motorista.username} não tem caminhão atual")
     except Exception as e:
         print(f"Erro ao buscar logo da empresa: {str(e)}")
+    
+    # Garantir que estamos passando a logo da empresa correta
+    print(f"Enviando logo {empresa_logo} para o template loading.html")
     
     return render(request, 'motorista/loading.html', {
         'user': motorista,
@@ -95,19 +103,33 @@ def get_empresa_logo(request):
     if username:
         try:
             user = User.objects.get(username=username)
+            print(f"Buscando logo da empresa para o usuário: {username}")
             
             # Verificar se o usuário é motorista e tem caminhão atual
             if hasattr(user, 'perfil') and user.perfil.tipo_usuario == 'MOTORISTA':
                 caminhao_atual = user.perfil.caminhao_atual
                 if caminhao_atual:
                     # Buscar a empresa do proprietário do caminhão
-                    empresas = Empresa.objects.filter(usuario=caminhao_atual.usuario)
+                    dono_caminhao = caminhao_atual.usuario
+                    print(f"Dono do caminhão: {dono_caminhao.username}")
+                    
+                    empresas = Empresa.objects.filter(usuario=dono_caminhao)
                     if empresas.exists():
                         empresa = empresas.first()
                         empresa_logo = empresa.logo if empresa.logo else None
+                        print(f"Logo da empresa encontrada: {empresa_logo}")
+                    else:
+                        print(f"Nenhuma empresa encontrada para o usuário dono do caminhão {dono_caminhao.username}")
+                else:
+                    print(f"Motorista {username} não tem caminhão atual")
+            else:
+                print(f"Usuário {username} não é motorista ou não tem perfil")
         except Exception as e:
             print(f"Erro ao buscar logo da empresa: {str(e)}")
+    else:
+        print("Nome de usuário não fornecido na requisição")
     
+    print(f"Retornando logo: {empresa_logo}")
     return JsonResponse({'empresa_logo': empresa_logo})
 
 
@@ -118,19 +140,8 @@ def motorista_login(request):
         return redirect('motorista:dashboard')
     
     # Inicializar a variável de logo da empresa
-    empresa_logo = None
-    
-    # Se o usuário estiver autenticado, buscar a logo da empresa associada ao caminhão atual
-    if request.user.is_authenticated and hasattr(request.user, 'perfil') and request.user.perfil.tipo_usuario == 'MOTORISTA':
-        try:
-            caminhao_atual = request.user.perfil.caminhao_atual
-            if caminhao_atual:
-                empresas = Empresa.objects.filter(usuario=caminhao_atual.usuario)
-                if empresas.exists():
-                    empresa = empresas.first()
-                    empresa_logo = empresa.logo if empresa.logo else None
-        except Exception as e:
-            print(f"Erro ao buscar logo da empresa: {str(e)}")
+    # Usar a logo padrão do TransportadorPRO para a tela de login
+    empresa_logo = "https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg"
     
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -147,17 +158,8 @@ def motorista_login(request):
                     user.perfil.ultimo_acesso = timezone.now()
                     user.perfil.save()
                 
-                # Buscar empresa associada ao motorista (se tiver caminhão atual)
-                empresa_logo = None
-                try:
-                    caminhao_atual = user.perfil.caminhao_atual
-                    if caminhao_atual:
-                        empresas = Empresa.objects.filter(usuario=caminhao_atual.usuario)
-                        if empresas.exists():
-                            empresa = empresas.first()
-                            empresa_logo = empresa.logo if empresa.logo else None
-                except Exception as e:
-                    print(f"Erro ao buscar logo da empresa: {str(e)}")
+                # A logo da empresa será carregada na tela de loading
+                # Não precisamos carregar aqui
                 
                 # Redirecionar para a tela de loading antes de ir para o dashboard
                 return redirect('motorista:loading')
