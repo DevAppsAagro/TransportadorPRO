@@ -187,6 +187,25 @@
                                 <!-- Fretes -->
                                 <div id="destino-frete" class="destino-container">
                                     <div class="mb-2">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="buscar-frete-checkbox" checked>
+                                            <label class="form-check-label smaller-text" for="buscar-frete-checkbox">
+                                                Buscar frete por ID
+                                            </label>
+                                        </div>
+                                        
+                                        <div id="busca-frete-container" style="display: block;" class="mb-2">
+                                            <div class="input-group input-group-sm mb-2">
+                                                <input type="text" class="form-control form-control-sm" id="frete_id_busca" placeholder="Digite o ID do frete">
+                                                <button class="btn btn-outline-secondary btn-sm" type="button" id="buscar-frete-btn" onclick="buscarFretePorId()">
+                                                    <i class="bi bi-search"></i> Buscar
+                                                </button>
+                                            </div>
+                                            <div id="resultado-busca-frete" class="alert alert-info py-2 smaller-text" style="display: none;">
+                                                <div id="frete-info"></div>
+                                            </div>
+                                        </div>
+                                        
                                         <label for="frete" class="form-label-xs">Frete</label>
                                         <select class="form-select form-select-sm" id="frete" name="frete">
                                             <option value="">Selecione um frete</option>
@@ -250,36 +269,38 @@
         // Função para formatar o valor inicial
         function formatarValorInicial() {
             if (valorInput.value) {
-                // Preservar o valor exato sem arredondamento
-                const valorStr = String(valorInput.value);
-                const partes = valorStr.split('.');
-                let resultado = partes[0];
+                // Converter o valor para número
+                // O valor já vem do banco com ponto como separador decimal
+                const valorNumerico = parseFloat(valorInput.value);
                 
-                if (partes.length > 1) {
-                    // Se tiver parte decimal, mostrar apenas 2 casas (truncando, não arredondando)
-                    resultado += ',' + (partes[1].length > 2 ? partes[1].substring(0, 2) : partes[1].padEnd(2, '0'));
-                } else {
-                    // Se não tiver parte decimal, adicionar ,00
-                    resultado += ',00';
-                }
-                
-                valorInput.value = resultado;
+                // Formatar usando toLocaleString para garantir a vírgula como separador decimal
+                valorInput.value = valorNumerico.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2
+                });
             }
         }
         
         // Função para formatar o valor durante a digitação
         function formatarValor(input) {
-            // Remover tudo que não for número ou vírgula
-            let valor = input.value.replace(/[^0-9,]/g, '');
+            // Remover tudo que não for número
+            let valor = input.value.replace(/[^0-9]/g, '');
             
-            // Garantir que só exista uma vírgula
-            const partes = valor.split(',');
-            if (partes.length > 2) {
-                valor = partes[0] + ',' + partes.slice(1).join('');
+            // Se não tiver nada, retorna vazio
+            if (valor === '') {
+                input.value = '';
+                return;
             }
             
-            // Atualizar o valor no input
-            input.value = valor;
+            // Converter para número e formatar com vírgula como separador decimal
+            // Dividir por 100 para colocar a vírgula na posição correta (centavos)
+            const valorNumerico = parseFloat(valor) / 100;
+            
+            // Formatar usando toLocaleString para garantir a vírgula como separador decimal
+            input.value = valorNumerico.toLocaleString('pt-BR', {
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2
+            });
         }
         
         // Carregar subcategorias
@@ -292,7 +313,7 @@
             subcategoriaSelect.innerHTML = '<option value="">Carregando...</option>';
             subcategoriaSelect.disabled = true;
             
-            fetch(`{% url 'core:get_subcategorias' %}?categoria_id=${categoriaId}`)
+            fetch(`{% url "core:get_subcategorias" %}?categoria_id=${categoriaId}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Erro na resposta da rede: ' + response.status);
@@ -311,6 +332,7 @@
                             subcategoriaSelect.appendChild(option);
                         });
                         
+                        /* Django template if start */
                         {% if despesa and despesa.subcategoria_id %}
                             subcategoriaSelect.value = "{{ despesa.subcategoria_id }}";
                             
@@ -322,6 +344,7 @@
                                 subcategoriaSelect.value = "{{ despesa.subcategoria_id }}";
                             }
                         {% endif %}
+                        /* Django template if end */
                     } else {
                         console.error('Resposta não é um array:', data);
                     }
@@ -340,7 +363,7 @@
             caminhaoSelect.innerHTML = '<option value="">Carregando...</option>';
             caminhaoSelect.disabled = true;
             
-            fetch('{% url "core:get_destinos_por_alocacao" %}?tipo=caminhao')
+            fetch(`{% url "core:get_destinos_por_alocacao" %}?tipo=caminhao`)
                 .then(response => response.json())
                 .then(data => {
                     caminhaoSelect.innerHTML = '<option value="">Selecione um caminhão</option>';
@@ -353,9 +376,11 @@
                         caminhaoSelect.appendChild(option);
                     });
                     
+                    /* Django template if start */
                     {% if despesa and despesa.caminhao_id %}
                         caminhaoSelect.value = "{{ despesa.caminhao_id }}";
                     {% endif %}
+                    /* Django template if end */
                     
                     carregouCaminhoes = true;
                 })
@@ -373,7 +398,7 @@
             carretaSelect.innerHTML = '<option value="">Carregando...</option>';
             carretaSelect.disabled = true;
             
-            fetch('{% url "core:get_destinos_por_alocacao" %}?tipo=carreta')
+            fetch(`{% url "core:get_destinos_por_alocacao" %}?tipo=carreta`)
                 .then(response => response.json())
                 .then(data => {
                     carretaSelect.innerHTML = '<option value="">Selecione uma carreta</option>';
@@ -386,9 +411,11 @@
                         carretaSelect.appendChild(option);
                     });
                     
+                    /* Django template if start */
                     {% if despesa and despesa.carreta_id %}
                         carretaSelect.value = "{{ despesa.carreta_id }}";
                     {% endif %}
+                    /* Django template if end */
                     
                     carregouCarretas = true;
                 })
@@ -406,7 +433,7 @@
             freteSelect.innerHTML = '<option value="">Carregando...</option>';
             freteSelect.disabled = true;
             
-            fetch('{% url "core:get_destinos_por_alocacao" %}?tipo=frete')
+            fetch(`{% url "core:get_destinos_por_alocacao" %}?tipo=frete&caminhao_id=${caminhaoSelect.value}`)
                 .then(response => response.json())
                 .then(data => {
                     freteSelect.innerHTML = '<option value="">Selecione um frete</option>';
@@ -420,9 +447,11 @@
                         freteSelect.appendChild(option);
                     });
                     
+                    /* Django template if start */
                     {% if despesa and despesa.frete_id %}
                         freteSelect.value = "{{ despesa.frete_id }}";
                     {% endif %}
+                    /* Django template if end */
                     
                     carregouFretes = true;
                 })
@@ -433,6 +462,95 @@
                 });
         }
         
+        // Buscar frete por ID
+        function buscarFretePorId() {
+            const freteId = document.getElementById('frete_id_busca').value;
+            if (!freteId || isNaN(parseInt(freteId))) {
+                document.getElementById('resultado-busca-frete').style.display = 'block';
+                document.getElementById('frete-info').innerHTML = '<div class="alert alert-warning py-1 mb-0">Por favor, digite um ID de frete válido.</div>';
+                return;
+            }
+            
+            document.getElementById('resultado-busca-frete').style.display = 'block';
+            document.getElementById('frete-info').innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Buscando frete...</div>';
+            
+            fetch(`{% url "core:api_frete" id=0 %}`.replace('0', freteId))
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Frete não encontrado');
+                    }
+                    return response.json();
+                })
+                .then(frete => {
+                    if (!frete || !frete.id) {
+                        document.getElementById('frete-info').innerHTML = '<div class="alert alert-warning py-1 mb-0">Frete não encontrado.</div>';
+                        return;
+                    }
+                    
+                    // Exibir informações do frete
+                    const placaCaminhao = frete.caminhao_placa ? `<strong>Placa:</strong> ${frete.caminhao_placa}` : '';
+                    const caminhaoInfo = frete.caminhao_marca && frete.caminhao_modelo ? 
+                        `<strong>Caminhão:</strong> ${frete.caminhao_marca} ${frete.caminhao_modelo}` : '';
+                    const statusFrete = frete.status ? `<strong>Status:</strong> ${formatarStatusFrete(frete.status)}` : '';
+                    
+                    let infoHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Frete #${frete.id}</strong> - ${frete.origem} → ${frete.destino}
+                            </div>
+                            <button type="button" class="btn-close btn-sm" aria-label="Fechar" id="fechar-resultado-frete"></button>
+                        </div>
+                        <div class="mt-1">
+                            <strong>Cliente:</strong> ${frete.cliente || 'Não informado'}<br>
+                            ${placaCaminhao} ${placaCaminhao ? '<br>' : ''}
+                            ${caminhaoInfo} ${caminhaoInfo ? '<br>' : ''}
+                            ${statusFrete}
+                        </div>
+                    `;
+                    
+                    document.getElementById('frete-info').innerHTML = infoHTML;
+                    
+                    // Selecionar o frete no dropdown
+                    if (freteSelect) {
+                        // Verificar se o frete já existe no dropdown
+                        let freteOption = Array.from(freteSelect.options).find(option => option.value == frete.id);
+                        
+                        // Se não existir, adicionar
+                        if (!freteOption) {
+                            freteOption = document.createElement('option');
+                            freteOption.value = frete.id;
+                            const placaText = frete.caminhao_placa ? `[${frete.caminhao_placa}]` : '';
+                            freteOption.textContent = `Frete #${frete.id} ${placaText} - ${frete.cliente ? frete.cliente + ' - ' : ''}${frete.origem} para ${frete.destino}`;
+                            freteSelect.appendChild(freteOption);
+                        }
+                        
+                        // Selecionar o frete
+                        freteSelect.value = frete.id;
+                    }
+                    
+                    // Adicionar evento para fechar o resultado
+                    document.getElementById('fechar-resultado-frete').addEventListener('click', function() {
+                        document.getElementById('resultado-busca-frete').style.display = 'none';
+                    });
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar frete:', error);
+                    document.getElementById('frete-info').innerHTML = '<div class="alert alert-danger py-1 mb-0">Erro ao buscar frete. Verifique o ID e tente novamente.</div>';
+                });
+        }
+        
+        // Formatar status do frete para exibição
+        function formatarStatusFrete(status) {
+            const statusMap = {
+                'PENDENTE': 'Pendente',
+                'EM_ANDAMENTO': 'Em Andamento',
+                'CONCLUIDO': 'Concluído',
+                'CANCELADO': 'Cancelado'
+            };
+            
+            return statusMap[status] || status;
+        }
+        
         // Carregar empresas
         function carregarEmpresas() {
             if (carregouEmpresas) return;
@@ -440,7 +558,7 @@
             empresaSelect.innerHTML = '<option value="">Carregando...</option>';
             empresaSelect.disabled = true;
             
-            fetch('{% url "core:get_destinos_por_alocacao" %}?tipo=empresa')
+            fetch(`{% url "core:get_destinos_por_alocacao" %}?tipo=empresa`)
                 .then(response => response.json())
                 .then(data => {
                     empresaSelect.innerHTML = '<option value="">Selecione uma empresa</option>';
@@ -453,9 +571,11 @@
                         empresaSelect.appendChild(option);
                     });
                     
+                    /* Django template if start */
                     {% if despesa and despesa.empresa_id %}
                         empresaSelect.value = "{{ despesa.empresa_id }}";
                     {% endif %}
+                    /* Django template if end */
                     
                     carregouEmpresas = true;
                 })
@@ -496,17 +616,58 @@
             }
         });
         
+        // Evento para o select de caminhão
+        caminhaoSelect.addEventListener('change', function() {
+            if (this.value && destinoFrete.classList.contains('active')) {
+                // Se o checkbox de busca por ID estiver desmarcado, carrega todos os fretes
+                if (!buscarFreteCheckbox.checked) {
+                    carregarFretes();
+                }
+            }
+        });
+        
+        // Eventos para busca de frete por ID
+        const buscarFreteCheckbox = document.getElementById('buscar-frete-checkbox');
+        const buscaFreteContainer = document.getElementById('busca-frete-container');
+        const buscarFreteBtn = document.getElementById('buscar-frete-btn');
+        const buscaFreteIdInput = document.getElementById('frete_id_busca');
+        
+        buscarFreteCheckbox.addEventListener('change', function() {
+            buscaFreteContainer.style.display = this.checked ? 'block' : 'none';
+            if (!this.checked) {
+                document.getElementById('resultado-busca-frete').style.display = 'none';
+                // Carregar todos os fretes quando o checkbox for desmarcado
+                if (caminhaoSelect.value) {
+                    carregarFretes();
+                }
+            }
+        });
+        
+        buscarFreteBtn.addEventListener('click', function() {
+            buscarFretePorId();
+        });
+        
+        buscaFreteIdInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                buscarFretePorId();
+            }
+        });
+        
+        /* Django template if start */
         {% if despesa and despesa.categoria_id %}
             const alocacao = categoriaSelect.options[categoriaSelect.selectedIndex].getAttribute('data-alocacao');
             carregarSubcategorias(categoriaSelect.value);
             mostrarDestino(alocacao);
         {% endif %}
+        /* Django template if end */
         
         // Converter vírgula para ponto antes de enviar o formulário
         document.getElementById('despesaForm').addEventListener('submit', function(e) {
             const valorInput = document.getElementById('valor');
             if (valorInput.value) {
-                valorInput.value = valorInput.value.replace(',', '.');
+                // Remover pontos de milhar e substituir vírgula por ponto
+                valorInput.value = valorInput.value.replace(/\./g, '').replace(',', '.');
             }
         });
         

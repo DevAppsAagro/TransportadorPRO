@@ -76,19 +76,19 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="preco_pneu_dianteiro">Pneu Dianteiro (R$)</label>
-                            <input type="number" step="0.01" class="form-control" id="preco_pneu_dianteiro" name="preco_pneu_dianteiro" value="{{ estimativa.preco_pneu_dianteiro|default:'' }}" required>
+                            <input type="text" class="form-control" id="preco_pneu_dianteiro" name="preco_pneu_dianteiro" value="{{ estimativa.preco_pneu_dianteiro|default:'0'|stringformat:'s'|replace:'.',',' }}" required>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="preco_pneu_traseiro">Pneu Traseiro (R$)</label>
-                            <input type="number" step="0.01" class="form-control" id="preco_pneu_traseiro" name="preco_pneu_traseiro" value="{{ estimativa.preco_pneu_traseiro|default:'' }}" required>
+                            <input type="text" class="form-control" id="preco_pneu_traseiro" name="preco_pneu_traseiro" value="{{ estimativa.preco_pneu_traseiro|default:'0'|stringformat:'s'|replace:'.',',' }}" required>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="preco_pneu_carreta">Pneu da Carreta (R$)</label>
-                            <input type="number" step="0.01" class="form-control" id="preco_pneu_carreta" name="preco_pneu_carreta" value="{{ estimativa.preco_pneu_carreta|default:'' }}" required>
+                            <input type="text" class="form-control" id="preco_pneu_carreta" name="preco_pneu_carreta" value="{{ estimativa.preco_pneu_carreta|default:'0'|stringformat:'s'|replace:'.',',' }}" required>
                         </div>
                     </div>
                 </div>
@@ -104,19 +104,19 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="km_vida_util_dianteiro">Pneu Dianteiro (km)</label>
-                            <input type="number" class="form-control" id="km_vida_util_dianteiro" name="km_vida_util_dianteiro" value="{{ estimativa.km_vida_util_dianteiro|default:'' }}" required>
+                            <input type="number" class="form-control" id="km_vida_util_dianteiro" name="km_vida_util_dianteiro" value="{{ estimativa.km_vida_util_dianteiro }}" required>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="km_vida_util_traseiro">Pneu Traseiro (km)</label>
-                            <input type="number" class="form-control" id="km_vida_util_traseiro" name="km_vida_util_traseiro" value="{{ estimativa.km_vida_util_traseiro|default:'' }}" required>
+                            <input type="number" class="form-control" id="km_vida_util_traseiro" name="km_vida_util_traseiro" value="{{ estimativa.km_vida_util_traseiro }}" required>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="km_vida_util_carreta">Pneu da Carreta (km)</label>
-                            <input type="number" class="form-control" id="km_vida_util_carreta" name="km_vida_util_carreta" value="{{ estimativa.km_vida_util_carreta|default:'' }}" required>
+                            <input type="number" class="form-control" id="km_vida_util_carreta" name="km_vida_util_carreta" value="{{ estimativa.km_vida_util_carreta }}" required>
                         </div>
                     </div>
                 </div>
@@ -160,20 +160,35 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="custo_recapagem_dianteiro">Pneu Dianteiro (R$)</label>
-                            <input type="number" step="0.01" class="form-control" id="custo_recapagem_dianteiro" name="custo_recapagem_dianteiro" value="{{ estimativa.custo_recapagem_dianteiro|default:'' }}" required>
+                            <input type="text" class="form-control" id="custo_recapagem_dianteiro" name="custo_recapagem_dianteiro" value="{{ estimativa.custo_recapagem_dianteiro|default:'0'|stringformat:'s'|replace:'.',',' }}" required>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="custo_recapagem_traseiro">Pneu Traseiro (R$)</label>
-                            <input type="number" step="0.01" class="form-control" id="custo_recapagem_traseiro" name="custo_recapagem_traseiro" value="{{ estimativa.custo_recapagem_traseiro|default:'' }}" required>
+                            <input type="text" class="form-control" id="custo_recapagem_traseiro" name="custo_recapagem_traseiro" value="{{ estimativa.custo_recapagem_traseiro|default:'0'|stringformat:'s'|replace:'.',',' }}" required>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="custo_recapagem_carreta">Pneu da Carreta (R$)</label>
-                            <input type="number" step="0.01" class="form-control" id="custo_recapagem_carreta" name="custo_recapagem_carreta" value="{{ estimativa.custo_recapagem_carreta|default:'' }}" required>
+                            <input type="text" class="form-control" id="custo_recapagem_carreta" name="custo_recapagem_carreta" value="{{ estimativa.custo_recapagem_carreta|default:'0'|stringformat:'s'|replace:'.',',' }}" required>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exibição do Custo Total -->
+        <div class="card mt-4 mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Custo Total</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h4>Custo Total por Km: R$ {{ estimativa.custo_total_km|default:'0'|stringformat:'s'|replace:'.',',' }}</h4>
+                        <p class="text-muted">Este valor representa o custo total de pneus por quilômetro rodado, considerando todos os tipos de pneus, suas vidas úteis e recapagens.</p>
                     </div>
                 </div>
             </div>
@@ -185,4 +200,30 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Converter valores com vírgula para ponto antes do envio do formulário
+    document.querySelector('form').addEventListener('submit', function(e) {
+        // Campos de preço
+        const campoPrecos = [
+            'preco_pneu_dianteiro',
+            'preco_pneu_traseiro',
+            'preco_pneu_carreta',
+            'custo_recapagem_dianteiro',
+            'custo_recapagem_traseiro',
+            'custo_recapagem_carreta'
+        ];
+        
+        // Converter todos os campos de preço
+        campoPrecos.forEach(function(campo) {
+            const input = document.getElementById(campo);
+            if (input && input.value) {
+                // Substituir vírgula por ponto para o processamento no backend
+                input.value = input.value.replace(',', '.');
+            }
+        });
+    });
+</script>
 {% endblock %}

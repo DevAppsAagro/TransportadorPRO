@@ -26,6 +26,7 @@ def estimativa_custo_fixo_list(request):
 def estimativa_custo_fixo_create(request):
     # Filtrar conjuntos pelo usuário logado
     conjuntos = Conjunto.objects.filter(usuario=request.user)
+    today = datetime.date.today().strftime('%Y-%m-%d')
     
     if request.method == 'POST':
         data_estimativa = request.POST.get('data_estimativa')
@@ -36,7 +37,8 @@ def estimativa_custo_fixo_create(request):
             messages.error(request, 'Por favor, preencha todos os campos obrigatórios.')
             return render(request, 'core/estimativa_custo_fixo/form.html', {
                 'conjuntos': conjuntos,
-                'tipos': ItemCustoFixo.TIPO_CHOICES
+                'tipos': ItemCustoFixo.TIPO_CHOICES,
+                'today': today
             })
         
         try:
@@ -72,13 +74,14 @@ def estimativa_custo_fixo_create(request):
     
     return render(request, 'core/estimativa_custo_fixo/form.html', {
         'conjuntos': conjuntos,
-        'tipos': ItemCustoFixo.TIPO_CHOICES
+        'tipos': ItemCustoFixo.TIPO_CHOICES,
+        'today': today
     })
 
 @login_required
-def estimativa_custo_fixo_edit(request, pk):
+def estimativa_custo_fixo_edit(request, id):
     # Buscar a estimativa garantindo que pertença ao usuário logado
-    estimativa = get_object_or_404(EstimativaCustoFixo, pk=pk, conjunto__usuario=request.user)
+    estimativa = get_object_or_404(EstimativaCustoFixo, pk=id, conjunto__usuario=request.user)
     # Filtrar conjuntos pelo usuário logado
     conjuntos = Conjunto.objects.filter(usuario=request.user)
     itens = estimativa.itens.all()
@@ -129,17 +132,37 @@ def estimativa_custo_fixo_edit(request, pk):
         except Exception as e:
             messages.error(request, f'Erro ao atualizar estimativa: {str(e)}')
     
+    # Converter os valores decimais para string com vírgula para o padrão brasileiro
+    estimativa_dict = {
+        'id': estimativa.id,
+        'conjunto_id': estimativa.conjunto_id,
+        'data_estimativa': estimativa.data_estimativa,
+        'custo_total_dia': str(estimativa.custo_total_dia).replace('.', ','),
+    }
+    
+    # Converter os itens para dicionários com valores formatados com vírgula
+    itens_formatados = []
+    for item in itens:
+        itens_formatados.append({
+            'id': item.id,
+            'descricao': item.descricao,
+            'tipo': item.tipo,
+            'valor_total': str(item.valor_total).replace('.', ','),
+            'valor_por_dia': str(item.valor_por_dia).replace('.', ','),
+        })
+    
     return render(request, 'core/estimativa_custo_fixo/form.html', {
-        'estimativa': estimativa,
+        'estimativa': estimativa_dict,
         'conjuntos': conjuntos,
-        'itens': itens,
-        'tipos': ItemCustoFixo.TIPO_CHOICES
+        'itens': itens_formatados,
+        'tipos': ItemCustoFixo.TIPO_CHOICES,
+        'today': datetime.date.today().strftime('%Y-%m-%d')
     })
 
 @login_required
-def estimativa_custo_fixo_delete(request, pk):
+def estimativa_custo_fixo_delete(request, id):
     # Buscar a estimativa garantindo que pertença ao usuário logado
-    estimativa = get_object_or_404(EstimativaCustoFixo, pk=pk, conjunto__usuario=request.user)
+    estimativa = get_object_or_404(EstimativaCustoFixo, pk=id, conjunto__usuario=request.user)
     
     try:
         estimativa.delete()
@@ -150,9 +173,9 @@ def estimativa_custo_fixo_delete(request, pk):
     return redirect('core:estimativa_custo_fixo_list')
 
 @login_required
-def detalhes_estimativa_custo_fixo(request, pk):
+def detalhes_estimativa_custo_fixo(request, id):
     # Buscar a estimativa garantindo que pertença ao usuário logado
-    estimativa = get_object_or_404(EstimativaCustoFixo, pk=pk, conjunto__usuario=request.user)
+    estimativa = get_object_or_404(EstimativaCustoFixo, pk=id, conjunto__usuario=request.user)
     itens = estimativa.itens.all()
     
     # Marcar se está ativa

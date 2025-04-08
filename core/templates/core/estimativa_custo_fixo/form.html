@@ -37,7 +37,7 @@
         });
         
         // Calcular valor por dia ao mudar valor total ou tipo
-        $(document).on('change', '.valor-total, .tipo-select', function() {
+        $(document).on('change keyup', '.valor-total, .tipo-select', function() {
             const row = $(this).closest('.item-row');
             calcularValorPorDia(row);
         });
@@ -45,7 +45,7 @@
         // Preencher formulário com itens existentes (se estiver editando)
         {% if itens %}
             {% for item in itens %}
-                addItemRow('{{ item.descricao }}', '{{ item.tipo }}', '{{ item.valor_total }}', '{{ item.valor_por_dia|floatformat:4 }}');
+                addItemRow('{{ item.descricao }}', '{{ item.tipo }}', '{{ item.valor_total }}', '{{ item.valor_por_dia }}');
             {% endfor %}
         {% else %}
             // Adicionar uma linha vazia para novo formulário
@@ -61,7 +61,7 @@
             $('.item-row').each(function() {
                 const descricao = $(this).find('.descricao').val();
                 const tipo = $(this).find('.tipo-select').val();
-                const valorTotal = $(this).find('.valor-total').val();
+                const valorTotal = $(this).find('.valor-total').val().replace(/\./g, '').replace(',', '.');
                 
                 if (descricao && valorTotal) {
                     itens.push({
@@ -98,7 +98,7 @@
                     </div>
                     <div class="col-md-2 mb-2">
                         <label class="form-label">Valor Total (R$)</label>
-                        <input type="number" step="0.01" min="0" class="form-control valor-total" value="${valorTotal}" required>
+                        <input type="text" class="form-control valor-total" value="${valorTotal}" required>
                     </div>
                     <div class="col-md-2 mb-2">
                         <label class="form-label">Valor/Dia (R$)</label>
@@ -124,8 +124,10 @@
     
     // Função para calcular valor por dia
     function calcularValorPorDia(row) {
-        const valorTotal = parseFloat(row.find('.valor-total').val()) || 0;
         const tipo = row.find('.tipo-select').val();
+        // Garantir que o valor com vírgula seja convertido corretamente para cálculo
+        const valorTotalStr = row.find('.valor-total').val().replace(/\./g, '').replace(',', '.');
+        const valorTotal = parseFloat(valorTotalStr) || 0;
         
         let valorPorDia = 0;
         
@@ -135,7 +137,8 @@
             valorPorDia = valorTotal / 30;
         }
         
-        row.find('.valor-por-dia').val(valorPorDia.toFixed(4));
+        // Formatar com vírgula no padrão brasileiro
+        row.find('.valor-por-dia').val(valorPorDia.toFixed(4).replace('.', ','));
         
         recalcularTotal();
     }
@@ -145,10 +148,13 @@
         let total = 0;
         
         $('.valor-por-dia').each(function() {
-            total += parseFloat($(this).val()) || 0;
+            // Converter de volta para ponto para o cálculo
+            const valorStr = $(this).val().replace(/\./g, '').replace(',', '.');
+            total += parseFloat(valorStr) || 0;
         });
         
-        $('#custoTotalDia').text(total.toFixed(4));
+        // Formatar com vírgula no padrão brasileiro
+        $('#custoTotalDia').text(total.toFixed(4).replace('.', ','));
     }
 </script>
 {% endblock %}

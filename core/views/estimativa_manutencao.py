@@ -75,8 +75,8 @@ def estimativa_manutencao_create(request):
     })
 
 @login_required
-def estimativa_manutencao_edit(request, pk):
-    estimativa = get_object_or_404(EstimativaManutencao, pk=pk)
+def estimativa_manutencao_edit(request, id):
+    estimativa = get_object_or_404(EstimativaManutencao, pk=id)
     conjuntos = Conjunto.objects.filter(usuario=request.user)
     itens = estimativa.itens_manutencao.all()
     
@@ -125,16 +125,37 @@ def estimativa_manutencao_edit(request, pk):
         except Exception as e:
             messages.error(request, f'Erro ao atualizar estimativa: {str(e)}')
     
+    # Converter os valores decimais para string com ponto decimal para evitar problemas de formatação
+    # Criar um dicionário com os valores formatados para o template
+    estimativa_dict = {
+        'id': estimativa.id,
+        'conjunto_id': estimativa.conjunto_id,
+        'data_estimativa': estimativa.data_estimativa,
+        'custo_total_km': str(estimativa.custo_total_km).replace(',', '.'),
+    }
+    
+    # Converter os itens para dicionários com valores formatados
+    itens_formatados = []
+    for item in itens:
+        itens_formatados.append({
+            'id': item.id,
+            'descricao': item.descricao,
+            'duracao_km': item.duracao_km,
+            'custo_total': str(item.custo_total).replace(',', '.'),
+            'custo_por_km': str(item.custo_por_km).replace(',', '.'),
+        })
+    
     return render(request, 'core/estimativa_manutencao/form.html', {
-        'estimativa': estimativa,
-        'itens': itens,
+        'estimativa': estimativa_dict,
+        'itens': itens_formatados,
         'conjuntos': conjuntos,
-        'titulo': 'Editar Estimativa de Manutenção'
+        'titulo': 'Editar Estimativa de Manutenção',
+        'today': datetime.date.today().strftime('%Y-%m-%d')
     })
 
 @login_required
-def detalhes_estimativa_manutencao(request, pk):
-    estimativa = get_object_or_404(EstimativaManutencao, pk=pk)
+def detalhes_estimativa_manutencao(request, id):
+    estimativa = get_object_or_404(EstimativaManutencao, pk=id)
     itens = estimativa.itens_manutencao.all()
     
     # Verificar se esta é a estimativa ativa (mais recente) para este conjunto
@@ -146,8 +167,8 @@ def detalhes_estimativa_manutencao(request, pk):
     })
 
 @login_required
-def estimativa_manutencao_delete(request, pk):
-    estimativa = get_object_or_404(EstimativaManutencao, pk=pk)
+def estimativa_manutencao_delete(request, id):
+    estimativa = get_object_or_404(EstimativaManutencao, pk=id)
     
     try:
         estimativa.delete()

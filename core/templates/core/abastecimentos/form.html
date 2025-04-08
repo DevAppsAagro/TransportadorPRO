@@ -31,17 +31,17 @@
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="data" class="form-label">Data do Abastecimento</label>
-                <input type="date" class="form-control" id="data" name="data" value="{{ abastecimento.data|date:'Y-m-d' }}" required>
+                <input type="date" class="form-control" id="data" name="data" value="{% if form_data %}{{ form_data.data }}{% else %}{{ abastecimento.data|date:'Y-m-d' }}{% endif %}" required>
             </div>
             
             <div class="col-md-4 mb-3">
                 <label for="data_vencimento" class="form-label">Data de Vencimento</label>
-                <input type="date" class="form-control" id="data_vencimento" name="data_vencimento" value="{{ abastecimento.data_vencimento|date:'Y-m-d' }}" required>
+                <input type="date" class="form-control" id="data_vencimento" name="data_vencimento" value="{% if form_data %}{{ form_data.data_vencimento }}{% else %}{{ abastecimento.data_vencimento|date:'Y-m-d' }}{% endif %}" required>
             </div>
 
             <div class="col-md-4 mb-3">
                 <label for="data_pagamento" class="form-label">Data de Pagamento</label>
-                <input type="date" class="form-control" id="data_pagamento" name="data_pagamento" value="{{ abastecimento.data_pagamento|date:'Y-m-d' }}">
+                <input type="date" class="form-control" id="data_pagamento" name="data_pagamento" value="{% if form_data %}{{ form_data.data_pagamento }}{% else %}{{ abastecimento.data_pagamento|date:'Y-m-d' }}{% endif %}">
             </div>
         </div>
 
@@ -57,17 +57,35 @@
                     {% endfor %}
                 </select>
             </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="motorista_user" class="form-label">Motorista (Usuário)</label>
+                <select class="form-select" id="motorista_user" name="motorista_user" onchange="checkMotoristaSelection()">
+                    <option value="">Selecione um motorista usuário</option>
+                    {% for motorista in motoristas_users %}
+                        <option value="{{ motorista.id }}" {% if abastecimento.motorista_user and abastecimento.motorista_user.id == motorista.id %}selected{% endif %}>
+                            {{ motorista.first_name }} {{ motorista.last_name }} ({{ motorista.username }})
+                        </option>
+                    {% endfor %}
+                </select>
+                <small class="form-text text-muted smaller-text">Preferencialmente</small>
+            </div>
             
             <div class="col-md-6 mb-3">
-                <label for="motorista" class="form-label">Motorista</label>
-                <select class="form-select" id="motorista" name="motorista" required>
+                <label for="motorista" class="form-label">Motorista (Contato)</label>
+                <select class="form-select" id="motorista" name="motorista" onchange="checkMotoristaSelection()">
                     <option value="">Selecione um motorista</option>
                     {% for motorista in motoristas %}
-                        <option value="{{ motorista.id }}" {% if abastecimento.motorista.id == motorista.id %}selected{% endif %}>
+                        <option value="{{ motorista.id }}" {% if abastecimento.motorista and abastecimento.motorista.id == motorista.id %}selected{% endif %}>
                             {{ motorista.nome_completo }}
                         </option>
                     {% endfor %}
                 </select>
+                <div id="motorista-validation-error" class="invalid-feedback smaller-text">
+                    É necessário selecionar pelo menos um tipo de motorista.
+                </div>
             </div>
         </div>
 
@@ -90,8 +108,22 @@
                     <div class="col-md-9">
                         <select class="form-select" id="frete" name="frete">
                             <option value="">Selecione um frete</option>
+                            {% if abastecimento.frete %}
+                            <option value="{{ abastecimento.frete.id }}" selected>
+                                #{{ abastecimento.frete.id }} - {{ abastecimento.frete.origem }} - {{ abastecimento.frete.destino }} ({{ abastecimento.frete.data_saida|date:"d/m/Y" }})
+                                {% if abastecimento.frete.status == "EM_ANDAMENTO" %}[Em andamento]{% endif %}
+                            </option>
+                            {% endif %}
                         </select>
                         <div class="form-text smaller-text">Mostrando apenas os 10 fretes mais recentes</div>
+                        {% if abastecimento.frete %}
+                        <input type="hidden" id="frete_id_hidden" value="{{ abastecimento.frete.id }}">
+                        <div id="frete_detalhes" class="mt-2 p-2 border rounded">
+                            <div id="frete_info" class="smaller-text">#{{ abastecimento.frete.id }} - {{ abastecimento.frete.origem }} - {{ abastecimento.frete.destino }} ({{ abastecimento.frete.data_saida|date:"d/m/Y" }})</div>
+                            <div id="frete_caminhao" class="smaller-text">Caminhão: {{ abastecimento.frete.caminhao.placa }} - {{ abastecimento.frete.caminhao.modelo }}</div>
+                            <div id="frete_status" class="smaller-text">Status: {% if abastecimento.frete.status == "EM_ANDAMENTO" %}Em andamento{% else %}{{ abastecimento.frete.get_status_display }}{% endif %}</div>
+                        </div>
+                        {% endif %}
                     </div>
                     <div class="col-md-3">
                         <div class="form-check mt-2">
@@ -310,14 +342,51 @@ function definirFreteManual() {
                     freteSelect.value = data.id;
                     
                     // Exibir os detalhes do frete
-                    const freteDetalhes = document.getElementById('frete_detalhes');
+                    let freteDetalhes = document.getElementById('frete_detalhes');
+                    
+                    // Se o elemento não existir, criá-lo dinamicamente
+                    if (!freteDetalhes) {
+                        freteDetalhes = document.createElement('div');
+                        freteDetalhes.id = 'frete_detalhes';
+                        freteDetalhes.className = 'mt-2 p-2 border rounded';
+                        
+                        const freteInfo = document.createElement('div');
+                        freteInfo.id = 'frete_info';
+                        freteInfo.className = 'smaller-text';
+                        
+                        const freteCaminhao = document.createElement('div');
+                        freteCaminhao.id = 'frete_caminhao';
+                        freteCaminhao.className = 'smaller-text';
+                        
+                        const freteStatus = document.createElement('div');
+                        freteStatus.id = 'frete_status';
+                        freteStatus.className = 'smaller-text';
+                        
+                        freteDetalhes.appendChild(freteInfo);
+                        freteDetalhes.appendChild(freteCaminhao);
+                        freteDetalhes.appendChild(freteStatus);
+                        
+                        // Adicionar ao DOM após o select de frete
+                        const freteSelect = document.getElementById('frete');
+                        freteSelect.parentNode.appendChild(freteDetalhes);
+                    }
+                    
                     freteDetalhes.style.display = 'block';
+                    
                     const freteInfo = document.getElementById('frete_info');
-                    freteInfo.textContent = `#${data.id} - ${data.origem} - ${data.destino} (${new Date(data.data_saida).toLocaleDateString('pt-BR')})`;
+                    if (freteInfo) {
+                        freteInfo.textContent = `#${data.id} - ${data.origem} - ${data.destino} (${new Date(data.data_saida).toLocaleDateString('pt-BR')})`;
+                    }
+                    
                     const freteCaminhao = document.getElementById('frete_caminhao');
-                    freteCaminhao.textContent = `Caminhão: ${data.caminhao_placa} - ${data.caminhao_modelo}`;
+                    if (freteCaminhao) {
+                        freteCaminhao.textContent = `Caminhão: ${data.caminhao_placa} - ${data.caminhao_modelo}`;
+                    }
+                    
                     const freteStatus = document.getElementById('frete_status');
-                    freteStatus.textContent = `Status: ${data.status === 'EM_ANDAMENTO' ? 'Em andamento' : data.status}`;
+                    if (freteStatus) {
+                        freteStatus.textContent = `Status: ${data.status === 'EM_ANDAMENTO' ? 'Em andamento' : data.status}`;
+                    }
                     
                     // Não desmarcar o checkbox para manter a opção de busca visível
                 }, 500);
@@ -326,6 +395,22 @@ function definirFreteManual() {
                 alert(`Erro: ${error.message}`);
                 console.error('Erro ao buscar frete:', error);
             });
+    }
+}
+
+// Função para verificar a seleção de motoristas
+function checkMotoristaSelection() {
+    const motoristaUser = document.getElementById('motorista_user');
+    const motorista = document.getElementById('motorista');
+    const motoristaError = document.getElementById('motorista-validation-error');
+    
+    // Se ambos estiverem vazios, mostrar erro
+    if ((!motoristaUser.value || motoristaUser.value === '') && (!motorista.value || motorista.value === '')) {
+        motorista.classList.add('is-invalid');
+        return false;
+    } else {
+        motorista.classList.remove('is-invalid');
+        return true;
     }
 }
 
@@ -347,16 +432,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // Se já tiver um caminhão selecionado, filtrar os fretes
     if (caminhaoSelect.value) {
         filtrarFretes();
-        
-        // Se estiver editando um abastecimento com frete, precisamos selecionar o frete após carregar
-        const freteId = '{{ abastecimento.frete.id|default:"" }}';
-        if (freteId) {
-            // Esperar um pouco para garantir que os fretes foram carregados
-            setTimeout(() => {
-                freteSelect.value = freteId;
-            }, 500);
-        }
     }
+    
+    // Se estiver editando um abastecimento com frete, mostrar os detalhes
+    const freteIdElement = document.getElementById('frete_id_hidden');
+    if (freteIdElement && freteIdElement.value) {
+        const freteId = freteIdElement.value;
+        // Esperar um pouco para garantir que os fretes foram carregados
+        setTimeout(() => {
+            const freteSelect = document.getElementById('frete');
+            if (freteSelect) {
+                freteSelect.value = freteId;
+            }
+            
+            // Mostrar os detalhes do frete
+            const freteDetalhes = document.getElementById('frete_detalhes');
+            if (freteDetalhes) {
+                freteDetalhes.style.display = 'block';
+            }
+        }, 500);
+    }
+    
+    // Verificar a seleção de motoristas inicialmente
+    checkMotoristaSelection();
 });
 // Formatar valores iniciais para o formato brasileiro
 function formatarValoresIniciais() {
@@ -428,6 +526,12 @@ function configurarMascarasNumericas() {
 
 // Adicionar validação antes do envio do formulário
 document.querySelector('form').addEventListener('submit', function(e) {
+    // Verificar se pelo menos um tipo de motorista foi selecionado
+    if (!checkMotoristaSelection()) {
+        e.preventDefault();
+        return false;
+    }
+    
     // Converter valores de volta para o formato com ponto antes de enviar
     const litrosInput = document.getElementById('litros');
     const valorLitroInput = document.getElementById('valor_litro');

@@ -72,7 +72,7 @@
                                             <input type="text" class="form-control custo-total" name="custo_total[]" value="{{ item.custo_total }}" required>
                                         </td>
                                         <td>
-                                            <input type="text" class="form-control custo-km" value="{{ item.custo_por_km|floatformat:4 }}" readonly>
+                                            <input type="text" class="form-control custo-km" value="{{ item.custo_por_km }}" readonly>
                                         </td>
                                         <td>
                                             <button type="button" class="btn btn-sm btn-danger remove-item">
@@ -175,6 +175,7 @@
         // Calcular custo por km para uma linha
         function calcularCustoPorKm(row) {
             var duracaoKm = parseFloat(row.find('.duracao-km').val()) || 0;
+            // Garantir que o valor com vírgula seja convertido corretamente para cálculo
             var custoTotal = parseFloat(row.find('.custo-total').val().replace(',', '.')) || 0;
             
             var custoPorKm = 0;
@@ -182,17 +183,20 @@
                 custoPorKm = custoTotal / duracaoKm;
             }
             
-            row.find('.custo-km').val(custoPorKm.toFixed(4));
+            // Formatar com vírgula no padrão brasileiro
+            row.find('.custo-km').val(custoPorKm.toFixed(4).replace('.', ','));
         }
         
         // Calcular custo total por km
         function calcularCustoTotal() {
             var custoTotal = 0;
             $('.custo-km').each(function() {
-                custoTotal += parseFloat($(this).val()) || 0;
+                // Converter de volta para ponto para o cálculo
+                custoTotal += parseFloat($(this).val().replace(',', '.')) || 0;
             });
             
-            $('#custoTotalKm').text('R$ ' + custoTotal.toFixed(4));
+            // Formatar com vírgula no padrão brasileiro
+            $('#custoTotalKm').text('R$ ' + custoTotal.toFixed(4).replace('.', ','));
         }
         
         // Inicializar eventos
