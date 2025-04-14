@@ -41,7 +41,7 @@
 
             <div class="col-md-4 mb-3">
                 <label for="data_pagamento" class="form-label">Data de Pagamento</label>
-                <input type="date" class="form-control" id="data_pagamento" name="data_pagamento" value="{% if form_data %}{{ form_data.data_pagamento }}{% else %}{{ abastecimento.data_pagamento|date:'Y-m-d' }}{% endif %}">
+                <input type="date" class="form-control" id="data_pagamento" name="data_pagamento" value="{% if form_data %}{{ form_data.data_pagamento }}{% else %}{% if abastecimento.data_pagamento %}{{ abastecimento.data_pagamento|date:'Y-m-d' }}{% endif %}{% endif %}">
             </div>
         </div>
 

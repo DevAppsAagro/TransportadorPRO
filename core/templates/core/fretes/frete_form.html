@@ -298,14 +298,7 @@
                 <div class="form-section">
                     <div class="form-section-title">Informações de Pagamento</div>
                     <div class="row g-2">
-                        <div class="col-md-3">
-                            <label class="form-label-xs">Status de Pagamento</label>
-                            <select name="status" class="form-select form-select-sm" required>
-                                <option value="PENDENTE" {% if frete and frete.status == 'PENDENTE' %}selected{% endif %}>Pendente</option>
-                                <option value="PAGO" {% if frete and frete.status == 'PAGO' %}selected{% endif %}>Pago</option>
-                            </select>
-                        </div>
-                        <div class="col-md-9">
+                        <div class="col-md-12">
                             <label class="form-label-xs">Observações</label>
                             <textarea name="observacoes" class="form-control form-control-sm" rows="1">{% if frete %}{{ frete.observacoes }}{% endif %}</textarea>
                         </div>

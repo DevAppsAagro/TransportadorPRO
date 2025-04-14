@@ -555,21 +555,50 @@
         function carregarEmpresas() {
             if (carregouEmpresas) return;
             
+            console.log('Iniciando carregamento de empresas...');
             empresaSelect.innerHTML = '<option value="">Carregando...</option>';
             empresaSelect.disabled = true;
             
             fetch(`{% url "core:get_destinos_por_alocacao" %}?tipo=empresa`)
-                .then(response => response.json())
+                .then(response => {
+                    console.log('Resposta recebida:', response.status);
+                    return response.json();
+                })
                 .then(data => {
-                    empresaSelect.innerHTML = '<option value="">Selecione uma empresa</option>';
+                    console.log('Dados recebidos:', data);
+                    empresaSelect.innerHTML = '';
                     empresaSelect.disabled = false;
                     
-                    data.forEach(empresa => {
+                    if (!data || data.length === 0) {
+                        console.log('Nenhuma empresa encontrada');
+                        // Se não houver empresas, criar uma opção padrão
                         const option = document.createElement('option');
-                        option.value = empresa.id;
-                        option.textContent = `${empresa.nome} - ${empresa.razao_social} - ${empresa.cnpj}`;
+                        option.value = "";
+                        option.textContent = "Nenhuma empresa encontrada";
                         empresaSelect.appendChild(option);
-                    });
+                    } else {
+                        console.log(`${data.length} empresas encontradas`);
+                        
+                        // Adicionar opção padrão
+                        const defaultOption = document.createElement('option');
+                        defaultOption.value = "";
+                        defaultOption.textContent = "Selecione uma empresa";
+                        empresaSelect.appendChild(defaultOption);
+                        
+                        // Adicionar todas as empresas
+                        data.forEach((empresa, index) => {
+                            console.log(`Adicionando empresa: ${empresa.razao_social} (ID: ${empresa.id})`);
+                            const option = document.createElement('option');
+                            option.value = empresa.id;
+                            option.textContent = empresa.razao_social;
+                            empresaSelect.appendChild(option);
+                        });
+                        
+                        // Se houver apenas uma empresa, seleciona automaticamente
+                        if (data.length === 1) {
+                            empresaSelect.value = data[0].id;
+                        }
+                    }
                     
                     /* Django template if start */
                     {% if despesa and despesa.empresa_id %}

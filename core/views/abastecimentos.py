@@ -50,7 +50,7 @@ def abastecimento_novo(request):
             abastecimento = Abastecimento(
                 data=request.POST['data'],
                 data_vencimento=request.POST['data_vencimento'],
-                data_pagamento=request.POST.get('data_pagamento'),
+                data_pagamento=request.POST.get('data_pagamento') if request.POST.get('data_pagamento') else None,
                 caminhao=caminhao,
                 situacao=request.POST['situacao'],
                 tipo_combustivel=request.POST['tipo_combustivel'],
@@ -118,7 +118,10 @@ def abastecimento_editar(request, id):
             # Atualizar os campos básicos
             abastecimento.data = request.POST['data']
             abastecimento.data_vencimento = request.POST['data_vencimento']
-            abastecimento.data_pagamento = request.POST.get('data_pagamento', None)
+            
+            # Tratar o campo data_pagamento corretamente
+            data_pagamento = request.POST.get('data_pagamento')
+            abastecimento.data_pagamento = data_pagamento if data_pagamento and data_pagamento.strip() else None
             abastecimento.caminhao = caminhao
             abastecimento.situacao = request.POST['situacao']
             abastecimento.tipo_combustivel = request.POST['tipo_combustivel']

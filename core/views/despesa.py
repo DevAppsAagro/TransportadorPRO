@@ -98,8 +98,8 @@ def despesa_create(request):
     """Cria uma nova despesa"""
     # Carregar apenas categorias inicialmente - os outros dados serão carregados sob demanda
     categorias = Categoria.objects.filter(Q(usuario=request.user) | Q(usuario__isnull=True))
-    # Apenas contatos do tipo FORNECEDOR
-    contatos = Contato.objects.filter(usuario=request.user, tipo='FORNECEDOR')
+    # Incluir contatos do tipo FORNECEDOR e FUNCIONARIO
+    contatos = Contato.objects.filter(usuario=request.user, tipo__in=['FORNECEDOR', 'FUNCIONARIO'])
     
     if request.method == 'POST':
         try:
@@ -186,7 +186,8 @@ def despesa_edit(request, id):
     
     # Carregar apenas dados essenciais
     categorias = Categoria.objects.filter(Q(usuario=request.user) | Q(usuario__isnull=True))
-    contatos = Contato.objects.filter(usuario=request.user, tipo='FORNECEDOR')
+    # Incluir contatos do tipo FORNECEDOR e FUNCIONARIO
+    contatos = Contato.objects.filter(usuario=request.user, tipo__in=['FORNECEDOR', 'FUNCIONARIO'])
     
     # Carregar dados relacionados apenas à alocação atual
     caminhoes = []
@@ -407,16 +408,39 @@ def get_destinos_por_alocacao(request):
             ]
         elif tipo == 'empresa':
             # Retornar empresas do usuário
-            empresas = Empresa.objects.filter(usuario=request.user)
-            response_data = [
-                {
-                    'id': empresa.id,
-                    'nome': empresa.nome,
-                    'razao_social': empresa.razao_social,
-                    'cnpj': empresa.cnpj
-                }
-                for empresa in empresas
-            ]
+            print(f"Buscando empresas para o usuário: {request.user.username} (ID: {request.user.id})")
+            
+            # Usar raw SQL para buscar diretamente na tabela core_empresa
+            from django.db import connection
+            
+            empresas = []
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT id, razao_social, nome_fantasia, cnpj FROM core_empresa WHERE usuario_id = %s",
+                    [request.user.id]
+                )
+                rows = cursor.fetchall()
+                print(f"Consulta SQL retornou {len(rows)} empresas")
+                
+                for row in rows:
+                    empresas.append({
+                        'id': row[0],
+                        'razao_social': row[1],
+                        'nome': row[2] or row[1],  # Usa nome_fantasia ou razao_social se nome_fantasia for nulo
+                        'cnpj': row[3]
+                    })
+                    print(f"Empresa encontrada via SQL: {row[1]} (ID: {row[0]})")
+            
+            # Se não encontrar empresas, buscar todas as empresas (temporariamente para debug)
+            if not empresas:
+                print("Nenhuma empresa encontrada para o usuário. Buscando todas as empresas...")
+                cursor.execute("SELECT id, razao_social, nome_fantasia, cnpj, usuario_id FROM core_empresa")
+                rows = cursor.fetchall()
+                print(f"Total de empresas no sistema: {len(rows)}")
+                for row in rows:
+                    print(f"Empresa no sistema: {row[1]} (ID: {row[0]}, Usuário ID: {row[4]})")
+            
+            response_data = empresas
     except Exception as e:
         # Registrar o erro, mas retornar um array vazio para evitar erro no cliente
         print(f"Erro ao carregar destinos do tipo {tipo}: {str(e)}")

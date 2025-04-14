@@ -2,13 +2,6 @@
 <!-- Tela de carregamento (inicialmente oculta) -->
 <div id="loading-screen" class="loading-overlay" style="display: none;">
     <div class="loading-container">
-        <div class="logo-container">
-            <img src="{% if empresa_logo %}{{ empresa_logo }}{% else %}https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro.svg{% endif %}" 
-                 alt="{% if empresa_logo %}Logo da Empresa{% else %}Logo{% endif %}" 
-                 class="loading-logo" 
-                 id="loading-logo" 
-                 style="max-width: 200px; height: auto; margin-bottom: 1.5rem;">
-        </div>
         <div class="loading-spinner">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Carregando...</span>
@@ -85,16 +78,4 @@
     }
 </style>
 
-<script>
-    // Função para verificar se a imagem carregou corretamente
-    document.addEventListener('DOMContentLoaded', function() {
-        const logoImg = document.getElementById('loading-logo');
-        if (logoImg) {
-            logoImg.onerror = function() {
-                // Se a imagem não carregar, usar a logo padrão do TransportadorPRO
-                this.src = 'https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro.svg';
-                console.log('Erro ao carregar a logo da empresa, usando logo padrão');
-            };
-        }
-    });
-</script>
+<!-- Script removido - não é mais necessário verificar o carregamento da logo -->

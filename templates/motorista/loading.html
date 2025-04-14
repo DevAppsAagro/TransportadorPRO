@@ -13,9 +13,6 @@
 
 {% block content %}
 <div class="loading-container">
-    <div class="logo-container">
-        <img src="{% if empresa_logo %}{{ empresa_logo }}{% else %}https://hejhbdkofhkdnzokjklr.supabase.co/storage/v1/object/public/logos//logo-transportadorpro-branco.svg{% endif %}" alt="Logo" class="loading-logo">
-    </div>
     <div class="loading-spinner">
         <div class="spinner-border text-light" role="status">
             <span class="visually-hidden">Carregando...</span>
@@ -51,15 +48,7 @@
         padding: 2rem;
     }
     
-    .logo-container {
-        margin-bottom: 1rem;
-    }
-    
-    .loading-logo {
-        max-width: 200px;
-        height: auto;
-        animation: pulse 2s infinite;
-    }
+    /* Logo container removido */
     
     .loading-spinner {
         margin: 1rem 0;
