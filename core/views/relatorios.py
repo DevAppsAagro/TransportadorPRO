@@ -1665,3 +1665,268 @@ def relatorio_despesa(request):
     }
     
     return render(request, 'core/relatorios/despesas.html', context)
+
+@login_required
+def relatorio_posto_form(request):
+    """
+    Exibe o formulário para gerar o relatório de abastecimentos por posto.
+    """
+    # Busca todos os postos (contatos do tipo POSTO) do usuário
+    postos = Contato.objects.filter(
+        Q(tipo='POSTO') & 
+        Q(usuario=request.user)
+    ).order_by('nome_completo')
+    
+    return render(request, 'core/relatorios/posto_form.html', {
+        'postos': postos
+    })
+
+@login_required
+def relatorio_posto(request):
+    """
+    Gera um relatório de abastecimentos por posto em um período específico.
+    """
+    # Obter parâmetros do formulário
+    posto_id = request.POST.get('posto')
+    data_inicio = request.POST.get('data_inicio')
+    data_fim = request.POST.get('data_fim')
+    
+    # Valores padrão para data (mês atual)
+    hoje = datetime.now().date()
+    primeiro_dia_mes = hoje.replace(day=1)
+    ultimo_dia_mes = (primeiro_dia_mes.replace(month=primeiro_dia_mes.month % 12 + 1, day=1) - timedelta(days=1)) if primeiro_dia_mes.month < 12 else primeiro_dia_mes.replace(year=primeiro_dia_mes.year + 1, month=1, day=1) - timedelta(days=1)
+    
+    # Se as datas não foram especificadas, usa o mês atual
+    if not data_inicio:
+        data_inicio = primeiro_dia_mes.strftime('%Y-%m-%d')
+    if not data_fim:
+        data_fim = ultimo_dia_mes.strftime('%Y-%m-%d')
+    
+    # Converte as datas para o formato correto
+    try:
+        data_inicio_dt = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+        data_fim_dt = datetime.strptime(data_fim, '%Y-%m-%d').date()
+    except ValueError:
+        data_inicio_dt = primeiro_dia_mes
+        data_fim_dt = ultimo_dia_mes
+        data_inicio = primeiro_dia_mes.strftime('%Y-%m-%d')
+        data_fim = ultimo_dia_mes.strftime('%Y-%m-%d')
+    
+    # Calcula o número de dias no período
+    dias_periodo = (data_fim_dt - data_inicio_dt).days + 1
+    
+    # Filtro base para abastecimentos do usuário no período
+    filtro_base = Q(
+        data__gte=data_inicio_dt,
+        data__lte=data_fim_dt,
+        caminhao__usuario=request.user
+    )
+    
+    # Adiciona filtro de posto se especificado
+    if posto_id:
+        posto = get_object_or_404(Contato, id=posto_id, tipo='POSTO')
+        filtro_base &= Q(posto=posto)
+    else:
+        posto = None
+    
+    # Busca todos os abastecimentos que atendem aos critérios
+    abastecimentos = Abastecimento.objects.filter(filtro_base).order_by('data')
+    
+    # Calcula métricas gerais
+    total_abastecimentos = abastecimentos.count()
+    total_litros = abastecimentos.aggregate(total=Coalesce(Sum('litros'), Decimal('0')))['total']
+    valor_total = abastecimentos.aggregate(total=Coalesce(Sum('total_valor'), Decimal('0')))['total']
+    
+    # Calcula valor médio por litro
+    valor_medio_litro = Decimal('0')
+    if total_litros > 0:
+        valor_medio_litro = valor_total / total_litros
+    
+    # Resumo por posto (se não foi filtrado por um posto específico)
+    resumo_postos = []
+    if not posto:
+        resumo_postos = list(abastecimentos.values('posto__nome_completo').annotate(
+            posto=F('posto__nome_completo'),
+            quantidade=Count('id'),
+            litros=Sum('litros'),
+            valor_total=Sum('total_valor')
+        ).order_by('-valor_total'))
+        
+        # Calcula o valor médio por litro e o percentual do total para cada posto
+        for resumo in resumo_postos:
+            if resumo['litros'] > 0:
+                resumo['valor_medio'] = resumo['valor_total'] / resumo['litros']
+            else:
+                resumo['valor_medio'] = Decimal('0')
+            
+            if valor_total > 0:
+                resumo['percentual'] = (resumo['valor_total'] / valor_total) * 100
+            else:
+                resumo['percentual'] = Decimal('0')
+    
+    # Evolução de preços (ordenados por data e posto)
+    evolucao_precos = []
+    precos_anteriores = {}
+    
+    for abastecimento in abastecimentos.order_by('data', 'posto__nome_completo'):
+        posto_nome = abastecimento.posto.nome_completo
+        tipo_combustivel = abastecimento.get_tipo_combustivel_display() if abastecimento.tipo_combustivel else "Diesel"
+        chave = f"{posto_nome}_{tipo_combustivel}"
+        
+        # Calcula a variação em relação ao preço anterior do mesmo posto/combustível
+        variacao = 0
+        if chave in precos_anteriores and precos_anteriores[chave] > 0:
+            variacao = ((abastecimento.valor_litro - precos_anteriores[chave]) / precos_anteriores[chave]) * 100
+        
+        # Registra o preço atual para comparação futura
+        precos_anteriores[chave] = abastecimento.valor_litro
+        
+        # Adiciona à lista de evolução de preços
+        evolucao_precos.append({
+            'data': abastecimento.data,
+            'posto': posto_nome,
+            'tipo_combustivel': tipo_combustivel,
+            'valor_litro': abastecimento.valor_litro,
+            'variacao': variacao
+        })
+    
+    # Prepara o contexto para o template
+    context = {
+        'posto': posto,
+        'data_inicio': data_inicio_dt,
+        'data_fim': data_fim_dt,
+        'dias_periodo': dias_periodo,
+        'total_abastecimentos': total_abastecimentos,
+        'total_litros': total_litros,
+        'valor_total': valor_total,
+        'valor_medio_litro': valor_medio_litro,
+        'resumo_postos': resumo_postos,
+        'evolucao_precos': evolucao_precos,
+        'abastecimentos': abastecimentos
+    }
+    
+    return render(request, 'core/relatorios/posto_resultado.html', context)
+
+@login_required
+def relatorio_posto_print(request):
+    """
+    Versão de impressão do relatório de abastecimentos por posto.
+    """
+    # Obtém os parâmetros da requisição
+    posto_id = request.GET.get('posto')
+    data_inicio = request.GET.get('data_inicio')
+    data_fim = request.GET.get('data_fim')
+    
+    # Define o período padrão como o mês atual se não for especificado
+    hoje = datetime.now().date()
+    primeiro_dia_mes = hoje.replace(day=1)
+    ultimo_dia_mes = (primeiro_dia_mes.replace(month=primeiro_dia_mes.month % 12 + 1, year=primeiro_dia_mes.year + primeiro_dia_mes.month // 12) - timedelta(days=1)) if primeiro_dia_mes.month < 12 else primeiro_dia_mes.replace(month=1, year=primeiro_dia_mes.year + 1, day=1) - timedelta(days=1)
+    
+    # Converte as datas para o formato correto
+    try:
+        data_inicio_dt = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+        data_fim_dt = datetime.strptime(data_fim, '%Y-%m-%d').date()
+    except ValueError:
+        data_inicio_dt = primeiro_dia_mes
+        data_fim_dt = ultimo_dia_mes
+        data_inicio = primeiro_dia_mes.strftime('%Y-%m-%d')
+        data_fim = ultimo_dia_mes.strftime('%Y-%m-%d')
+    
+    # Calcula o número de dias no período
+    dias_periodo = (data_fim_dt - data_inicio_dt).days + 1
+    
+    # Busca a empresa do usuário
+    empresa = Empresa.objects.filter(usuario=request.user).first()
+    
+    # Filtro base para abastecimentos do usuário no período
+    filtro_base = Q(
+        data__gte=data_inicio_dt,
+        data__lte=data_fim_dt,
+        caminhao__usuario=request.user
+    )
+    
+    # Adiciona filtro de posto se especificado
+    if posto_id:
+        posto = get_object_or_404(Contato, id=posto_id, tipo='POSTO')
+        filtro_base &= Q(posto=posto)
+    else:
+        posto = None
+    
+    # Busca todos os abastecimentos que atendem aos critérios
+    abastecimentos = Abastecimento.objects.filter(filtro_base).order_by('data')
+    
+    # Calcula métricas gerais
+    total_abastecimentos = abastecimentos.count()
+    total_litros = abastecimentos.aggregate(total=Coalesce(Sum('litros'), Decimal('0')))['total']
+    valor_total = abastecimentos.aggregate(total=Coalesce(Sum('total_valor'), Decimal('0')))['total']
+    
+    # Calcula valor médio por litro
+    valor_medio_litro = Decimal('0')
+    if total_litros > 0:
+        valor_medio_litro = valor_total / total_litros
+    
+    # Resumo por posto (se não foi filtrado por um posto específico)
+    resumo_postos = []
+    if not posto:
+        resumo_postos = list(abastecimentos.values('posto__nome_completo').annotate(
+            posto=F('posto__nome_completo'),
+            quantidade=Count('id'),
+            litros=Sum('litros'),
+            valor_total=Sum('total_valor')
+        ).order_by('-valor_total'))
+        
+        # Calcula o valor médio por litro e o percentual do total para cada posto
+        for resumo in resumo_postos:
+            if resumo['litros'] > 0:
+                resumo['valor_medio'] = resumo['valor_total'] / resumo['litros']
+            else:
+                resumo['valor_medio'] = Decimal('0')
+            
+            if valor_total > 0:
+                resumo['percentual'] = (resumo['valor_total'] / valor_total) * 100
+            else:
+                resumo['percentual'] = Decimal('0')
+    
+    # Evolução de preços (ordenados por data e posto)
+    evolucao_precos = []
+    precos_anteriores = {}
+    
+    for abastecimento in abastecimentos.order_by('data', 'posto__nome_completo'):
+        posto_nome = abastecimento.posto.nome_completo
+        tipo_combustivel = abastecimento.get_tipo_combustivel_display() if abastecimento.tipo_combustivel else "Diesel"
+        chave = f"{posto_nome}_{tipo_combustivel}"
+        
+        # Calcula a variação em relação ao preço anterior do mesmo posto/combustível
+        variacao = 0
+        if chave in precos_anteriores and precos_anteriores[chave] > 0:
+            variacao = ((abastecimento.valor_litro - precos_anteriores[chave]) / precos_anteriores[chave]) * 100
+        
+        # Registra o preço atual para comparação futura
+        precos_anteriores[chave] = abastecimento.valor_litro
+        
+        # Adiciona à lista de evolução de preços
+        evolucao_precos.append({
+            'data': abastecimento.data,
+            'posto': posto_nome,
+            'tipo_combustivel': tipo_combustivel,
+            'valor_litro': abastecimento.valor_litro,
+            'variacao': variacao
+        })
+    
+    # Prepara o contexto para o template
+    context = {
+        'empresa': empresa,
+        'posto': posto,
+        'data_inicio': data_inicio_dt,
+        'data_fim': data_fim_dt,
+        'dias_periodo': dias_periodo,
+        'total_abastecimentos': total_abastecimentos,
+        'total_litros': total_litros,
+        'valor_total': valor_total,
+        'valor_medio_litro': valor_medio_litro,
+        'resumo_postos': resumo_postos,
+        'evolucao_precos': evolucao_precos,
+        'abastecimentos': abastecimentos
+    }
+    
+    return render(request, 'core/relatorios/posto_resultado_print_updated.html', context)

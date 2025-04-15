@@ -1,0 +1,625 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Relatório de Abastecimentos por Posto{% endblock %}
+
+{% block custom_css %}
+<style>
+    /* Estilos comuns para modo claro e escuro */
+    .report-header {
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+    .report-header h4 {
+        margin-bottom: 15px;
+    }
+    .report-form label {
+        font-weight: 600;
+    }
+    .report-results {
+        margin-top: 30px;
+    }
+    .report-section {
+        margin-bottom: 30px;
+    }
+    .report-section h5 {
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+    }
+    .metric-card {
+        border-radius: 4px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        margin-bottom: 20px;
+        padding: 15px;
+    }
+    .metric-card.positive {
+        border-left: 4px solid #1cc88a;
+    }
+    .metric-card.negative {
+        border-left: 4px solid #e74a3b;
+    }
+    .metric-card.warning {
+        border-left: 4px solid #f6c23e;
+    }
+    .metric-card .metric-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    .metric-card .metric-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .table-costs .category {
+        font-weight: bold;
+    }
+    .table-costs .subcategory {
+        padding-left: 20px;
+    }
+    .table-costs .total-row {
+        font-weight: bold;
+    }
+    .print-btn {
+        margin-bottom: 20px;
+    }
+    .summary-card {
+        border-radius: 8px;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    .summary-card .card-header {
+        font-weight: bold;
+        padding: 15px 20px;
+    }
+    .summary-card .card-body {
+        padding: 20px;
+    }
+    .table-responsive {
+        margin-top: 20px;
+    }
+    .table-sm-font {
+        font-size: 0.85rem;
+    }
+    .table-sm-font th {
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+    .table-sm-font td {
+        padding: 0.5rem;
+        vertical-align: middle;
+    }
+    .valor-monetario {
+        white-space: nowrap;
+        font-weight: 600;
+    }
+    .print-header {
+        display: none;
+    }
+    
+    /* Estilos para textos informativos */
+    .info-text {
+        font-size: 0.8rem;
+        color: #666;
+        background-color: #f9f9f9;
+        padding: 0.2rem 0.5rem;
+        border-left: 3px solid #4e83fd;
+    }
+    
+    [data-bs-theme="dark"] .info-text, 
+    body.dark-mode .info-text {
+        color: #a0aec0;
+        background-color: #2d3748;
+        border-left-color: #4e83fd;
+    }
+    
+    /* Estilos para modo claro */
+    :root:not([data-bs-theme="dark"]) .report-header, 
+    body:not(.dark-mode) .report-header {
+        background-color: #f8f9fc;
+    }
+    :root:not([data-bs-theme="dark"]) .report-header h4, 
+    body:not(.dark-mode) .report-header h4 {
+        color: #4e73df;
+    }
+    :root:not([data-bs-theme="dark"]) .metric-card, 
+    body:not(.dark-mode) .metric-card {
+        background-color: #fff;
+        border-left: 4px solid #4e73df;
+    }
+    :root:not([data-bs-theme="dark"]) .metric-card.positive .metric-value, 
+    body:not(.dark-mode) .metric-card.positive .metric-value {
+        color: #1cc88a;
+    }
+    :root:not([data-bs-theme="dark"]) .metric-card.negative .metric-value, 
+    body:not(.dark-mode) .metric-card.negative .metric-value {
+        color: #e74a3b;
+    }
+    :root:not([data-bs-theme="dark"]) .metric-card .metric-title, 
+    body:not(.dark-mode) .metric-card .metric-title {
+        color: #4e73df;
+    }
+    :root:not([data-bs-theme="dark"]) .metric-card .metric-value, 
+    body:not(.dark-mode) .metric-card .metric-value {
+        color: #333;
+    }
+    :root:not([data-bs-theme="dark"]) .text-success, 
+    body:not(.dark-mode) .text-success {
+        color: #1cc88a !important;
+    }
+    :root:not([data-bs-theme="dark"]) .text-danger, 
+    body:not(.dark-mode) .text-danger {
+        color: #e74a3b !important;
+    }
+    :root:not([data-bs-theme="dark"]) .table-costs .total-row, 
+    body:not(.dark-mode) .table-costs .total-row {
+        background-color: #f2f2f2;
+    }
+    :root:not([data-bs-theme="dark"]) .report-section h5, 
+    body:not(.dark-mode) .report-section h5 {
+        border-bottom: 1px solid #e3e6f0;
+        color: #5a5c69;
+    }
+    :root:not([data-bs-theme="dark"]) .summary-card .card-header, 
+    body:not(.dark-mode) .summary-card .card-header {
+        background-color: #f8f9fc;
+        color: #5a5c69;
+    }
+    :root:not([data-bs-theme="dark"]) .summary-card .card-body, 
+    body:not(.dark-mode) .summary-card .card-body {
+        background-color: #fff;
+    }
+    
+    /* Estilos para modo escuro */
+    [data-bs-theme="dark"] .report-header, 
+    body.dark-mode .report-header {
+        background-color: #2d3748;
+        border-bottom-color: #4a5568;
+    }
+    [data-bs-theme="dark"] .metric-card, 
+    body.dark-mode .metric-card {
+        background-color: #2d3748;
+        border-left: 4px solid #4e83fd;
+    }
+    [data-bs-theme="dark"] .metric-card.positive, 
+    body.dark-mode .metric-card.positive {
+        border-left: 4px solid #38b2ac;
+    }
+    [data-bs-theme="dark"] .metric-card.negative, 
+    body.dark-mode .metric-card.negative {
+        border-left: 4px solid #f56565;
+    }
+    [data-bs-theme="dark"] .metric-card .metric-title, 
+    body.dark-mode .metric-card .metric-title {
+        color: #a0aec0;
+    }
+    [data-bs-theme="dark"] .metric-card .metric-value, 
+    body.dark-mode .metric-card .metric-value {
+        color: #e2e8f0;
+    }
+    [data-bs-theme="dark"] .metric-card.positive .metric-value, 
+    body.dark-mode .metric-card.positive .metric-value {
+        color: #38b2ac;
+    }
+    [data-bs-theme="dark"] .metric-card.negative .metric-value, 
+    body.dark-mode .metric-card.negative .metric-value {
+        color: #f56565;
+    }
+    [data-bs-theme="dark"] .text-success, 
+    body.dark-mode .text-success {
+        color: #38b2ac !important;
+    }
+    [data-bs-theme="dark"] .text-danger, 
+    body.dark-mode .text-danger {
+        color: #f56565 !important;
+    }
+    [data-bs-theme="dark"] .card, 
+    body.dark-mode .card {
+        background-color: #2d3748;
+        border-color: #4a5568;
+    }
+    [data-bs-theme="dark"] .card-header, 
+    body.dark-mode .card-header {
+        background-color: #2c5282;
+        border-color: #4a5568;
+    }
+    [data-bs-theme="dark"] .card-header h6, 
+    body.dark-mode .card-header h6 {
+        color: #e2e8f0;
+    }
+    [data-bs-theme="dark"] .table-costs .total-row, 
+    body.dark-mode .table-costs .total-row {
+        background-color: #4a5568;
+    }
+    [data-bs-theme="dark"] .report-section h5, 
+    body.dark-mode .report-section h5 {
+        border-bottom: 1px solid #4a5568;
+        color: #e2e8f0;
+    }
+    [data-bs-theme="dark"] .summary-card .card-header, 
+    body.dark-mode .summary-card .card-header {
+        background-color: #2c5282;
+        color: #e2e8f0;
+    }
+    [data-bs-theme="dark"] .summary-card .card-body, 
+    body.dark-mode .summary-card .card-body {
+        background-color: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    /* Estilos para impressão */
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .print-header {
+            display: block;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Botões de ação -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4 no-print">
+        <h1 class="h3 mb-0 text-gray-800">Relatório de Abastecimentos por Posto</h1>
+        <div class="btn-group">
+            <a href="{% url 'core:relatorio_posto_print' %}?{% if posto %}posto={{ posto.id }}&{% endif %}data_inicio={{ data_inicio|date:'Y-m-d' }}&data_fim={{ data_fim|date:'Y-m-d' }}" target="_blank" class="btn btn-sm btn-primary">
+                <i class="fas fa-print fa-sm text-white-50"></i> Versão para Impressão
+            </a>
+            <button id="exportExcel" class="btn btn-sm btn-success">
+                <i class="fas fa-file-excel fa-sm text-white-50"></i> Exportar Excel
+            </button>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Relatório de Abastecimentos por Posto</h6>
+        </div>
+        <div class="card-body">
+            <div class="report-header">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>{% if posto %}{{ posto.nome_completo }}{% else %}Todos os Postos{% endif %}</h4>
+                        <p><strong>Período:</strong> {{ data_inicio|date:"d/m/Y" }} a {{ data_fim|date:"d/m/Y" }}</p>
+                        <p><strong>Dias no período:</strong> {{ dias_periodo }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Métricas Gerais -->
+            <div class="report-section">
+                <h5>Métricas Gerais</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Total de Abastecimentos</div>
+                            <div class="metric-value">{{ total_abastecimentos }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Total de Litros</div>
+                            <div class="metric-value">{{ total_litros|floatformat:2|intcomma }} L</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Valor Total</div>
+                            <div class="metric-value">R$ {{ valor_total|floatformat:2|intcomma }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-title">Valor Médio por Litro</div>
+                            <div class="metric-value">R$ {{ valor_medio_litro|floatformat:2|intcomma }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evolução de Preços com Gráfico -->
+            <div class="report-section">
+                <h5>Evolução de Preços</h5>
+                
+                <!-- Gráfico de evolução de preços -->
+                <div class="chart-container" style="position: relative; height:300px; margin-bottom: 20px;">
+                    <canvas id="evolucaoPrecos"></canvas>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm-font">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Posto</th>
+                                <th>Tipo</th>
+                                <th>Valor/Litro</th>
+                                <th>Variação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for preco in evolucao_precos %}
+                            <tr>
+                                <td>{{ preco.data|date:"d/m/Y" }}</td>
+                                <td>{{ preco.posto }}</td>
+                                <td>{{ preco.tipo_combustivel }}</td>
+                                <td class="valor-monetario">R$ {{ preco.valor_litro|floatformat:2|intcomma }}</td>
+                                <td class="{% if preco.variacao > 0 %}text-danger{% elif preco.variacao < 0 %}text-success{% endif %} text-center">
+                                    {% if preco.variacao != 0 %}
+                                        {{ preco.variacao|floatformat:2 }}%
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">Nenhum registro de preço no período.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Resumo por Posto -->
+            {% if not posto %}
+            <div class="report-section">
+                <h5>Resumo por Posto</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm-font">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Posto</th>
+                                <th>Abastecimentos</th>
+                                <th>Total de Litros</th>
+                                <th>Valor Total</th>
+                                <th>Valor Médio/Litro</th>
+                                <th>% do Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for resumo in resumo_postos %}
+                            <tr>
+                                <td>{{ resumo.posto }}</td>
+                                <td class="text-center">{{ resumo.quantidade }}</td>
+                                <td class="valor-monetario">{{ resumo.litros|floatformat:2|intcomma }} L</td>
+                                <td class="valor-monetario">R$ {{ resumo.valor_total|floatformat:2|intcomma }}</td>
+                                <td class="valor-monetario">R$ {{ resumo.valor_medio|floatformat:2|intcomma }}</td>
+                                <td class="text-center">{{ resumo.percentual|floatformat:2 }}%</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">Nenhum abastecimento registrado no período.</td>
+                            </tr>
+                            {% endfor %}
+                            {% if resumo_postos %}
+                            <tr class="total-row">
+                                <td><strong>Total</strong></td>
+                                <td class="text-center"><strong>{{ total_abastecimentos }}</strong></td>
+                                <td class="valor-monetario"><strong>{{ total_litros|floatformat:2|intcomma }} L</strong></td>
+                                <td class="valor-monetario"><strong>R$ {{ valor_total|floatformat:2|intcomma }}</strong></td>
+                                <td class="valor-monetario"><strong>R$ {{ valor_medio_litro|floatformat:2|intcomma }}</strong></td>
+                                <td class="text-center"><strong>100%</strong></td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Detalhes dos Abastecimentos -->
+            <div class="report-section">
+                <h5>Detalhes dos Abastecimentos</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm-font">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Data</th>
+                                <th>Posto</th>
+                                <th>Caminhão</th>
+                                <th>Motorista</th>
+                                <th>Tipo</th>
+                                <th>Litros</th>
+                                <th>Valor/Litro</th>
+                                <th>Valor Total</th>
+                                <th>Origem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for abastecimento in abastecimentos %}
+                            <tr>
+                                <td>{{ abastecimento.data|date:"d/m/Y" }}</td>
+                                <td>{{ abastecimento.posto.nome_completo }}</td>
+                                <td>{{ abastecimento.caminhao.placa }}</td>
+                                <td>
+                                    {% if abastecimento.motorista %}
+                                        {{ abastecimento.motorista.nome_completo }}
+                                    {% elif abastecimento.motorista_user %}
+                                        {{ abastecimento.motorista_user.get_full_name|default:abastecimento.motorista_user.username }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>{{ abastecimento.get_tipo_combustivel_display|default:"-" }}</td>
+                                <td class="valor-monetario">{{ abastecimento.litros|floatformat:2|intcomma }}</td>
+                                <td class="valor-monetario">R$ {{ abastecimento.valor_litro|floatformat:2|intcomma }}</td>
+                                <td class="valor-monetario">R$ {{ abastecimento.total_valor|floatformat:2|intcomma }}</td>
+                                <td>
+                                    {% if abastecimento.origem_pendente %}
+                                        <span class="badge bg-primary">Motorista</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Admin</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center">Nenhum abastecimento registrado no período.</td>
+                            </tr>
+                            {% endfor %}
+                            {% if abastecimentos %}
+                            <tr class="total-row">
+                                <td colspan="5"><strong>Total</strong></td>
+                                <td class="valor-monetario"><strong>{{ total_litros|floatformat:2|intcomma }}</strong></td>
+                                <td></td>
+                                <td class="valor-monetario"><strong>R$ {{ valor_total|floatformat:2|intcomma }}</strong></td>
+                                <td></td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+    // Carregar Chart.js dinamicamente
+    function carregarChartJS() {
+        return new Promise((resolve, reject) => {
+            if (typeof Chart !== 'undefined') {
+                resolve();
+                return;
+            }
+            
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error('Falha ao carregar Chart.js'));
+            document.head.appendChild(script);
+        });
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Carregar Chart.js e depois inicializar o gráfico
+        carregarChartJS()
+            .then(() => {
+                inicializarGrafico();
+            })
+            .catch(error => {
+                console.error(error);
+            });
+        
+        // Exportar para Excel
+        document.getElementById('exportExcel').addEventListener('click', function() {
+            // Criar uma tabela temporária para exportar
+            var tabelas = document.querySelectorAll('.table');
+            var wb = XLSX.utils.book_new();
+            
+            // Adicionar informações gerais
+            var infoGeral = [
+                ['Relatório de Abastecimentos por Posto'],
+                ['{% if posto %}{{ posto.nome_completo }}{% else %}Todos os Postos{% endif %}'],
+                ['Período:', '{{ data_inicio|date:"d/m/Y" }} a {{ data_fim|date:"d/m/Y" }}'],
+                ['Dias no período:', '{{ dias_periodo }}'],
+                [''],
+                ['Métricas Gerais'],
+                ['Total de Abastecimentos:', '{{ total_abastecimentos }}'],
+                ['Total de Litros:', '{{ total_litros|floatformat:2|intcomma }} L'],
+                ['Valor Total:', 'R$ {{ valor_total|floatformat:2|intcomma }}'],
+                ['Valor Médio por Litro:', 'R$ {{ valor_medio_litro|floatformat:2|intcomma }}'],
+                ['']
+            ];
+            
+            var ws_info = XLSX.utils.aoa_to_sheet(infoGeral);
+            XLSX.utils.book_append_sheet(wb, ws_info, "Informações");
+            
+            // Adicionar cada tabela como uma planilha
+            tabelas.forEach(function(tabela, index) {
+                var ws = XLSX.utils.table_to_sheet(tabela);
+                XLSX.utils.book_append_sheet(wb, ws, "Tabela " + (index + 1));
+            });
+            
+            // Salvar o arquivo
+            XLSX.writeFile(wb, 'Relatorio_Abastecimentos_Postos_{{ data_inicio|date:"Y-m-d" }}_{{ data_fim|date:"Y-m-d" }}.xlsx');
+        });
+    });
+    
+    // Função para inicializar o gráfico de evolução de preços
+    function inicializarGrafico() {
+        var ctx = document.getElementById('evolucaoPrecos').getContext('2d');
+        
+        // Arrays para armazenar os dados do gráfico
+        var datas = [];
+        var valores = [];
+        var postos = [];
+        
+        // Preencher os arrays com os dados do Django
+        {% for preco in evolucao_precos %}
+            datas.push("{{ preco.data|date:'d/m/Y' }}");
+            valores.push(parseFloat("{{ preco.valor_litro|floatformat:2 }}".replace(',', '.')));
+            postos.push("{{ preco.posto }}");
+        {% endfor %}
+        
+        // Verificar se temos dados para criar o gráfico
+        if (datas.length > 0) {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: datas,
+                    datasets: [{
+                        label: 'Valor por Litro (R$)',
+                        data: valores,
+                        borderColor: '#4e73df',
+                        backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#4e73df',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#4e73df',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R$ ' + value.toFixed(2).replace('.', ',');
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    var label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += 'R$ ' + context.parsed.y.toFixed(2).replace('.', ',');
+                                    label += ' - ' + postos[context.dataIndex];
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            // Se não houver dados, exibir mensagem no canvas
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#666';
+            ctx.textAlign = 'center';
+            ctx.fillText('Nenhum dado disponível para exibir o gráfico', ctx.canvas.width / 2, ctx.canvas.height / 2);
+        }
+    }
+</script>
+{% endblock %}

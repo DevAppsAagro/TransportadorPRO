@@ -15,7 +15,7 @@ from .views.estimativa_pneus import estimativa_pneus_list, estimativa_pneus_crea
 from .views.estimativa_manutencao import estimativa_manutencao_list, estimativa_manutencao_create, estimativa_manutencao_edit, estimativa_manutencao_delete, detalhes_estimativa_manutencao
 from .views.estimativa_custo_fixo import estimativa_custo_fixo_list, estimativa_custo_fixo_create, estimativa_custo_fixo_edit, estimativa_custo_fixo_delete, detalhes_estimativa_custo_fixo, calcular_valor_por_dia
 from .views.despesa import despesa_list, despesa_create, despesa_edit, despesa_delete, despesa_detail, registrar_pagamento, get_subcategorias, get_destinos_por_alocacao
-from .views.relatorios import relatorio_veiculo, relatorio_frete, fluxo_caixa, dre, relatorio_cliente, relatorio_manutencao, relatorio_despesa, relatorio_cliente_print, relatorio_veiculo_print
+from .views.relatorios import relatorio_veiculo, relatorio_frete, fluxo_caixa, dre, relatorio_cliente, relatorio_manutencao, relatorio_despesa, relatorio_cliente_print, relatorio_veiculo_print, relatorio_posto_form, relatorio_posto, relatorio_posto_print
 from .views.configuracoes import configuracoes_empresa
 from .views.landing import landing_page
 from .views.motoristas import listar_motoristas, criar_motorista, editar_motorista, excluir_motorista, detalhe_motorista, resetar_senha_motorista
@@ -49,9 +49,14 @@ urlpatterns = [
     path('contatos/<int:pk>/excluir/', contato_excluir, name='contato_excluir'),
     path('relatorios/', relatorios, name='relatorios'),
     path('relatorios/veiculo/', relatorio_veiculo, name='relatorio_veiculo'),
+    path('relatorios/veiculo/form/', relatorio_veiculo, name='relatorio_veiculo_form'),
     path('relatorios/veiculo/print/', relatorio_veiculo_print, name='relatorio_veiculo_print'),
     path('relatorios/frete/', relatorio_frete, name='relatorio_frete'),
+    path('relatorios/frete/form/', relatorio_frete, name='relatorio_frete_form'),
     path('relatorios/frete/<int:pk>/', relatorio_frete, name='relatorio_frete_detalhe'),
+    path('relatorios/posto/form/', relatorio_posto_form, name='relatorio_posto_form'),
+    path('relatorios/posto/', relatorio_posto, name='relatorio_posto'),
+    path('relatorios/posto/print/', relatorio_posto_print, name='relatorio_posto_print'),
     path('relatorios/fluxo-caixa/', fluxo_caixa, name='fluxo_caixa'),
     path('relatorios/dre/', dre, name='dre'),
     path('relatorios/cliente/', relatorio_cliente, name='relatorio_cliente'),

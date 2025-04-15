@@ -1,0 +1,168 @@
+{% load humanize %}
+
+<!-- Métricas Gerais -->
+<div class="report-section">
+    <h5>Métricas Gerais</h5>
+    <div class="summary-cards">
+        <div class="metric-card">
+            <div class="metric-title">Total de Abastecimentos</div>
+            <div class="metric-value">{{ total_abastecimentos }}</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-title">Total de Litros</div>
+            <div class="metric-value">{{ total_litros|floatformat:2|intcomma }} L</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-title">Valor Total</div>
+            <div class="metric-value">R$ {{ valor_total|floatformat:2|intcomma }}</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-title">Valor Médio/Litro</div>
+            <div class="metric-value">R$ {{ valor_medio_litro|floatformat:2|intcomma }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Resumo por Posto -->
+{% if not posto %}
+<div class="report-section">
+    <h5>Resumo por Posto</h5>
+    <table>
+        <thead>
+            <tr>
+                <th>Posto</th>
+                <th>Abastecimentos</th>
+                <th>Total de Litros</th>
+                <th>Valor Total</th>
+                <th>Valor Médio/Litro</th>
+                <th>% do Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for resumo in resumo_postos %}
+            <tr>
+                <td>{{ resumo.posto }}</td>
+                <td class="text-center">{{ resumo.quantidade }}</td>
+                <td class="valor-monetario">{{ resumo.litros|floatformat:2|intcomma }} L</td>
+                <td class="valor-monetario">R$ {{ resumo.valor_total|floatformat:2|intcomma }}</td>
+                <td class="valor-monetario">R$ {{ resumo.valor_medio|floatformat:2|intcomma }}</td>
+                <td class="text-center">{{ resumo.percentual|floatformat:2 }}%</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">Nenhum abastecimento registrado no período.</td>
+            </tr>
+            {% endfor %}
+            {% if resumo_postos %}
+            <tr class="total-row">
+                <td><strong>Total</strong></td>
+                <td class="text-center"><strong>{{ total_abastecimentos }}</strong></td>
+                <td class="valor-monetario"><strong>{{ total_litros|floatformat:2|intcomma }} L</strong></td>
+                <td class="valor-monetario"><strong>R$ {{ valor_total|floatformat:2|intcomma }}</strong></td>
+                <td class="valor-monetario"><strong>R$ {{ valor_medio_litro|floatformat:2|intcomma }}</strong></td>
+                <td class="text-center"><strong>100%</strong></td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Evolução de Preços -->
+<div class="report-section">
+    <h5>Evolução de Preços</h5>
+    <table>
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Posto</th>
+                <th>Tipo</th>
+                <th>Valor/Litro</th>
+                <th>Variação</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for preco in evolucao_precos %}
+            <tr>
+                <td>{{ preco.data|date:"d/m/Y" }}</td>
+                <td>{{ preco.posto }}</td>
+                <td>{{ preco.tipo_combustivel }}</td>
+                <td class="valor-monetario">R$ {{ preco.valor_litro|floatformat:2|intcomma }}</td>
+                <td class="{% if preco.variacao > 0 %}text-danger{% elif preco.variacao < 0 %}text-success{% endif %} text-center">
+                    {% if preco.variacao != 0 %}
+                        {{ preco.variacao|floatformat:2 }}%
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">Nenhum registro de preço no período.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Detalhes dos Abastecimentos -->
+<div class="report-section page-break">
+    <h5>Detalhes dos Abastecimentos</h5>
+    <table>
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Posto</th>
+                <th>Caminhão</th>
+                <th>Motorista</th>
+                <th>Tipo</th>
+                <th>Litros</th>
+                <th>Valor/Litro</th>
+                <th>Valor Total</th>
+                <th>Origem</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for abastecimento in abastecimentos %}
+            <tr>
+                <td>{{ abastecimento.data|date:"d/m/Y" }}</td>
+                <td>{{ abastecimento.posto.nome_completo }}</td>
+                <td>{{ abastecimento.caminhao.placa }}</td>
+                <td>
+                    {% if abastecimento.motorista %}
+                        {{ abastecimento.motorista.nome_completo }}
+                    {% elif abastecimento.motorista_user %}
+                        {{ abastecimento.motorista_user.get_full_name|default:abastecimento.motorista_user.username }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>{{ abastecimento.get_tipo_combustivel_display|default:"-" }}</td>
+                <td class="valor-monetario">{{ abastecimento.litros|floatformat:2|intcomma }}</td>
+                <td class="valor-monetario">R$ {{ abastecimento.valor_litro|floatformat:2|intcomma }}</td>
+                <td class="valor-monetario">R$ {{ abastecimento.total_valor|floatformat:2|intcomma }}</td>
+                <td class="text-center">
+                    {% if abastecimento.origem_pendente %}
+                        <span class="badge bg-primary">Motorista</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Admin</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" class="text-center">Nenhum abastecimento registrado no período.</td>
+            </tr>
+            {% endfor %}
+            {% if abastecimentos %}
+            <tr class="total-row">
+                <td colspan="5"><strong>Total</strong></td>
+                <td class="valor-monetario"><strong>{{ total_litros|floatformat:2|intcomma }}</strong></td>
+                <td></td>
+                <td class="valor-monetario"><strong>R$ {{ valor_total|floatformat:2|intcomma }}</strong></td>
+                <td></td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>

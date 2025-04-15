@@ -28,21 +28,30 @@
                         </div>
                     </div>
                     <div class="row justify-content-center">
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-4 mb-4">
                             <div class="card h-100">
                                 <div class="card-body">
                                     <h5 class="card-title">Relatório de Fretes</h5>
                                     <p class="card-text">Analise os fretes realizados e seus resultados.</p>
-                                    <a href="#" class="btn btn-primary">Gerar Relatório</a>
+                                    <a href="{% url 'core:relatorio_frete_form' %}" class="btn btn-primary">Gerar Relatório</a>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-4 mb-4">
                             <div class="card h-100">
                                 <div class="card-body">
-                                    <h5 class="card-title">Relatório de Veículos</h5>
+                                    <h5 class="card-title">Relatório deE Veículos</h5>
                                     <p class="card-text">Acompanhe o desempenho e manutenção da sua frota.</p>
-                                    <a href="#" class="btn btn-primary">Gerar Relatório</a>
+                                    <a href="{% url 'core:relatorio_veiculo_form' %}" class="btn btn-primary">Gerar Relatório</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Relatório de Abastecimentos por Posto</h5>
+                                    <p class="card-text">Analise os abastecimentos por posto para negociar melhores preços.</p>
+                                    <a href="{% url 'core:relatorio_posto_form' %}" class="btn btn-primary">Gerar Relatório</a>
                                 </div>
                             </div>
                         </div>
