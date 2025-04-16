@@ -1,0 +1,196 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Configuração do Sistema de Cobranças</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6 class="smaller-text"><i class="bi bi-info-circle"></i> Sobre o Sistema de Cobranças</h6>
+                        <p class="smaller-text mb-0">
+                            O TransportadorPRO oferece um sistema integrado de cobranças que permite que você emita cobranças para seus clientes de forma rápida e segura.
+                            Com esta integração, você pode gerar cobranças automaticamente para cada frete e acompanhar o status de pagamento em tempo real.
+                        </p>
+                    </div>
+                    
+                    <!-- Abas para diferentes opções de configuração -->
+                    <ul class="nav nav-tabs mb-3" id="configTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="automatic-tab" data-bs-toggle="tab" data-bs-target="#automatic" type="button" role="tab" aria-controls="automatic" aria-selected="true">
+                                <i class="bi bi-magic"></i> Configuração Automática
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual" type="button" role="tab" aria-controls="manual" aria-selected="false">
+                                <i class="bi bi-gear"></i> Configuração Manual
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="configTabsContent">
+
+                    <!-- Aba de configuração automática -->
+                    <div class="tab-pane fade show active" id="automatic" role="tabpanel" aria-labelledby="automatic-tab">
+                        <div class="alert alert-success mb-3">
+                            <h6 class="smaller-text"><i class="bi bi-check-circle"></i> Configuração Automática</h6>
+                            <p class="smaller-text mb-0">
+                                Sua conta de cobranças será configurada automaticamente pelo sistema. Você não precisa fazer nada!
+                                Basta começar a gerar cobranças para seus fretes e o sistema cuidará de todo o processo.
+                            </p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <p class="smaller-text"><strong>Status da Conta:</strong> 
+                                {% if config.api_key %}
+                                <span class="badge bg-success">Configurada</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">Não Configurada</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <p class="smaller-text"><strong>Taxa do Sistema:</strong> R$ {{ config.taxa_sistema }}</p>
+                            <div class="form-text smaller-text">
+                                <strong>Importante:</strong> Esta taxa será adicionada ao valor do frete e será paga pelo seu cliente (quem paga o frete), não por você. Por exemplo, se o frete for de R$1.000,00, seu cliente pagará R$1.009,99, e você receberá os R$1.000,00 integralmente.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="smaller-text">Como usar o sistema de cobranças:</h6>
+                            <ol class="smaller-text">
+                                <li>Acesse a página de detalhes de um frete</li>
+                                <li>Clique no botão "Gerar Cobrança"</li>
+                                <li>O sistema criará automaticamente uma cobrança para o cliente</li>
+                                <li>Você pode acompanhar o status da cobrança na página de cobranças</li>
+                            </ol>
+                        </div>
+                        
+                        {% if config.api_key %}
+                        <a href="{% url 'core:listar_cobrancas' %}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-list-ul"></i> Ver Minhas Cobranças
+                        </a>
+                        {% else %}
+                        <button id="create-auto-account" class="btn btn-success btn-sm">
+                            <i class="bi bi-magic"></i> Configurar Minha Conta Automaticamente
+                        </button>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Aba de configuração manual -->
+                    <div class="tab-pane fade" id="manual" role="tabpanel" aria-labelledby="manual-tab">
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            <div class="alert alert-info mb-3">
+                                <h6 class="smaller-text"><i class="bi bi-info-circle"></i> Configuração Manual</h6>
+                                <p class="smaller-text mb-0">
+                                    Se preferir, você pode configurar sua conta de cobranças manualmente. 
+                                    Preencha os campos abaixo com as informações da sua conta.
+                                </p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="api_key" class="form-label form-label-xs">Chave de API</label>
+                                <input type="text" class="form-control form-control-sm" id="api_key" name="api_key" 
+                                       value="{{ config.api_key }}">
+                                <div class="form-text smaller-text">
+                                    Insira sua chave de API para integração com o sistema de cobranças.
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="is_sandbox" name="is_sandbox" 
+                                       {% if config.is_sandbox %}checked{% endif %}>
+                                <label class="form-check-label smaller-text" for="is_sandbox">Usar ambiente de testes</label>
+                                <div class="form-text smaller-text">
+                                    Marque esta opção para usar o ambiente de testes. Desmarque para usar em produção.
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <p class="smaller-text"><strong>Taxa do Sistema:</strong> R$ {{ config.taxa_sistema }}</p>
+                                <div class="form-text smaller-text">
+                                    <strong>Importante:</strong> Esta taxa será adicionada ao valor do frete e será paga pelo seu cliente (quem paga o frete), não por você. Por exemplo, se o frete for de R$1.000,00, seu cliente pagará R$1.009,99, e você receberá os R$1.000,00 integralmente.
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="bi bi-save"></i> Salvar Configurações
+                            </button>
+                        
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Botão para criar conta automaticamente
+        const createAutoAccountBtn = document.getElementById('create-auto-account');
+        if (createAutoAccountBtn) {
+            createAutoAccountBtn.addEventListener('click', function() {
+                // Mostrar indicador de carregamento
+                this.innerHTML = '<i class="bi bi-hourglass-split"></i> Configurando...';
+                this.disabled = true;
+                
+                // Fazer uma requisição para criar a conta automaticamente
+                fetch('{% url "core:configurar_cobranca" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ auto_create: true })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Recarregar a página para mostrar a conta configurada
+                        window.location.reload();
+                    } else {
+                        if (data.redirect) {
+                            // Se precisar redirecionar para a página de configuração da empresa
+                            alert('Você precisa preencher os dados da sua empresa antes de configurar o sistema de cobranças.');
+                            window.location.href = data.redirect;
+                        } else if (data.manual_config) {
+                            // Se a criação automática falhou mas podemos configurar manualmente
+                            let errorMsg = data.error;
+                            
+                            // Mensagem mais amigável para erro de companyType
+                            if (errorMsg.includes('companyType')) {
+                                errorMsg = 'Não foi possível criar a conta automaticamente. Você pode configurar manualmente sua chave de API para continuar usando o sistema de cobranças.';
+                            }
+                            
+                            alert(errorMsg);
+                            // Mudar para a aba de configuração manual
+                            document.getElementById('manual-tab').click();
+                            this.innerHTML = '<i class="bi bi-magic"></i> Configurar Minha Conta Automaticamente';
+                            this.disabled = false;
+                        } else {
+                            alert('Erro ao configurar conta: ' + data.error);
+                            this.innerHTML = '<i class="bi bi-magic"></i> Configurar Minha Conta Automaticamente';
+                            this.disabled = false;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao configurar conta. Tente novamente mais tarde.');
+                    this.innerHTML = '<i class="bi bi-magic"></i> Configurar Minha Conta Automaticamente';
+                    this.disabled = false;
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

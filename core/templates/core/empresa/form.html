@@ -141,6 +141,15 @@
                                 <label for="inscricao_municipal" class="form-label form-label-sm">Inscrição Municipal</label>
                                 <input type="text" class="form-control form-control-sm" id="inscricao_municipal" name="inscricao_municipal" value="{{ empresa.inscricao_municipal }}">
                             </div>
+                            <div class="col-md-3 mb-2">
+                                <label for="company_type" class="form-label form-label-sm">Tipo de Empresa *</label>
+                                <select class="form-select form-select-sm" id="company_type" name="company_type" required>
+                                    <option value="MEI" {% if empresa.company_type == 'MEI' %}selected{% endif %}>Microempreendedor Individual (MEI)</option>
+                                    <option value="LIMITED" {% if empresa.company_type == 'LIMITED' %}selected{% endif %}>Sociedade Limitada (LTDA)</option>
+                                    <option value="INDIVIDUAL" {% if empresa.company_type == 'INDIVIDUAL' %}selected{% endif %}>Empresa Individual</option>
+                                    <option value="ASSOCIATION" {% if empresa.company_type == 'ASSOCIATION' %}selected{% endif %}>Associação/ONG</option>
+                                </select>
+                            </div>
                             <div class="col-md-6 mb-2">
                                 <label for="logo" class="form-label form-label-sm">Logo da Empresa</label>
                                 <input type="file" class="form-control form-control-sm" id="logo" name="logo" accept="image/*">

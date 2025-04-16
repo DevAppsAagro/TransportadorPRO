@@ -14,6 +14,7 @@ class EmpresaForm(ModelForm):
         model = Empresa
         fields = [
             'razao_social', 'nome_fantasia', 'cnpj', 'inscricao_estadual', 'inscricao_municipal',
+            'company_type',  # Adicionado campo de tipo de empresa para integração com sistema de cobranças
             'cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'estado',
             'telefone', 'celular', 'email', 'site', 'rntrc', 'antt', 'observacoes'
         ]

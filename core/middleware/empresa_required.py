@@ -1,32 +1,9 @@
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 import logging
+from core.models.empresa import Empresa
 
 logger = logging.getLogger(__name__)
-
-class DomainRedirectMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        host = request.META.get('HTTP_HOST', '')
-        path = request.path
-        
-        # Caso 1: É o domínio app.transportadorpro.com
-        if host.startswith('app.'):
-            # Se está tentando acessar a raiz, redireciona para o dashboard
-            if path == '/':
-                return HttpResponseRedirect('/dashboard/')
-        
-        # Caso 2: É o domínio principal (transportadorpro.com ou www.transportadorpro.com)
-        else:
-            # Se está tentando acessar áreas do sistema (dashboard, perfil, etc)
-            if path.startswith('/dashboard/') or path == '/dashboard':
-                # Redireciona para o domínio do app
-                return HttpResponseRedirect(f'https://app.transportadorpro.com{path}')
-            
-        return self.get_response(request)
-
 
 class EmpresaRequiredMiddleware:
     """Middleware para verificar se o usuário tem os dados da empresa cadastrados."""
@@ -41,12 +18,12 @@ class EmpresaRequiredMiddleware:
         if request.user.is_authenticated:
             # Caminhos que não devem ser redirecionados (página de cadastro da empresa, logout, etc)
             excluded_paths = [
-                reverse('core:configurar_empresa'),
+                '/configuracoes/empresa/',
                 '/admin/',
                 '/logout/',
                 '/static/',
                 '/media/',
-                '/configuracoes/empresa/',
+                '/api/',
             ]
             
             # Verifica se o caminho atual não está na lista de exclusões
@@ -58,13 +35,14 @@ class EmpresaRequiredMiddleware:
             
             if should_check:
                 try:
-                    # Verifica se o usuário tem empresa associada
-                    if not hasattr(request.user, 'empresa'):
+                    # Verifica se o usuário tem empresa associada usando o ORM do Django
+                    empresa = Empresa.objects.filter(usuario=request.user).first()
+                    
+                    if not empresa:
                         logger.warning(f"Usuário {request.user.username} não tem empresa associada. Redirecionando para cadastro.")
                         return HttpResponseRedirect('/configuracoes/empresa/')
                     
                     # Verifica se os campos obrigatórios estão preenchidos
-                    empresa = request.user.empresa
                     campos_obrigatorios = [
                         'razao_social',
                         'cnpj',
@@ -79,7 +57,8 @@ class EmpresaRequiredMiddleware:
                     ]
                     
                     for campo in campos_obrigatorios:
-                        if not getattr(empresa, campo, None):
+                        valor = getattr(empresa, campo, None)
+                        if not valor or valor.strip() == '':
                             logger.warning(f"Empresa do usuário {request.user.username} não tem o campo {campo} preenchido. Redirecionando para cadastro.")
                             return HttpResponseRedirect('/configuracoes/empresa/')
                     

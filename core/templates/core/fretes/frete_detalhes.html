@@ -225,20 +225,42 @@
             {% else %}
                 <span class="status-badge status-andamento">Em Andamento</span>
             {% endif %}
+            
+            {% if frete.cobranca_status != 'NAO_GERADA' %}
+                {% if frete.cobranca_status == 'PENDING' %}
+                    <span class="badge bg-warning">Pendente</span>
+                {% elif frete.cobranca_status == 'RECEIVED' or frete.cobranca_status == 'CONFIRMED' %}
+                    <span class="badge bg-success">Pago</span>
+                {% elif frete.cobranca_status == 'OVERDUE' %}
+                    <span class="badge bg-danger">Vencido</span>
+                {% elif frete.cobranca_status == 'REFUNDED' %}
+                    <span class="badge bg-info">Estornado</span>
+                {% elif frete.cobranca_status == 'CANCELED' %}
+                    <span class="badge bg-secondary">Cancelado</span>
+                {% endif %}
+            {% endif %}
         </h1>
         <div>
-            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#alterarStatusModal">
-                <i class="fas fa-exchange-alt"></i> Alterar Status
-            </button>
-            <a href="{% url 'core:frete_print' id=frete.id %}" class="btn btn-sm btn-primary" target="_blank">
-                <i class="fas fa-print"></i> Imprimir
+            <a href="#" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#alterarStatusModal">
+                <i class="fas fa-edit"></i> Alterar Status
             </a>
-            <a href="{% url 'core:frete_editar' id=frete.id %}" class="btn btn-sm btn-primary">
+            <a href="{% url 'core:editar_frete' id=frete.id %}" class="btn btn-sm btn-info">
                 <i class="fas fa-edit"></i> Editar
             </a>
             <a href="{% url 'core:fretes' %}" class="btn btn-sm btn-secondary">
                 <i class="fas fa-arrow-left"></i> Voltar
             </a>
+            
+            {% if not frete.cobranca_id and frete.cliente %}
+            <div class="d-inline-block" data-bs-toggle="tooltip" data-bs-placement="top" title="Uma taxa de R$9,99 será adicionada ao valor do frete e será paga pelo seu cliente, não por você.">
+                <a href="{% url 'core:gerar_cobranca_frete' frete.id %}" class="btn btn-sm btn-success">
+                    <i class="bi bi-cash"></i> Gerar Cobrança
+                </a>
+            </div>
+            <div class="alert alert-info mt-2 small" style="font-size: 0.8rem;">
+                <i class="bi bi-info-circle"></i> <strong>Importante:</strong> Ao gerar uma cobrança, uma taxa de R$9,99 será adicionada ao valor do frete. Esta taxa será paga pelo seu cliente (quem paga o frete), não por você.
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -543,4 +565,91 @@
         </div>
     </div>
 </div>
+
+    <!-- Seção de Cobrança -->
+    {% if frete.cobranca_id %}
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="detail-card">
+                <div class="card-header">
+                    <i class="bi bi-cash-coin mr-1"></i> Informações da Cobrança
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="row mb-3">
+                                <div class="col-md-4 info-label">Status:</div>
+                                <div class="col-md-8">
+                                    {% if frete.cobranca_status == 'PENDING' %}
+                                        <span class="status-pendente">Pendente</span>
+                                    {% elif frete.cobranca_status == 'RECEIVED' or frete.cobranca_status == 'CONFIRMED' %}
+                                        <span class="status-pago">Pago</span>
+                                    {% elif frete.cobranca_status == 'OVERDUE' %}
+                                        <span class="status-vencido">Vencido</span>
+                                    {% elif frete.cobranca_status == 'REFUNDED' %}
+                                        <span class="status-estornado">Estornado</span>
+                                    {% elif frete.cobranca_status == 'CANCELED' %}
+                                        <span class="status-cancelado">Cancelado</span>
+                                    {% else %}
+                                        <strong>Status da Cobrança:</strong> {{ frete.get_cobranca_status_display }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4 info-label">Data de Criação:</div>
+                                <div class="col-md-8"><strong>Data de Criação:</strong> {{ frete.cobranca_data_criacao|date:'d/m/Y H:i' }}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4 info-label">Data de Vencimento:</div>
+                                <div class="col-md-8"><strong>Data de Vencimento:</strong> {{ frete.cobranca_data_vencimento|date:'d/m/Y' }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row mb-3">
+                                <div class="col-md-4 info-label">Valor do Frete:</div>
+                                <div class="col-md-8">R$ {{ frete.valor_total|floatformat:2 }}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4 info-label">Taxa do Sistema:</div>
+                                <div class="col-md-8">R$ 9,99</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-4 info-label">Valor Total:</div>
+                                <div class="col-md-8"><strong>Valor Total:</strong> R$ {{ frete.cobranca_valor_total|floatformat:2 }}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <a href="{{ frete.link_pagamento }}" target="_blank" class="btn btn-primary btn-sm">
+                                <i class="bi bi-link-45deg"></i> Link de Pagamento
+                            </a>
+                            <a href="{% url 'core:atualizar_status_cobranca' frete.id %}" class="btn btn-info btn-sm ms-2">
+                                <i class="bi bi-arrow-repeat"></i> Atualizar Status
+                            </a>
+                            {% if frete.cobranca_status == 'PENDING' %}
+                            <a href="{% url 'core:cancelar_cobranca' frete.id %}" class="btn btn-danger btn-sm ms-2" 
+                               onclick="return confirm('Tem certeza que deseja cancelar esta cobrança?')">
+                                <i class="bi bi-x-circle"></i> Cancelar Cobrança
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar todos os tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
+</script>
 {% endblock %}

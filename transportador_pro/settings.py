@@ -78,6 +78,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.domain_redirect.DomainRedirectMiddleware',  # Novo middleware para redirecionamento de domínio
     'core.middleware.subdomain.SubdomainMiddleware',  # Middleware para processamento de subdomínios
+    'core.middleware.empresa_required.EmpresaRequiredMiddleware',  # Middleware para verificar dados da empresa
 ]
 
 ROOT_URLCONF = 'transportador_pro.urls'
@@ -276,3 +277,10 @@ if not DEBUG:
     EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
     EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
     DEFAULT_FROM_EMAIL = 'TransportadorPRO <noreply@transportadorpro.com>'
+
+# Configurações do Sistema de Cobranças
+# Suporte para nomes antigos e novos das variáveis de ambiente
+COBRANCA_WALLET_ID = os.getenv('COBRANCA_WALLET_ID', os.getenv('ASAAS_WALLET_ID', ''))  # Wallet ID para receber as taxas
+COBRANCA_WEBHOOK_TOKEN = os.getenv('COBRANCA_WEBHOOK_TOKEN', os.getenv('ASAAS_WEBHOOK_TOKEN', ''))  # Token para validar webhooks
+COBRANCA_SANDBOX = os.getenv('COBRANCA_SANDBOX', os.getenv('ASAAS_SANDBOX', 'True')) == 'True'  # True para ambiente de testes, False para produção
+COBRANCA_MASTER_API_KEY = os.getenv('COBRANCA_MASTER_API_KEY', os.getenv('ASAAS_MASTER_API_KEY', ''))  # Chave de API principal para criar subcontas

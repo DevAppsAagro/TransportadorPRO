@@ -13,6 +13,17 @@ class Frete(models.Model):
         ('EM_ANDAMENTO', 'Em Andamento'),
         ('FINALIZADO', 'Finalizado'),
     ]
+    
+    # Status de cobrança Asaas
+    STATUS_COBRANCA_CHOICES = [
+        ('PENDING', 'Pendente'),
+        ('RECEIVED', 'Recebida'),
+        ('CONFIRMED', 'Confirmada'),
+        ('OVERDUE', 'Vencida'),
+        ('REFUNDED', 'Estornada'),
+        ('CANCELED', 'Cancelada'),
+        ('NAO_GERADA', 'Não Gerada'),
+    ]
     caminhao = models.ForeignKey(Caminhao, on_delete=models.PROTECT, verbose_name='Caminhão')
     motorista = models.ForeignKey(Contato, on_delete=models.PROTECT, verbose_name='Motorista', limit_choices_to={'tipo': 'MOTORISTA'}, related_name='fretes_como_motorista', null=True, blank=True)
     motorista_user = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name='Motorista (Usuário)', null=True, blank=True, related_name='fretes_como_motorista_user')
@@ -40,6 +51,39 @@ class Frete(models.Model):
     valor_desconto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Valor de Desconto', default=0)
     status = models.CharField(max_length=20, verbose_name='Status', default='PENDENTE')
     status_andamento = models.CharField(max_length=20, verbose_name='Status de Andamento', choices=STATUS_ANDAMENTO_CHOICES, default='EM_ANDAMENTO')
+    
+    # Campos para integração com o sistema de cobranças
+    asaas_cobranca_id = models.CharField(max_length=255, null=True, blank=True, verbose_name="ID da Cobrança")
+    asaas_link_pagamento = models.URLField(null=True, blank=True, verbose_name="Link de Pagamento")
+    asaas_status = models.CharField(max_length=50, choices=STATUS_COBRANCA_CHOICES, default='NAO_GERADA', verbose_name="Status da Cobrança")
+    asaas_data_criacao = models.DateTimeField(null=True, blank=True, verbose_name="Data de Criação da Cobrança")
+    asaas_data_vencimento = models.DateField(null=True, blank=True, verbose_name="Data de Vencimento da Cobrança")
+    asaas_valor_total = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Valor Total da Cobrança")
+    
+    # Propriedades para compatibilidade com os novos nomes
+    @property
+    def cobranca_id(self):
+        return self.asaas_cobranca_id
+    
+    @property
+    def link_pagamento(self):
+        return self.asaas_link_pagamento
+    
+    @property
+    def cobranca_status(self):
+        return self.asaas_status
+    
+    @property
+    def cobranca_data_criacao(self):
+        return self.asaas_data_criacao
+    
+    @property
+    def cobranca_data_vencimento(self):
+        return self.asaas_data_vencimento
+    
+    @property
+    def cobranca_valor_total(self):
+        return self.asaas_valor_total
 
     class Meta:
         verbose_name = 'Frete'

@@ -2,6 +2,7 @@ from django.urls import path, include
 from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
 from .views import dashboard, financeiro, veiculos, relatorios, configuracao
+from .urls_asaas import urlpatterns as asaas_urls
 from .views.auth_views import register, login_view, perfil_usuario
 from .views.contatos import contatos, contato_novo, contato_editar, contato_excluir
 from .views.categorias import categorias, categoria_nova, categoria_editar, categoria_excluir, subcategorias, subcategoria_nova, subcategoria_editar, subcategoria_excluir
@@ -27,6 +28,8 @@ from .views.abastecimentos_pendentes import (
 app_name = 'core'
 
 urlpatterns = [
+    # Incluir URLs da Asaas
+    *asaas_urls,
     # Landing page (para domínio principal)
     path('', landing_page, name='landing_page'),
     

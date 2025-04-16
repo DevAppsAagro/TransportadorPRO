@@ -14,6 +14,15 @@ class Empresa(models.Model):
     inscricao_estadual = models.CharField('Inscrição Estadual', max_length=30, blank=True)
     inscricao_municipal = models.CharField('Inscrição Municipal', max_length=30, blank=True)
     
+    # Tipo de empresa (usado para integração com sistema de cobranças)
+    COMPANY_TYPE_CHOICES = [
+        ('MEI', 'Microempreendedor Individual (MEI)'),
+        ('LIMITED', 'Sociedade Limitada (LTDA)'),
+        ('INDIVIDUAL', 'Empresa Individual'),
+        ('ASSOCIATION', 'Associação/ONG')
+    ]
+    company_type = models.CharField('Tipo de Empresa', max_length=30, choices=COMPANY_TYPE_CHOICES, default='LIMITED')
+    
     # Endereço
     cep = models.CharField('CEP', max_length=9)
     logradouro = models.CharField('Logradouro', max_length=255)
