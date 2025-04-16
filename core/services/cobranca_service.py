@@ -194,8 +194,7 @@ class CobrancaService:
         if self.wallet_id:
             payload['split'] = [{
                 'walletId': self.wallet_id,
-                'value': float(self.taxa_sistema),
-                'percentualValue': False  # Valor fixo, não percentual
+                'fixedValue': float(self.taxa_sistema)  # Valor fixo em vez de percentual
             }]
         
         logger.info(f"Criando cobrança no sistema de cobranças: {payload}")
