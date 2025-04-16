@@ -69,6 +69,10 @@ class AsaasConfig(models.Model):
     # Campos para split de pagamento
     wallet_id = models.CharField(max_length=255, verbose_name="Wallet ID (Split)", null=True, blank=True)
     
+    # Configuração para obrigar o usuário a gerar cobrança ao cadastrar fretes
+    obrigar_cobranca = models.BooleanField(default=False, verbose_name="Obrigar geração de cobrança", 
+                                         help_text="Se marcado, o usuário será obrigado a gerar cobrança ao cadastrar fretes")
+    
     # Campos de controle
     data_criacao = models.DateTimeField('Data de Criação', auto_now_add=True)
     data_atualizacao = models.DateTimeField('Data de Atualização', auto_now=True)

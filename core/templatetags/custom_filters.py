@@ -61,3 +61,15 @@ def percentage(value, total):
         return (Decimal(value) / Decimal(total)) * 100
     except (ValueError, TypeError, ZeroDivisionError):
         return 0
+
+@register.filter
+def replace(value, arg):
+    """Replaces all occurrences of the first argument with the second argument in the given string"""
+    if not isinstance(value, str):
+        return value
+    
+    if ',' not in arg:
+        return value
+    
+    old, new = arg.split(',', 1)
+    return value.replace(old, new)

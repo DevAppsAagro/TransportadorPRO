@@ -1,17 +1,24 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.utils import timezone
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.conf import settings
-
 import json
 import logging
+from datetime import datetime
+from decimal import Decimal
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.conf import settings
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.utils import timezone
+import json
+import logging
+import hmac
+import hashlib
+import os
 
-from core.models.cobranca_config import AsaasConfig
-from core.models.frete import Frete
-from core.services.cobranca_service import CobrancaService
+from ..models.cobranca_config import AsaasConfig
+from ..models.frete import Frete
+from ..services.cobranca_service import CobrancaService
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +83,7 @@ def configurar_cobranca(request):
 def gerar_cobranca_frete(request, frete_id):
     """
     View para gerar uma cobrança para um frete.
+    Primeiro exibe uma tela de confirmação e depois gera a cobrança.
     """
     frete = get_object_or_404(Frete, id=frete_id, caminhao__usuario=request.user)
     
@@ -89,9 +97,20 @@ def gerar_cobranca_frete(request, frete_id):
         messages.error(request, 'Este frete não possui um cliente associado. Adicione um cliente antes de gerar a cobrança.')
         return redirect('core:frete_detalhes', id=frete.id)
     
-    # Verificar se tem data de vencimento
-    if not hasattr(frete, 'data_vencimento') or not frete.data_vencimento:
-        # Usar data de chegada + 7 dias como data de vencimento
+    # Verificar se o usuário tem configuração do sistema de cobranças
+    try:
+        cobranca_config = AsaasConfig.objects.get(usuario=request.user)
+    except AsaasConfig.DoesNotExist:
+        messages.error(request, 'Você precisa configurar sua integração com o sistema de cobranças antes de gerar cobranças.')
+        return redirect('core:configurar_cobranca')
+    
+    # Inicializar serviço de cobranças para obter a taxa do sistema
+    cobranca_service = CobrancaService(request.user)
+    taxa_sistema = cobranca_config.taxa_sistema
+    
+    # Definir data de vencimento padrão se não existir
+    if not frete.data_vencimento:
+        # Usar data de chegada + 7 dias como data de vencimento padrão
         if frete.data_chegada:
             data_vencimento = frete.data_chegada + timezone.timedelta(days=7)
         else:
@@ -99,27 +118,41 @@ def gerar_cobranca_frete(request, frete_id):
     else:
         data_vencimento = frete.data_vencimento
     
-    try:
-        # Verificar se o usuário tem configuração do sistema de cobranças
+    # Se for POST, processar o formulário e gerar a cobrança
+    if request.method == 'POST':
+        data_vencimento_str = request.POST.get('data_vencimento')
+        if data_vencimento_str:
+            try:
+                data_vencimento = datetime.strptime(data_vencimento_str, '%Y-%m-%d').date()
+                
+                # Atualizar a data de vencimento do frete
+                frete.data_vencimento = data_vencimento
+                frete.save(update_fields=['data_vencimento'])
+            except ValueError:
+                messages.error(request, 'Data de vencimento inválida.')
+                return redirect('core:gerar_cobranca_frete', frete_id=frete.id)
+        
         try:
-            cobranca_config = AsaasConfig.objects.get(usuario=request.user)
-        except AsaasConfig.DoesNotExist:
-            messages.error(request, 'Você precisa configurar sua integração com o sistema de cobranças antes de gerar cobranças.')
-            return redirect('core:configurar_cobranca')
+            # Criar cobrança
+            resultado = cobranca_service.criar_cobranca(frete, data_vencimento)
+            
+            # Sucesso
+            messages.success(request, 'Cobrança gerada com sucesso!')
+            return redirect('core:frete_detalhes', id=frete.id)
         
-        # Inicializar serviço de cobranças
-        cobranca_service = CobrancaService(request.user)
-        
-        # Criar cobrança
-        resultado = cobranca_service.criar_cobranca(frete, data_vencimento)
-        
-        # Sucesso
-        messages.success(request, 'Cobrança gerada com sucesso!')
-        return redirect('core:frete_detalhes', id=frete.id)
+        except Exception as e:
+            messages.error(request, f'Erro ao gerar cobrança: {str(e)}')
+            return redirect('core:frete_detalhes', id=frete.id)
     
-    except Exception as e:
-        messages.error(request, f'Erro ao gerar cobrança: {str(e)}')
-        return redirect('core:frete_detalhes', id=frete.id)
+    # Se for GET, exibir tela de confirmação
+    context = {
+        'frete': frete,
+        'data_vencimento': data_vencimento,
+        'taxa_sistema': taxa_sistema,
+        'valor_total': frete.valor_total + Decimal(str(taxa_sistema)),
+    }
+    
+    return render(request, 'core/cobrancas/confirmar.html', context)
 
 @login_required
 def atualizar_status_cobranca(request, frete_id):
@@ -244,3 +277,141 @@ def listar_cobrancas(request):
     return render(request, 'core/cobrancas/listar.html', {
         'fretes': fretes_com_cobranca
     })
+
+@login_required
+def detalhe_cobranca(request, cobranca_id):
+    """
+    View para exibir detalhes de uma cobrança específica.
+    """
+    # Verificar se o usuário tem configuração de cobrança
+    try:
+        config = AsaasConfig.objects.get(usuario=request.user)
+    except AsaasConfig.DoesNotExist:
+        messages.error(request, 'Você precisa configurar o sistema de cobranças primeiro.')
+        return redirect('core:configurar_cobranca')
+    
+    # Inicializar o serviço de cobrança
+    cobranca_service = CobrancaService(request.user)
+    
+    # Buscar detalhes da cobrança na API da Asaas
+    try:
+        detalhes_cobranca = cobranca_service.consultar_cobranca(cobranca_id)
+        
+        # Buscar o frete relacionado à cobrança
+        frete = Frete.objects.filter(
+            caminhao__usuario=request.user,
+            asaas_cobranca_id=cobranca_id
+        ).first()
+        
+        # Verificar se a cobrança pertence ao usuário
+        if not frete:
+            messages.error(request, 'Cobrança não encontrada ou não pertence a você.')
+            return redirect('core:listar_cobrancas')
+        
+        # Verificar se está no ambiente sandbox para mostrar opções de teste
+        is_sandbox = getattr(settings, 'COBRANCA_SANDBOX', True)
+        
+        return render(request, 'core/cobrancas/detalhe.html', {
+            'cobranca': detalhes_cobranca,
+            'frete': frete,
+            'is_sandbox': is_sandbox
+        })
+    except Exception as e:
+        messages.error(request, f'Erro ao buscar detalhes da cobrança: {str(e)}')
+        return redirect('core:listar_cobrancas')
+
+@login_required
+def simular_pagamento(request, cobranca_id):
+    """
+    View para simular um pagamento no ambiente sandbox da Asaas.
+    Apenas funciona no ambiente de testes (sandbox).
+    """
+    # Verificar se está no ambiente sandbox
+    if not getattr(settings, 'COBRANCA_SANDBOX', True):
+        messages.error(request, 'A simulação de pagamento só está disponível no ambiente de testes (sandbox).')
+        return redirect('core:detalhe_cobranca', cobranca_id=cobranca_id)
+    
+    # Inicializar o serviço de cobrança
+    try:
+        cobranca_service = CobrancaService(request.user)
+        
+        # Simular o pagamento
+        resultado = cobranca_service.simular_pagamento(cobranca_id)
+        
+        if resultado.get('success', False):
+            messages.success(request, 'Pagamento simulado com sucesso! O status da cobrança foi atualizado.')
+        else:
+            messages.warning(request, f'Simulação de pagamento realizada, mas com avisos: {resultado.get("message", "")}') 
+    except Exception as e:
+        messages.error(request, f'Erro ao simular pagamento: {str(e)}')
+    
+    # Redirecionar para a página de detalhes da cobrança
+    return redirect('core:detalhe_cobranca', cobranca_id=cobranca_id)
+        
+@login_required
+def recriar_subconta(request):
+    """
+    View para atualizar a configuração de split de pagamento da subconta existente.
+    Isso é útil quando a subconta existente não tem o wallet_id configurado.
+    """
+    # Verificar se o wallet_id está configurado
+    wallet_id = getattr(settings, 'COBRANCA_WALLET_ID', None) or os.getenv('ASAAS_WALLET_ID')
+    
+    if not wallet_id:
+        messages.error(request, 'O ID da carteira (wallet_id) não está configurado. Configure a variável COBRANCA_WALLET_ID ou ASAAS_WALLET_ID nas configurações.')
+        return redirect('core:configurar_cobranca')
+    
+    # Inicializar o serviço de cobrança
+    cobranca_service = CobrancaService(request.user)
+    
+    try:
+        # Atualizar a configuração de split de pagamento
+        resultado = cobranca_service.recriar_subconta(request.user)
+        
+        if resultado and resultado.get('success'):
+            messages.success(request, f'Configuração de split atualizada com sucesso! {resultado.get("message", "")}')
+        else:
+            messages.error(request, 'Falha ao atualizar configuração de split. Verifique os logs para mais detalhes.')
+    except Exception as e:
+        messages.error(request, f'Erro ao atualizar configuração de split: {str(e)}')
+    
+    return redirect('core:configurar_cobranca')
+    
+    # Verificar se o usuário tem configuração de cobrança
+    try:
+        config = AsaasConfig.objects.get(usuario=request.user)
+    except AsaasConfig.DoesNotExist:
+        messages.error(request, 'Você precisa configurar o sistema de cobranças primeiro.')
+        return redirect('core:configurar_cobranca')
+    
+    # Verificar se a cobrança pertence ao usuário
+    frete = Frete.objects.filter(
+        caminhao__usuario=request.user,
+        asaas_cobranca_id=cobranca_id
+    ).first()
+    
+    if not frete:
+        messages.error(request, 'Cobrança não encontrada ou não pertence a você.')
+        return redirect('core:listar_cobrancas')
+    
+    # Inicializar o serviço de cobrança
+    cobranca_service = CobrancaService(request.user)
+    
+    try:
+        # Simular o pagamento da cobrança
+        resultado = cobranca_service.simular_pagamento(cobranca_id)
+        
+        if resultado.get('status') in ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH']:
+            # Atualizar o status da cobrança no banco de dados
+            frete.cobranca_status = resultado.get('status')
+            frete.save()
+            
+            messages.success(request, 'Pagamento simulado com sucesso!')
+        else:
+            messages.warning(request, f'O pagamento foi processado, mas o status retornado foi: {resultado.get("status")}')
+        
+        return redirect('core:detalhe_cobranca', cobranca_id=cobranca_id)
+    
+    except Exception as e:
+        messages.error(request, f'Erro ao simular pagamento: {str(e)}')
+        return redirect('core:detalhe_cobranca', cobranca_id=cobranca_id)

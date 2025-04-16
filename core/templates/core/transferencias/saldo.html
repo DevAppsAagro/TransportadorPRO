@@ -1,0 +1,267 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Saldo e Transferências{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Saldo e Transferências</h1>
+    </div>
+
+    <!-- Saldo Disponível -->
+    <div class="row">
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Saldo Disponível</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if saldo %}
+                                    {% with valor_formatado=saldo.balance|floatformat:2|default:"0,00" %}
+                                        R$ {{ valor_formatado|stringformat:"s"|cut:"."|default:"0,00" }}
+                                    {% endwith %}
+                                {% else %}
+                                    R$ 0,00
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Saldo Bloqueado</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if saldo %}
+                                    {% with valor_formatado=saldo.blockedBalance|floatformat:2|default:"0,00" %}
+                                        R$ {{ valor_formatado|stringformat:"s"|cut:"."|default:"0,00" }}
+                                    {% endwith %}
+                                {% else %}
+                                    R$ 0,00
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-lock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Transferir Saldo</div>
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#transferirModal">
+                                    <i class="fas fa-money-bill-wave mr-1"></i> Transferir para Conta
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exchange-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contas Bancárias e Histórico -->
+    <div class="row">
+        <!-- Contas Bancárias -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Minhas Contas Bancárias</h6>
+                    <a href="{% url 'core:cadastrar_conta_bancaria' %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus-circle"></i> Nova Conta
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if contas_bancarias %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Banco</th>
+                                        <th>Agência</th>
+                                        <th>Conta</th>
+                                        <th>Tipo</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for conta in contas_bancarias %}
+                                    <tr>
+                                        <td>{{ conta.bank.name }}</td>
+                                        <td>{{ conta.agency }}</td>
+                                        <td>{{ conta.account }}-{{ conta.accountDigit }}</td>
+                                        <td>
+                                            {% if conta.bankAccountType == 'CHECKING' %}
+                                                Corrente
+                                            {% elif conta.bankAccountType == 'SAVINGS' %}
+                                                Poupança
+                                            {% else %}
+                                                {{ conta.bankAccountType }}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-primary transferir-btn" 
+                                                    data-toggle="modal" data-target="#transferirModal" 
+                                                    data-conta-id="{{ conta.id }}"
+                                                    data-conta-info="{{ conta.bank.name }} - Ag: {{ conta.agency }} - CC: {{ conta.account }}-{{ conta.accountDigit }}">
+                                                <i class="fas fa-money-bill-wave"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="mb-3">Você ainda não possui contas bancárias cadastradas.</p>
+                            <a href="{% url 'core:cadastrar_conta_bancaria' %}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle mr-1"></i> Cadastrar Conta Bancária
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Histórico de Transferências -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Histórico de Transferências</h6>
+                </div>
+                <div class="card-body">
+                    {% if transferencias %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Valor</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transf in transferencias %}
+                                    <tr>
+                                        <td>{{ transf.dateCreated|date:"d/m/Y" }}</td>
+                                        <td>R$ {{ transf.value|floatformat:2|stringformat:"s"|cut:"." }}</td>
+                                        <td>
+                                            {% if transf.status == 'PENDING' %}
+                                                <span class="badge badge-warning">Pendente</span>
+                                            {% elif transf.status == 'CONFIRMED' %}
+                                                <span class="badge badge-success">Confirmada</span>
+                                            {% elif transf.status == 'CANCELLED' %}
+                                                <span class="badge badge-danger">Cancelada</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">{{ transf.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p>Você ainda não realizou nenhuma transferência.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Transferir -->
+<div class="modal fade" id="transferirModal" tabindex="-1" role="dialog" aria-labelledby="transferirModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transferirModalLabel">Transferir Saldo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="{% url 'core:solicitar_transferencia' %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="valor">Valor a Transferir</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">R$</span>
+                            </div>
+                            <input type="text" class="form-control" id="valor" name="valor" placeholder="0,00" required>
+                        </div>
+                        <small class="form-text text-muted">Saldo disponível: 
+                            {% if saldo %}
+                                {% with valor_formatado=saldo.balance|floatformat:2|default:"0,00" %}
+                                    R$ {{ valor_formatado|stringformat:"s"|cut:"."|default:"0,00" }}
+                                {% endwith %}
+                            {% else %}
+                                R$ 0,00
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label for="conta_bancaria_id">Conta Bancária</label>
+                        <select class="form-control" id="conta_bancaria_id" name="conta_bancaria_id" required>
+                            <option value="">Selecione uma conta bancária</option>
+                            {% for conta in contas_bancarias %}
+                                <option value="{{ conta.id }}">{{ conta.bank.name }} - Ag: {{ conta.agency }} - CC: {{ conta.account }}-{{ conta.accountDigit }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if not contas_bancarias %}
+                            <small class="form-text text-danger">Você precisa cadastrar uma conta bancária antes de realizar transferências.</small>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" {% if not contas_bancarias %}disabled{% endif %}>Transferir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Formatar campo de valor como moeda
+        $('#valor').mask('#.##0,00', {reverse: true});
+        
+        // Preencher conta bancária ao clicar no botão de transferir
+        $('.transferir-btn').click(function() {
+            var contaId = $(this).data('conta-id');
+            $('#conta_bancaria_id').val(contaId);
+        });
+    });
+</script>
+{% endblock %}

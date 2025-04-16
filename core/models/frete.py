@@ -32,8 +32,10 @@ class Frete(models.Model):
     peso_carga = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Peso da Carga (kg)')
     km_saida = models.IntegerField(verbose_name='Km de Saída')
     km_chegada = models.IntegerField(verbose_name='Km de Chegada', null=True, blank=True)
-    conta_bancaria = models.CharField(max_length=100, verbose_name='Conta Bancária', blank=True, null=True)
+    # Campo conta_bancaria removido conforme solicitado
+    # Campo data_recebimento mantido no modelo, mas será atualizado automaticamente pelo Asaas
     data_recebimento = models.DateField(verbose_name='Data de Recebimento', null=True, blank=True)
+    data_vencimento = models.DateField(verbose_name='Data de Vencimento', null=True, blank=True)
     carga = models.ForeignKey(Carga, on_delete=models.PROTECT, verbose_name='Tipo de Carga')
     valor_unitario = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Valor Unitário')
     valor_total = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Valor Total')

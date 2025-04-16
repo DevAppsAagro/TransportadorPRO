@@ -1,0 +1,97 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Confirmar Geração de Cobrança</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-3">
+                        <h6><i class="bi bi-info-circle"></i> Resumo da Cobrança</h6>
+                        <p class="mb-0">
+                            Confira os detalhes da cobrança antes de gerar. Uma vez gerada, a cobrança não poderá ser alterada.
+                        </p>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Dados do Frete</h6>
+                            <table class="table table-sm table-bordered">
+                                <tr>
+                                    <th>Frete ID:</th>
+                                    <td>{{ frete.id }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Cliente:</th>
+                                    <td>{{ frete.cliente.nome_completo }}</td>
+                                </tr>
+                                <tr>
+                                    <th>CPF/CNPJ:</th>
+                                    <td>{{ frete.cliente.cpf_cnpj }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Origem:</th>
+                                    <td>{{ frete.origem }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Destino:</th>
+                                    <td>{{ frete.destino }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Dados da Cobrança</h6>
+                            <table class="table table-sm table-bordered">
+                                <tr>
+                                    <th>Valor do Frete:</th>
+                                    <td>R$ {{ frete.valor_total|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Taxa do Sistema:</th>
+                                    <td>R$ {{ taxa_sistema|floatformat:2 }}</td>
+                                </tr>
+                                <tr class="table-primary">
+                                    <th>Valor Total:</th>
+                                    <td><strong>R$ {{ valor_total|floatformat:2 }}</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="data_vencimento" class="form-label">Data de Vencimento</label>
+                            <input type="date" class="form-control" id="data_vencimento" name="data_vencimento" 
+                                   value="{{ data_vencimento|date:'Y-m-d' }}" required>
+                            <div class="form-text">
+                                Esta é a data limite para o pagamento da cobrança.
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <p class="mb-0">
+                                <i class="bi bi-exclamation-triangle"></i> <strong>Importante:</strong> 
+                                Ao gerar esta cobrança, uma taxa de R$ {{ taxa_sistema|floatformat:2 }} será adicionada ao valor do frete.
+                                Esta taxa será paga pelo seu cliente (quem paga o frete), não por você.
+                            </p>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'core:frete_detalhes' id=frete.id %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle"></i> Confirmar e Gerar Cobrança
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

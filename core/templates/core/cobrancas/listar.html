@@ -83,7 +83,7 @@
                                     <td>
                                         {% if frete.cobranca_status == 'PENDING' %}
                                         <span class="status-pendente">Pendente</span>
-                                        {% elif frete.cobranca_status == 'RECEIVED' or frete.cobranca_status == 'CONFIRMED' %}
+                                        {% elif frete.cobranca_status == 'RECEIVED' or frete.cobranca_status == 'RECEIVED_IN_CASH' or frete.cobranca_status == 'CONFIRMED' %}
                                         <span class="status-pago">Pago</span>
                                         {% elif frete.cobranca_status == 'OVERDUE' %}
                                         <span class="status-vencido">Vencido</span>
@@ -97,8 +97,11 @@
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
-                                            <a href="{% url 'core:frete_detalhes' frete.id %}" class="btn btn-outline-primary btn-sm" title="Ver Detalhes">
-                                                <i class="bi bi-eye"></i>
+                                            <a href="{% url 'core:detalhe_cobranca' frete.asaas_cobranca_id %}" class="btn btn-outline-primary btn-sm" title="Ver Detalhes da Cobrança">
+                                                <i class="bi bi-credit-card"></i>
+                                            </a>
+                                            <a href="{% url 'core:frete_detalhes' frete.id %}" class="btn btn-outline-secondary btn-sm" title="Ver Detalhes do Frete">
+                                                <i class="bi bi-truck"></i>
                                             </a>
                                             <a href="{{ frete.link_pagamento }}" target="_blank" class="btn btn-outline-success btn-sm" title="Link de Pagamento">
                                                 <i class="bi bi-link-45deg"></i>

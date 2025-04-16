@@ -281,16 +281,15 @@
                             <input type="date" name="data_chegada" class="form-control form-control-sm"
                                 value="{% if frete %}{{ frete.data_chegada|date:'Y-m-d' }}{% endif %}">
                         </div>
+                        <!-- Campo DATA DE RECEBIMENTO removido conforme solicitado -->
+                        <!-- Será atualizado automaticamente pelo Asaas quando o boleto/fatura for pago -->
                         <div class="col-md-3">
-                            <label class="form-label-xs">Data de Recebimento</label>
-                            <input type="date" name="data_recebimento" class="form-control form-control-sm"
-                                value="{% if frete %}{{ frete.data_recebimento|date:'Y-m-d' }}{% endif %}">
+                            <label class="form-label-xs">Data de Vencimento</label>
+                            <input type="date" name="data_vencimento" class="form-control form-control-sm"
+                                value="{% if frete %}{{ frete.data_vencimento|date:'Y-m-d' }}{% endif %}">
+                            <small class="form-text text-muted smaller-text">Data limite para pagamento</small>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label-xs">Conta Bancária</label>
-                            <input type="text" name="conta_bancaria" class="form-control form-control-sm"
-                                value="{% if frete %}{{ frete.conta_bancaria }}{% endif %}">
-                        </div>
+                        <!-- Campo CONTA BANCÁRIA removido conforme solicitado -->
                     </div>
                 </div>
                 

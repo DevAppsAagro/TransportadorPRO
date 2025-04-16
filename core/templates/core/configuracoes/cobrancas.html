@@ -74,6 +74,13 @@
                         <a href="{% url 'core:listar_cobrancas' %}" class="btn btn-primary btn-sm">
                             <i class="bi bi-list-ul"></i> Ver Minhas Cobranças
                         </a>
+                        <a href="{% url 'core:recriar_subconta' %}" class="btn btn-warning btn-sm ms-2">
+                            <i class="bi bi-arrow-repeat"></i> Atualizar Configuração de Split
+                        </a>
+                        <div class="form-text smaller-text mt-2">
+                            <i class="bi bi-info-circle"></i> Use o botão acima se você estiver tendo problemas com o split de pagamento (taxa do sistema).
+                            Isso irá atualizar a configuração de split para garantir que as taxas sejam direcionadas corretamente.
+                        </div>
                         {% else %}
                         <button id="create-auto-account" class="btn btn-success btn-sm">
                             <i class="bi bi-magic"></i> Configurar Minha Conta Automaticamente

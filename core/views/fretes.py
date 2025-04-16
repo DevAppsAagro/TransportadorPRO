@@ -226,8 +226,9 @@ def frete_novo(request):
                 data_saida=request.POST.get('data_saida'),
                 peso_carga=peso_carga,
                 km_saida=request.POST.get('km_saida'),
-                conta_bancaria=request.POST.get('conta_bancaria'),
+                # Campo conta_bancaria removido conforme solicitado
                 data_recebimento=request.POST.get('data_recebimento') or None,
+                data_vencimento=request.POST.get('data_vencimento') or None,
                 carga=carga,
                 valor_unitario=valor_unitario,
                 valor_total=valor_total,
@@ -249,6 +250,17 @@ def frete_novo(request):
             logger.info('FRETE SALVO COM SUCESSO!')
             logger.info('='*50)
             
+            # Verificar se o usuário é obrigado a gerar cobrança
+            from core.models.cobranca_config import AsaasConfig
+            try:
+                config = AsaasConfig.objects.get(usuario=request.user)
+                if config.obrigar_cobranca:
+                    # Redirecionar para a página de geração de cobrança
+                    messages.success(request, 'Frete cadastrado com sucesso! Agora é necessário gerar a cobrança.')
+                    return redirect('core:gerar_cobranca_frete', frete_id=frete.id)
+            except AsaasConfig.DoesNotExist:
+                # Se não existir configuração, seguir o fluxo normal
+                pass
             
             messages.success(request, 'Frete cadastrado com sucesso!')
             return redirect('core:fretes')
@@ -421,7 +433,7 @@ def frete_editar(request, id):
             frete.data_saida = request.POST.get('data_saida')
             frete.peso_carga = peso_carga
             frete.km_saida = request.POST.get('km_saida')
-            frete.conta_bancaria = request.POST.get('conta_bancaria')
+            # Campo conta_bancaria removido conforme solicitado
             frete.carga = carga
             frete.valor_unitario = valor_unitario
             frete.valor_total = valor_total
@@ -447,6 +459,15 @@ def frete_editar(request, id):
                 frete.data_chegada = request.POST.get('data_chegada')
                 frete.km_chegada = request.POST.get('km_chegada')
             
+            # Verificar se há data de vencimento
+            data_vencimento = request.POST.get('data_vencimento')
+            if data_vencimento and data_vencimento.strip():
+                frete.data_vencimento = data_vencimento
+                logger.info(f'Data de vencimento definida para: {data_vencimento}')
+            else:
+                frete.data_vencimento = None
+                logger.info('Sem data de vencimento definida')
+                
             # Verificar se há data de recebimento
             data_recebimento = request.POST.get('data_recebimento')
             if data_recebimento and data_recebimento.strip():
@@ -464,6 +485,18 @@ def frete_editar(request, id):
                 logger.info('Frete não marcado como recebido (sem data de recebimento)')
             
             frete.save()
+            
+            # Verificar se o usuário é obrigado a gerar cobrança e se o frete ainda não tem cobrança
+            from core.models.cobranca_config import AsaasConfig
+            try:
+                config = AsaasConfig.objects.get(usuario=request.user)
+                if config.obrigar_cobranca and not frete.asaas_cobranca_id:
+                    # Redirecionar para a página de geração de cobrança
+                    messages.success(request, 'Frete atualizado com sucesso! Agora é necessário gerar a cobrança.')
+                    return redirect('core:gerar_cobranca_frete', frete_id=frete.id)
+            except AsaasConfig.DoesNotExist:
+                # Se não existir configuração, seguir o fluxo normal
+                pass
             
             # Adicionamos apenas uma mensagem de sucesso
             messages.success(request, 'Frete atualizado com sucesso!')
@@ -557,14 +590,25 @@ def alterar_status_frete(request, id):
             frete.status_andamento = status_andamento
             frete.save()
             
-            messages.success(request, 'Status do frete atualizado com sucesso!')
+            # Verificar se o usuário é obrigado a gerar cobrança e se o frete ainda não tem cobrança
+            from core.models.cobranca_config import AsaasConfig
+            try:
+                config = AsaasConfig.objects.get(usuario=request.user)
+                if config.obrigar_cobranca and not frete.asaas_cobranca_id:
+                    # Redirecionar para a página de geração de cobrança
+                    messages.success(request, 'Frete atualizado com sucesso! Agora é necessário gerar a cobrança.')
+                    return redirect('core:gerar_cobranca_frete', frete_id=frete.id)
+            except AsaasConfig.DoesNotExist:
+                # Se não existir configuração, seguir o fluxo normal
+                pass
+            
+            messages.success(request, 'Frete atualizado com sucesso!')
             return redirect('core:frete_detalhes', id=frete.id)
         except Exception as e:
             messages.error(request, f'Erro ao atualizar status do frete: {str(e)}')
             return redirect('core:frete_detalhes', id=frete.id)
     
-    # Se não for POST, redirecionar para a página de detalhes
-    return redirect('core:frete_detalhes', id=frete.id)
+    # ... (código anterior)
 
 @login_required
 def frete_excluir(request, id):

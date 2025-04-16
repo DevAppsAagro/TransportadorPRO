@@ -1,0 +1,273 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Detalhes da Cobrança{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Detalhes da Cobrança</h5>
+                    <div>
+                        <a href="{% url 'core:listar_cobrancas' %}" class="btn btn-sm btn-light">
+                            <i class="bi bi-arrow-left"></i> Voltar para Cobranças
+                        </a>
+                        <a href="{% url 'core:frete_detalhes' frete.id %}" class="btn btn-sm btn-light ms-2">
+                            <i class="bi bi-truck"></i> Ver Frete
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card shadow-sm mb-4">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Informações da Cobrança</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-2">
+                                        <div class="col-md-4 fw-bold">ID da Cobrança:</div>
+                                        <div class="col-md-8">{{ cobranca.id }}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-4 fw-bold">Status:</div>
+                                        <div class="col-md-8">
+                                            {% if cobranca.status == 'PENDING' %}
+                                                <span class="badge bg-warning text-dark">Pendente</span>
+                                            {% elif cobranca.status == 'RECEIVED' %}
+                                                <span class="badge bg-success">Recebida</span>
+                                            {% elif cobranca.status == 'RECEIVED_IN_CASH' %}
+                                                <span class="badge bg-success">Recebida em Dinheiro</span>
+                                            {% elif cobranca.status == 'CONFIRMED' %}
+                                                <span class="badge bg-success">Confirmada</span>
+                                            {% elif cobranca.status == 'OVERDUE' %}
+                                                <span class="badge bg-danger">Vencida</span>
+                                            {% elif cobranca.status == 'REFUNDED' %}
+                                                <span class="badge bg-secondary">Estornada</span>
+                                            {% elif cobranca.status == 'CANCELED' %}
+                                                <span class="badge bg-secondary">Cancelada</span>
+                                            {% else %}
+                                                <span class="badge bg-info">{{ cobranca.status }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-4 fw-bold">Valor do Frete:</div>
+                                        <div class="col-md-8">R$ {{ cobranca.value|floatformat:2 }}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-4 fw-bold">Taxa:</div>
+                                        <div class="col-md-8">R$ 9,99</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-4 fw-bold">Valor Total:</div>
+                                        <div class="col-md-8 fw-bold">R$ {{ cobranca.value|floatformat:2 }}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-4 fw-bold">Data de Criação:</div>
+                                        <div class="col-md-8">
+                                            {% if cobranca.dateCreated %}
+                                                {{ cobranca.dateCreated|date:"d/m/Y H:i" }}
+                                            {% else %}
+                                                Não disponível
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-4 fw-bold">Data de Vencimento:</div>
+                                        <div class="col-md-8">
+                                            {% if cobranca.dueDate %}
+                                                {% if cobranca.status == 'OVERDUE' %}
+                                                    <span class="badge bg-danger">{{ cobranca.dueDate|date:"d/m/Y" }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-primary">{{ cobranca.dueDate|date:"d/m/Y" }}</span>
+                                                {% endif %}
+                                            {% else %}
+                                                Não disponível
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-4 fw-bold">Forma de Pagamento:</div>
+                                        <div class="col-md-8">
+                                            {% if cobranca.billingType == 'BOLETO' %}
+                                                Boleto Bancário
+                                            {% elif cobranca.billingType == 'CREDIT_CARD' %}
+                                                Cartão de Crédito
+                                            {% elif cobranca.billingType == 'PIX' %}
+                                                PIX
+                                            {% else %}
+                                                {{ cobranca.billingType }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% if cobranca.status == 'PENDING' %}
+                                    <div class="row mt-3">
+                                        <div class="col-md-12">
+                                            <a href="{{ cobranca.invoiceUrl }}" target="_blank" class="btn btn-primary">
+                                                <i class="bi bi-credit-card"></i> Acessar Fatura
+                                            </a>
+                                            {% if cobranca.bankSlipUrl %}
+                                            <a href="{{ cobranca.bankSlipUrl }}" target="_blank" class="btn btn-outline-primary ms-2">
+                                                <i class="bi bi-file-earmark-text"></i> Visualizar Boleto
+                                            </a>
+                                            {% endif %}
+                                            {% if cobranca.status == 'PENDING' %}
+                                            <a href="{% url 'core:cancelar_cobranca' frete.id %}" class="btn btn-outline-danger ms-2" 
+                                               onclick="return confirm('Tem certeza que deseja cancelar esta cobrança?')">
+                                                <i class="bi bi-x-circle"></i> Cancelar Cobrança
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card shadow-sm mb-4">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Informações do Cliente</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-2">
+                                        <div class="col-md-4 fw-bold">Nome:</div>
+                                        <div class="col-md-8">{{ cobranca.customer.name|default:frete.cliente.nome_completo }}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-4 fw-bold">CPF/CNPJ:</div>
+                                        <div class="col-md-8">{{ cobranca.customer.cpfCnpj|default:frete.cliente.cpf_cnpj }}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-4 fw-bold">Email:</div>
+                                        <div class="col-md-8">{{ cobranca.customer.email|default:frete.cliente.email }}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-4 fw-bold">Telefone:</div>
+                                        <div class="col-md-8">{{ cobranca.customer.phone|default:frete.cliente.telefone }}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if is_sandbox %}
+                            <div class="card shadow-sm mb-4 border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Ambiente de Testes (Sandbox)</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p>Esta cobrança está no ambiente de testes (sandbox) da Asaas. Para simular um pagamento, siga as instruções abaixo:</p>
+                                    
+                                    <h6 class="mt-3">Opção 1: Usando o Link de Pagamento</h6>
+                                    <ol>
+                                        <li>Clique no botão "Acessar Fatura" acima</li>
+                                        <li>Na página da fatura, escolha a forma de pagamento desejada</li>
+                                        <li>Para cartão de crédito, use os dados de teste:
+                                            <ul>
+                                                <li>Número: 5162 3066 5385 4388</li>
+                                                <li>Nome: Qualquer nome</li>
+                                                <li>Validade: Qualquer data futura</li>
+                                                <li>CVV: Qualquer número de 3 dígitos</li>
+                                            </ul>
+                                        </li>
+                                        <li>Para boleto, apenas visualize o boleto (não precisa pagar)</li>
+                                        <li>Para PIX, apenas visualize o QR code (não precisa pagar)</li>
+                                    </ol>
+
+                                    <h6 class="mt-3">Opção 2: Simular Pagamento via API</h6>
+                                    <p>Para simular um pagamento imediato, clique no botão abaixo:</p>
+                                    <button id="simular-pagamento" class="btn btn-success">
+                                        <i class="bi bi-check-circle"></i> Simular Pagamento
+                                    </button>
+                                    <div id="resultado-simulacao" class="mt-2" style="display: none;"></div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Informações do Frete</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <p><strong>ID do Frete:</strong> {{ frete.id }}</p>
+                                            <p><strong>Cliente:</strong> {{ frete.cliente.nome_completo }}</p>
+                                            <p><strong>Origem:</strong> {{ frete.origem }}</p>
+                                            <p><strong>Destino:</strong> {{ frete.destino }}</p>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p><strong>Caminhão:</strong> {{ frete.caminhao }}</p>
+                                            <p><strong>Motorista:</strong> 
+                                                {% if frete.motorista_user %}
+                                                    {{ frete.motorista_user.get_full_name }}
+                                                {% elif frete.motorista %}
+                                                    {{ frete.motorista.nome_completo }}
+                                                {% else %}
+                                                    Não informado
+                                                {% endif %}
+                                            </p>
+                                            <p><strong>Data de Saída:</strong> 
+                                                {% if frete.data_saida %}
+                                                    {{ frete.data_saida|date:"d/m/Y" }}
+                                                {% else %}
+                                                    Não informada
+                                                {% endif %}
+                                            </p>
+                                            <p><strong>Data de Chegada:</strong> 
+                                                {% if frete.data_chegada %}
+                                                    {{ frete.data_chegada|date:"d/m/Y" }}
+                                                {% else %}
+                                                    Não informada
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p><strong>Valor do Frete:</strong> R$ {{ frete.valor_total|floatformat:2 }}</p>
+                                            <p><strong>Distância:</strong> {{ frete.km_total|floatformat:0 }} km</p>
+                                            <p><strong>Status:</strong> {{ frete.get_status_andamento_display }}</p>
+                                        </div>
+                                        <div class="col-md-3 text-end">
+                                            <a href="{% url 'core:frete_detalhes' frete.id %}" class="btn btn-primary">
+                                                <i class="bi bi-truck"></i> Ver Detalhes do Frete
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if is_sandbox %}
+    // Função para simular pagamento no ambiente sandbox
+    var simularBtn = document.getElementById('simular-pagamento');
+    if (simularBtn) {
+        simularBtn.addEventListener('click', function() {
+            var resultadoDiv = document.getElementById('resultado-simulacao');
+            if (resultadoDiv) {
+                resultadoDiv.innerHTML = '<div class="alert alert-info">Simulando pagamento...</div>';
+                resultadoDiv.style.display = 'block';
+            }
+            
+            // Redirecionar para a URL de simulação de pagamento
+            window.location.href = "{% url 'core:simular_pagamento' cobranca.id %}";
+        });
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}

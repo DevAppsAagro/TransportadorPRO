@@ -1,0 +1,128 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Cadastrar Conta Bancária{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Cadastrar Conta Bancária</h1>
+        <a href="{% url 'core:saldo_transferencias' %}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50"></i> Voltar
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Dados da Conta Bancária</h6>
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'core:cadastrar_conta_bancaria' %}" method="post">
+                        {% csrf_token %}
+                        
+                        <div class="form-group row">
+                            <label for="bank" class="col-sm-3 col-form-label">Banco</label>
+                            <div class="col-sm-9">
+                                <select class="form-control" id="bank" name="bank" required>
+                                    <option value="">Selecione o banco</option>
+                                    {% for banco in bancos %}
+                                        <option value="{{ banco.codigo }}" {% if dados.bank == banco.codigo %}selected{% endif %}>{{ banco.nome }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label for="accountName" class="col-sm-3 col-form-label">Nome da Conta</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="accountName" name="accountName" value="{{ dados.accountName|default:'' }}" placeholder="Ex: Conta Principal" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label for="ownerName" class="col-sm-3 col-form-label">Nome do Titular</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="ownerName" name="ownerName" value="{{ dados.ownerName|default:'' }}" placeholder="Nome completo do titular" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label for="cpfCnpj" class="col-sm-3 col-form-label">CPF/CNPJ</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="cpfCnpj" name="cpfCnpj" value="{{ dados.cpfCnpj|default:'' }}" placeholder="CPF ou CNPJ do titular" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label for="ownerBirthDate" class="col-sm-3 col-form-label">Data de Nascimento</label>
+                            <div class="col-sm-9">
+                                <input type="date" class="form-control" id="ownerBirthDate" name="ownerBirthDate" value="{{ dados.ownerBirthDate|default:'' }}" required>
+                                <small class="form-text text-muted">Data de nascimento do titular (obrigatório para pessoa física)</small>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label for="agency" class="col-sm-3 col-form-label">Agência</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="agency" name="agency" value="{{ dados.agency|default:'' }}" placeholder="Número da agência (sem dígito)" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label for="account" class="col-sm-3 col-form-label">Conta</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" id="account" name="account" value="{{ dados.account|default:'' }}" placeholder="Número da conta (sem dígito)" required>
+                            </div>
+                            <div class="col-sm-3">
+                                <input type="text" class="form-control" id="accountDigit" name="accountDigit" value="{{ dados.accountDigit|default:'' }}" placeholder="Dígito" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label for="bankAccountType" class="col-sm-3 col-form-label">Tipo de Conta</label>
+                            <div class="col-sm-9">
+                                <select class="form-control" id="bankAccountType" name="bankAccountType" required>
+                                    <option value="">Selecione o tipo</option>
+                                    <option value="CHECKING" {% if dados.bankAccountType == 'CHECKING' %}selected{% endif %}>Conta Corrente</option>
+                                    <option value="SAVINGS" {% if dados.bankAccountType == 'SAVINGS' %}selected{% endif %}>Conta Poupança</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <div class="col-sm-9 offset-sm-3">
+                                <button type="submit" class="btn btn-primary">Cadastrar Conta</button>
+                                <a href="{% url 'core:saldo_transferencias' %}" class="btn btn-secondary">Cancelar</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Máscara para CPF/CNPJ
+        var cpfCnpjMask = function (val) {
+            return val.replace(/\D/g, '').length > 11 ? '00.000.000/0000-00' : '000.000.000-00';
+        },
+        cpfCnpjOptions = {
+            onKeyPress: function(val, e, field, options) {
+                field.mask(cpfCnpjMask.apply({}, arguments), options);
+            }
+        };
+        $('#cpfCnpj').mask(cpfCnpjMask, cpfCnpjOptions);
+        
+        // Máscara para agência e conta
+        $('#agency').mask('0000');
+        $('#account').mask('000000000000');
+        $('#accountDigit').mask('0');
+    });
+</script>
+{% endblock %}

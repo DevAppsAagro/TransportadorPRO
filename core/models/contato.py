@@ -13,9 +13,13 @@ class Contato(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Usuário')
     nome_completo = models.CharField('Nome Completo', max_length=255)
     tipo = models.CharField('Tipo', max_length=20, choices=TIPO_CHOICES)
-    cpf_cnpj = models.CharField('CPF/CNPJ', max_length=18, blank=True)
-    email = models.EmailField('E-mail', blank=True)
-    telefone = models.CharField('Telefone', max_length=15, blank=True)
+    
+    # Campos importantes para integração com Asaas - obrigatórios para clientes
+    # blank=True permite que o campo seja opcional no banco de dados, mas 
+    # a validação no formulário garantirá que seja preenchido para clientes
+    cpf_cnpj = models.CharField('CPF/CNPJ', max_length=18, blank=True, help_text='Obrigatório para clientes')
+    email = models.EmailField('E-mail', blank=True, help_text='Obrigatório para clientes')
+    telefone = models.CharField('Telefone', max_length=15, blank=True, help_text='Obrigatório para clientes')
     
     # Endereço
     cep = models.CharField('CEP', max_length=9, blank=True)

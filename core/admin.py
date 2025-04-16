@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from core.models.perfil_usuario import PerfilUsuario
 from core.models.abastecimento_pendente import AbastecimentoPendente
 from core.models.caminhao import Caminhao
+from core.models.cobranca_config import AsaasConfig
 
 # Configuração para exibir o Perfil junto com o Usuário
 class PerfilUsuarioInline(admin.StackedInline):
@@ -47,6 +48,13 @@ class CaminhaoAdmin(admin.ModelAdmin):
     list_filter = ('status', 'ano')
     search_fields = ('placa', 'modelo')
 
+# Classe para AsaasConfig
+class AsaasConfigAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'is_sandbox', 'taxa_sistema', 'data_criacao', 'data_atualizacao')
+    list_filter = ('is_sandbox', 'data_criacao')
+    search_fields = ('usuario__username',)
+    readonly_fields = ('data_criacao', 'data_atualizacao')
+
 # Remover o registro padrão de User
 admin.site.unregister(User)
 
@@ -54,3 +62,4 @@ admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(AbastecimentoPendente, AbastecimentoPendenteAdmin)
 admin.site.register(Caminhao, CaminhaoAdmin)
+admin.site.register(AsaasConfig, AsaasConfigAdmin)

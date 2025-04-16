@@ -274,9 +274,8 @@
         </div>
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="value-card success">
-                <div class="value-title">COMISSÃO DO MOTORISTA</div>
-                <div class="value-amount">R$ {{ frete.valor_comissao_motorista|floatformat:2|intcomma }}</div>
-                <div class="text-muted">({{ frete.comissao_motorista }}%)</div>
+                <div class="value-title">STATUS DO FRETE</div>
+                <div class="value-amount">{{ frete.get_status_andamento_display }}</div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6 mb-4">
@@ -298,6 +297,50 @@
             </div>
         </div>
     </div>
+
+    {% if frete.cobranca_id %}
+    <!-- Resumo da Cobrança -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="value-card primary">
+                <div class="value-title">VALOR TOTAL DA COBRANÇA</div>
+                <div class="value-amount">R$ {{ frete.cobranca_valor_total|floatformat:2|intcomma }}</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="value-card {% if frete.cobranca_status == 'RECEIVED' or frete.cobranca_status == 'RECEIVED_IN_CASH' or frete.cobranca_status == 'CONFIRMED' %}success{% elif frete.cobranca_status == 'PENDING' %}warning{% elif frete.cobranca_status == 'OVERDUE' %}danger{% else %}secondary{% endif %}">
+                <div class="value-title">STATUS DO PAGAMENTO</div>
+                <div class="value-amount">
+                    {% if frete.cobranca_status == 'PENDING' %}
+                        Pendente
+                    {% elif frete.cobranca_status == 'RECEIVED' or frete.cobranca_status == 'RECEIVED_IN_CASH' or frete.cobranca_status == 'CONFIRMED' %}
+                        Pago
+                    {% elif frete.cobranca_status == 'OVERDUE' %}
+                        Vencido
+                    {% elif frete.cobranca_status == 'REFUNDED' %}
+                        Estornado
+                    {% elif frete.cobranca_status == 'CANCELED' %}
+                        Cancelado
+                    {% else %}
+                        {{ frete.get_cobranca_status_display }}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="value-card info">
+                <div class="value-title">DATA DE CRIAÇÃO</div>
+                <div class="value-amount">{{ frete.cobranca_data_criacao|date:'d/m/Y' }}</div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="value-card {% if frete.cobranca_status == 'OVERDUE' %}danger{% else %}warning{% endif %}">
+                <div class="value-title">DATA DE VENCIMENTO</div>
+                <div class="value-amount">{{ frete.cobranca_data_vencimento|date:'d/m/Y' }}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <div class="row">
         <!-- Informações do Transporte -->
@@ -358,23 +401,19 @@
                         <div class="col-md-4 info-label">Valor Comissão:</div>
                         <div class="col-md-8">R$ {{ frete.valor_comissao_motorista|floatformat:2|intcomma }}</div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4 info-label">Conta Bancária:</div>
-                        <div class="col-md-8">{{ frete.conta_bancaria|default:"-" }}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4 info-label">Data Recebimento:</div>
-                        <div class="col-md-8">
-                            {% if frete.data_recebimento %}
-                                {{ frete.data_recebimento|date:"d/m/Y" }}
-                            {% else %}
-                                Não recebido
-                                <button type="button" class="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#registrarRecebimentoModal">
-                                    <i class="fas fa-check-circle"></i> Registrar Recebimento
-                                </button>
-                            {% endif %}
+                    
+                    {% if frete.asaas_cobranca_id %}
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> Este frete está sendo gerenciado pelo sistema de cobranças automático.
+                                <a href="{% url 'core:detalhe_cobranca' frete.asaas_cobranca_id %}" class="btn btn-sm btn-primary ms-2">
+                                    <i class="fas fa-eye"></i> Ver Detalhes da Cobrança
+                                </a>
+                            </div>
                         </div>
                     </div>
+                    {% else %}
                     <div class="row">
                         <div class="col-md-4 info-label">Status Pagamento:</div>
                         <div class="col-md-8">
@@ -386,9 +425,13 @@
                                 <span class="status-vence-hoje">Vence Hoje</span>
                             {% else %}
                                 <span class="status-pendente">Pendente</span>
+                                <button type="button" class="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#registrarRecebimentoModal">
+                                    <i class="fas fa-check-circle"></i> Registrar Recebimento
+                                </button>
                             {% endif %}
                         </div>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -566,73 +609,101 @@
     </div>
 </div>
 
-    <!-- Seção de Cobrança -->
+    <!-- Informações da Cobrança -->
     {% if frete.cobranca_id %}
-    <div class="row">
-        <div class="col-lg-12">
+    <div class="row mt-4">
+        <div class="col-12">
             <div class="detail-card">
-                <div class="card-header">
-                    <i class="bi bi-cash-coin mr-1"></i> Informações da Cobrança
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-file-invoice-dollar mr-1"></i> Informações da Cobrança
+                    </div>
+                    <div>
+                        <a href="{% url 'core:detalhe_cobranca' frete.cobranca_id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye"></i> Ver Detalhes Completos
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="row mb-3">
-                                <div class="col-md-4 info-label">Status:</div>
-                                <div class="col-md-8">
-                                    {% if frete.cobranca_status == 'PENDING' %}
-                                        <span class="status-pendente">Pendente</span>
-                                    {% elif frete.cobranca_status == 'RECEIVED' or frete.cobranca_status == 'CONFIRMED' %}
-                                        <span class="status-pago">Pago</span>
-                                    {% elif frete.cobranca_status == 'OVERDUE' %}
-                                        <span class="status-vencido">Vencido</span>
-                                    {% elif frete.cobranca_status == 'REFUNDED' %}
-                                        <span class="status-estornado">Estornado</span>
-                                    {% elif frete.cobranca_status == 'CANCELED' %}
-                                        <span class="status-cancelado">Cancelado</span>
-                                    {% else %}
-                                        <strong>Status da Cobrança:</strong> {{ frete.get_cobranca_status_display }}
-                                    {% endif %}
+                            <div class="card shadow-sm mb-3">
+                                <div class="card-header bg-light py-2">
+                                    <h6 class="mb-0">Status e Datas</h6>
                                 </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-4 info-label">Data de Criação:</div>
-                                <div class="col-md-8"><strong>Data de Criação:</strong> {{ frete.cobranca_data_criacao|date:'d/m/Y H:i' }}</div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-4 info-label">Data de Vencimento:</div>
-                                <div class="col-md-8"><strong>Data de Vencimento:</strong> {{ frete.cobranca_data_vencimento|date:'d/m/Y' }}</div>
+                                <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-5 info-label">Status:</div>
+                                        <div class="col-md-7">
+                                            {% if frete.cobranca_status == 'PENDING' %}
+                                                <span class="badge bg-warning text-dark">Pendente</span>
+                                            {% elif frete.cobranca_status == 'RECEIVED' or frete.cobranca_status == 'RECEIVED_IN_CASH' or frete.cobranca_status == 'CONFIRMED' %}
+                                                <span class="badge bg-success">Pago</span>
+                                            {% elif frete.cobranca_status == 'OVERDUE' %}
+                                                <span class="badge bg-danger">Vencido</span>
+                                            {% elif frete.cobranca_status == 'REFUNDED' %}
+                                                <span class="badge bg-secondary">Estornado</span>
+                                            {% elif frete.cobranca_status == 'CANCELED' %}
+                                                <span class="badge bg-secondary">Cancelado</span>
+                                            {% else %}
+                                                <span class="badge bg-info">{{ frete.get_cobranca_status_display }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-5 info-label">Data de Criação:</div>
+                                        <div class="col-md-7">{{ frete.cobranca_data_criacao|date:'d/m/Y H:i' }}</div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-5 info-label">Data de Vencimento:</div>
+                                        <div class="col-md-7">{{ frete.cobranca_data_vencimento|date:'d/m/Y' }}</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="row mb-3">
-                                <div class="col-md-4 info-label">Valor do Frete:</div>
-                                <div class="col-md-8">R$ {{ frete.valor_total|floatformat:2 }}</div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-4 info-label">Taxa do Sistema:</div>
-                                <div class="col-md-8">R$ 9,99</div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-4 info-label">Valor Total:</div>
-                                <div class="col-md-8"><strong>Valor Total:</strong> R$ {{ frete.cobranca_valor_total|floatformat:2 }}</strong></div>
+                            <div class="card shadow-sm mb-3">
+                                <div class="card-header bg-light py-2">
+                                    <h6 class="mb-0">Valores</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-5 info-label">Valor do Frete:</div>
+                                        <div class="col-md-7">R$ {{ frete.valor_total|floatformat:2 }}</div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-5 info-label">Taxa do Sistema:</div>
+                                        <div class="col-md-7">R$ 9,99</div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-5 info-label">Valor Total:</div>
+                                        <div class="col-md-7"><strong>R$ {{ frete.cobranca_valor_total|floatformat:2 }}</strong></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="row mt-3">
                         <div class="col-12">
-                            <a href="{{ frete.link_pagamento }}" target="_blank" class="btn btn-primary btn-sm">
-                                <i class="bi bi-link-45deg"></i> Link de Pagamento
-                            </a>
-                            <a href="{% url 'core:atualizar_status_cobranca' frete.id %}" class="btn btn-info btn-sm ms-2">
-                                <i class="bi bi-arrow-repeat"></i> Atualizar Status
-                            </a>
-                            {% if frete.cobranca_status == 'PENDING' %}
-                            <a href="{% url 'core:cancelar_cobranca' frete.id %}" class="btn btn-danger btn-sm ms-2" 
-                               onclick="return confirm('Tem certeza que deseja cancelar esta cobrança?')">
-                                <i class="bi bi-x-circle"></i> Cancelar Cobrança
-                            </a>
-                            {% endif %}
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-light py-2">
+                                    <h6 class="mb-0">Ações</h6>
+                                </div>
+                                <div class="card-body">
+                                    <a href="{{ frete.link_pagamento }}" target="_blank" class="btn btn-primary">
+                                        <i class="bi bi-link-45deg"></i> Link de Pagamento
+                                    </a>
+                                    <a href="{% url 'core:atualizar_status_cobranca' frete.id %}" class="btn btn-info ms-2">
+                                        <i class="bi bi-arrow-repeat"></i> Atualizar Status
+                                    </a>
+                                    {% if frete.cobranca_status == 'PENDING' %}
+                                    <a href="{% url 'core:cancelar_cobranca' frete.id %}" class="btn btn-danger ms-2" 
+                                       onclick="return confirm('Tem certeza que deseja cancelar esta cobrança?')">
+                                        <i class="bi bi-x-circle"></i> Cancelar Cobrança
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

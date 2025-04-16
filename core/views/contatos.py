@@ -30,11 +30,29 @@ def contatos(request):
 def contato_novo(request):
     if request.method == 'POST':
         # Validar campos obrigatórios
-        campos_obrigatorios = ['nome_completo', 'tipo']
-        for campo in campos_obrigatorios:
-            if not request.POST.get(campo):
-                messages.error(request, f'O campo {campo.replace("_", " ").title()} é obrigatório.')
+        campos_obrigatorios = ['nome_completo', 'tipo', 'cpf_cnpj', 'email', 'telefone']
+        
+        # Verificar tipo de contato - para clientes, todos os campos são obrigatórios
+        tipo = request.POST.get('tipo')
+        
+        # Se for cliente, validar todos os campos obrigatórios para integração com Asaas
+        if tipo == 'CLIENTE':
+            for campo in campos_obrigatorios:
+                if not request.POST.get(campo):
+                    messages.error(request, f'O campo {campo.replace("_", " ").title()} é obrigatório para clientes.')
+                    return render(request, 'core/contatos/contato_form.html', {'contato': request.POST})
+                    
+            # Validar formato do CPF/CNPJ
+            cpf_cnpj = request.POST.get('cpf_cnpj', '').strip()
+            if len(cpf_cnpj) not in [11, 14, 18]:  # 11 (CPF sem formatação), 14 (CNPJ sem formatação) ou 18 (formatado)
+                messages.error(request, 'CPF/CNPJ inválido. Informe um CPF ou CNPJ válido.')
                 return render(request, 'core/contatos/contato_form.html', {'contato': request.POST})
+        else:
+            # Para outros tipos, apenas nome e tipo são obrigatórios
+            for campo in ['nome_completo', 'tipo']:
+                if not request.POST.get(campo):
+                    messages.error(request, f'O campo {campo.replace("_", " ").title()} é obrigatório.')
+                    return render(request, 'core/contatos/contato_form.html', {'contato': request.POST})
         
         try:
             # Criar novo contato
@@ -70,7 +88,34 @@ def contato_editar(request, pk):
         return redirect('core:contatos')
     
     if request.method == 'POST':
+        # Validar campos obrigatórios
+        campos_obrigatorios = ['nome_completo', 'tipo', 'cpf_cnpj', 'email', 'telefone']
+        
+        # Verificar tipo de contato
+        tipo = request.POST.get('tipo')
+        
+        # Se for cliente, validar todos os campos obrigatórios para integração com Asaas
+        if tipo == 'CLIENTE':
+            for campo in campos_obrigatorios:
+                if not request.POST.get(campo):
+                    messages.error(request, f'O campo {campo.replace("_", " ").title()} é obrigatório para clientes.')
+                    # Manter os dados enviados no formulário
+                    dados_form = {}
+                    for field in request.POST:
+                        dados_form[field] = request.POST[field]
+                    return render(request, 'core/contatos/contato_form.html', {'contato': dados_form})
+                    
+            # Validar formato do CPF/CNPJ
+            cpf_cnpj = request.POST.get('cpf_cnpj', '').strip()
+            if len(cpf_cnpj) not in [11, 14, 18]:  # 11 (CPF sem formatação), 14 (CNPJ sem formatação) ou 18 (formatado)
+                messages.error(request, 'CPF/CNPJ inválido. Informe um CPF ou CNPJ válido.')
+                dados_form = {}
+                for field in request.POST:
+                    dados_form[field] = request.POST[field]
+                return render(request, 'core/contatos/contato_form.html', {'contato': dados_form})
+        
         try:
+            # Atualizar campos do contato
             for field in request.POST:
                 if hasattr(contato, field):
                     setattr(contato, field, request.POST[field])
@@ -78,7 +123,7 @@ def contato_editar(request, pk):
             messages.success(request, 'Contato atualizado com sucesso!')
             return redirect('core:contatos')
         except Exception as e:
-            messages.error(request, 'Erro ao atualizar contato. Por favor, tente novamente.')
+            messages.error(request, f'Erro ao atualizar contato: {str(e)}')
     
     return render(request, 'core/contatos/contato_form.html', {'contato': contato})
 

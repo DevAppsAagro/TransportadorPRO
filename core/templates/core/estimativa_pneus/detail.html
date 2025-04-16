@@ -35,7 +35,7 @@
                     <p><strong>Data da Estimativa:</strong> {{ estimativa.data_estimativa|date:"d/m/Y" }}</p>
                 </div>
                 <div class="col-md-6">
-                    <p><strong>Custo por Km:</strong> R$ {{ estimativa.custo_total_km|floatformat:2|stringformat:'s'|replace:'.',',' }}</p>
+                    <p><strong>Custo por Km:</strong> R$ {{ estimativa.custo_total_km|floatformat:2|stringformat:'s'|cut:'.' }}</p>
                     <p><strong>Status:</strong> 
                         {% if estimativa.is_active %}
                             <span class="badge bg-success">Ativo</span>
@@ -56,10 +56,10 @@
                 </div>
                 <div class="card-body">
                     <p><strong>Quantidade:</strong> {{ estimativa.qtd_pneus_dianteiros }}</p>
-                    <p><strong>Preço Unitário:</strong> R$ {{ estimativa.preco_pneu_dianteiro|floatformat:2|stringformat:'s'|replace:'.',',' }}</p>
+                    <p><strong>Preço Unitário:</strong> R$ {{ estimativa.preco_pneu_dianteiro|floatformat:2|stringformat:'s'|cut:'.' }}</p>
                     <p><strong>Vida Útil:</strong> {{ estimativa.km_vida_util_dianteiro|floatformat:0 }} km</p>
                     <p><strong>Recapagens:</strong> {{ estimativa.num_recapagens_dianteiro }}</p>
-                    <p><strong>Custo Recapagem:</strong> R$ {{ estimativa.custo_recapagem_dianteiro|floatformat:2|stringformat:'s'|replace:'.',',' }}</p>
+                    <p><strong>Custo Recapagem:</strong> R$ {{ estimativa.custo_recapagem_dianteiro|floatformat:2|stringformat:'s'|cut:'.' }}</p>
                 </div>
             </div>
         </div>
@@ -71,10 +71,10 @@
                 </div>
                 <div class="card-body">
                     <p><strong>Quantidade:</strong> {{ estimativa.qtd_pneus_traseiros }}</p>
-                    <p><strong>Preço Unitário:</strong> R$ {{ estimativa.preco_pneu_traseiro|floatformat:2|stringformat:'s'|replace:'.',',' }}</p>
+                    <p><strong>Preço Unitário:</strong> R$ {{ estimativa.preco_pneu_traseiro|floatformat:2|stringformat:'s'|cut:'.' }}</p>
                     <p><strong>Vida Útil:</strong> {{ estimativa.km_vida_util_traseiro|floatformat:0 }} km</p>
                     <p><strong>Recapagens:</strong> {{ estimativa.num_recapagens_traseiro }}</p>
-                    <p><strong>Custo Recapagem:</strong> R$ {{ estimativa.custo_recapagem_traseiro|floatformat:2|stringformat:'s'|replace:'.',',' }}</p>
+                    <p><strong>Custo Recapagem:</strong> R$ {{ estimativa.custo_recapagem_traseiro|floatformat:2|stringformat:'s'|cut:'.' }}</p>
                 </div>
             </div>
         </div>
@@ -86,10 +86,10 @@
                 </div>
                 <div class="card-body">
                     <p><strong>Quantidade:</strong> {{ estimativa.qtd_pneus_carreta }}</p>
-                    <p><strong>Preço Unitário:</strong> R$ {{ estimativa.preco_pneu_carreta|floatformat:2|stringformat:'s'|replace:'.',',' }}</p>
+                    <p><strong>Preço Unitário:</strong> R$ {{ estimativa.preco_pneu_carreta|floatformat:2|stringformat:'s'|cut:'.' }}</p>
                     <p><strong>Vida Útil:</strong> {{ estimativa.km_vida_util_carreta|floatformat:0 }} km</p>
                     <p><strong>Recapagens:</strong> {{ estimativa.num_recapagens_carreta }}</p>
-                    <p><strong>Custo Recapagem:</strong> R$ {{ estimativa.custo_recapagem_carreta|floatformat:2|stringformat:'s'|replace:'.',',' }}</p>
+                    <p><strong>Custo Recapagem:</strong> R$ {{ estimativa.custo_recapagem_carreta|floatformat:2|stringformat:'s'|cut:'.' }}</p>
                 </div>
             </div>
         </div>
@@ -108,9 +108,9 @@
                             <h6>Pneus Dianteiros</h6>
                         </div>
                         <div class="card-body">
-                            <p><strong>Custo Total:</strong> R$ {{ resultados.dianteiros.custo_total|floatformat:2|stringformat:'s'|replace:'.',',' }}</p>
+                            <p><strong>Custo Total:</strong> R$ {{ resultados.dianteiros.custo_total|floatformat:2|stringformat:'s'|cut:'.' }}</p>
                             <p><strong>Km Total:</strong> {{ resultados.dianteiros.km_total|floatformat:0 }} km</p>
-                            <p><strong>Custo por Km:</strong> R$ {{ resultados.dianteiros.custo_por_km|floatformat:4|stringformat:'s'|replace:'.',',' }}</p>
+                            <p><strong>Custo por Km:</strong> R$ {{ resultados.dianteiros.custo_por_km|floatformat:4|stringformat:'s'|cut:'.' }}</p>
                         </div>
                     </div>
                 </div>
@@ -120,9 +120,9 @@
                             <h6>Pneus Traseiros</h6>
                         </div>
                         <div class="card-body">
-                            <p><strong>Custo Total:</strong> R$ {{ resultados.traseiros.custo_total|floatformat:2|stringformat:'s'|replace:'.',',' }}</p>
+                            <p><strong>Custo Total:</strong> R$ {{ resultados.traseiros.custo_total|floatformat:2|stringformat:'s'|cut:'.' }}</p>
                             <p><strong>Km Total:</strong> {{ resultados.traseiros.km_total|floatformat:0 }} km</p>
-                            <p><strong>Custo por Km:</strong> R$ {{ resultados.traseiros.custo_por_km|floatformat:4|stringformat:'s'|replace:'.',',' }}</p>
+                            <p><strong>Custo por Km:</strong> R$ {{ resultados.traseiros.custo_por_km|floatformat:4|stringformat:'s'|cut:'.' }}</p>
                         </div>
                     </div>
                 </div>
@@ -132,9 +132,9 @@
                             <h6>Pneus da Carreta</h6>
                         </div>
                         <div class="card-body">
-                            <p><strong>Custo Total:</strong> R$ {{ resultados.carreta.custo_total|floatformat:2|stringformat:'s'|replace:'.',',' }}</p>
+                            <p><strong>Custo Total:</strong> R$ {{ resultados.carreta.custo_total|floatformat:2|stringformat:'s'|cut:'.' }}</p>
                             <p><strong>Km Total:</strong> {{ resultados.carreta.km_total|floatformat:0 }} km</p>
-                            <p><strong>Custo por Km:</strong> R$ {{ resultados.carreta.custo_por_km|floatformat:4|stringformat:'s'|replace:'.',',' }}</p>
+                            <p><strong>Custo por Km:</strong> R$ {{ resultados.carreta.custo_por_km|floatformat:4|stringformat:'s'|cut:'.' }}</p>
                         </div>
                     </div>
                 </div>
@@ -142,7 +142,7 @@
             <div class="row mt-4">
                 <div class="col-12">
                     <div class="alert alert-info">
-                        <h5 class="mb-3">Custo Total por Km: R$ {{ resultados.custo_total_km|floatformat:4|stringformat:'s'|replace:'.',',' }}</h5>
+                        <h5 class="mb-3">Custo Total por Km: R$ {{ resultados.custo_total_km|floatformat:4|stringformat:'s'|cut:'.' }}</h5>
                         <p class="mb-0">Este valor representa o custo total de pneus por quilômetro rodado, considerando todos os tipos de pneus, suas vidas úteis e recapagens.</p>
                     </div>
                 </div>
