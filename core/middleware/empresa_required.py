@@ -16,6 +16,9 @@ class EmpresaRequiredMiddleware:
         
         # Depois verifica se o usuário está autenticado e precisa cadastrar a empresa
         if request.user.is_authenticated:
+            # Se for motorista, não exige empresa cadastrada
+            if hasattr(request.user, 'perfil') and getattr(request.user.perfil, 'is_motorista', False):
+                return response
             # Caminhos que não devem ser redirecionados (página de cadastro da empresa, logout, etc)
             excluded_paths = [
                 '/configuracoes/empresa/',
